@@ -56,7 +56,7 @@ Wenn alle Container erfolgreich laufen, kann das Frontend über folgenden Link g
 Dort sollte das Frontend mit den geladenen Daten sichtbar sein.
 
 ## Starten von Cypress-Tests
-Durch den folgenden Befehl werden alle E2E Test von Cypress ausgeführt. Nach Abschluss lassen sich unter web/frontend/cypress/reports der Test Report und unter web/frontend/cypress/videos eine Video aufnahme der Test finden.
+Durch den folgenden Befehl, der unter /web/frontend ausgeführt werden muss, werden alle E2E Test von Cypress ausgeführt. Nach Abschluss lassen sich unter web/frontend/cypress/reports der Test Report und unter web/frontend/cypress/videos eine Video aufnahme der Test finden.
 
 ```bash
 yarn test:report
