@@ -1,0 +1,1062 @@
+<template>
+  <div class="container">
+    <header>
+      <h1>INSY Frontend</h1>
+    </header>
+
+    <main>
+      <section>
+
+        <div class="table-selector">
+          <div class="control-group">
+            <label>Tabelle:</label>
+            <select v-model="selectedTable" @change="onTableChange">
+              <option value="analysis">Analysis</option>
+              <option value="sample">Sample</option>
+              <option value="box">Box</option>
+              <option value="boxpos">Box Pos</option>
+              <option value="log">Log (Read-Only)</option>
+              <option value="threshold">Thresholds</option>
+            </select>
+          </div>
+
+          <div class="control-group search-wrapper">
+            <label>Suche:</label>
+            <div class="search-input-group">
+              <input 
+                type="text" 
+                v-model="searchQuery" 
+                @keyup.enter="applySearch"
+                placeholder="ID, Name..." 
+                class="search-input"
+              />
+              <button @click="applySearch" class="btn btn-search" title="Suchen">
+                <svg viewBox="0 0 24 24" class="mdi-icon">
+                  <path fill="currentColor" d="M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3M9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5Z" />
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="control-group">
+            <label>Anzeige-Limit:</label>
+            <select v-model.number="displayLimit" style="width: auto;">
+              <option :value="10">10</option>
+              <option :value="25">25</option>
+              <option :value="50">50</option>
+              <option :value="100">100</option>
+              <option :value="200">200</option>
+              <option :value="tableData.length">Alle</option>
+            </select>
+          </div>
+
+          <div class="button-group">
+            <button @click="fetchTableData" class="btn btn-load">
+              <svg viewBox="0 0 24 24" class="mdi-icon">
+                <path fill="currentColor" d="M17.65,6.35C16.2,4.9 14.21,4 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20C15.73,20 18.84,17.45 19.73,14H17.65C16.83,16.33 14.61,18 12,18A6,6 0 0,1 6,12A6,6 0 0,1 12,6C13.66,6 15.14,6.69 16.22,7.78L13,11H20V4L17.65,6.35Z" />
+              </svg>
+              Daten laden
+            </button>
+            
+            <button 
+              v-if="currentSchema && !currentSchema.readOnly" 
+              @click="createNew" 
+              class="btn btn-save" 
+            >
+              <svg viewBox="0 0 24 24" class="mdi-icon">
+                <path fill="currentColor" d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z" />
+              </svg>
+              Neuer Eintrag
+            </button>
+          </div>
+        </div>
+
+        <p v-if="loading" class="status-text"> <LoadingBar /> Lade Daten... </p>
+        <p v-else-if="error" class="error-text">Fehler: {{ error.message }}</p>
+        <p v-else-if="tableData.length === 0" class="status-text">Keine Daten vorhanden.</p>
+
+        <div v-else class="table-wrapper">
+          <table>
+            <thead>
+            <tr>
+              <th 
+                v-for="col in visibleColumns" 
+                :key="col"
+                @click="sortBy(col)"
+                class="sortable-header"
+              >
+                <div class="th-content">
+                  {{ formatHeader(col) }}
+                  <span v-if="sortKey === col">
+                    <svg v-if="sortAsc" viewBox="0 0 24 24" class="mdi-icon small-icon">
+                      <path fill="currentColor" d="M7.41,15.41L12,10.83L16.59,15.41L18,14L12,8L6,14L7.41,15.41Z" />
+                    </svg>
+                    <svg v-else viewBox="0 0 24 24" class="mdi-icon small-icon">
+                      <path fill="currentColor" d="M7.41,8.59L12,13.17L16.59,8.59L18,10L12,16L6,10L7.41,8.59Z" />
+                    </svg>
+                  </span>
+                </div>
+              </th>
+              <th class="sticky-col th-sticky">
+                Optionen
+              </th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr v-for="(row, idx) in sortedData" :key="idx">
+              <td v-for="col in visibleColumns" :key="col">
+                {{ formatCell(col, row[col]) }}
+              </td>
+              <td class="sticky-col td-sticky">
+                <div class="action-buttons">
+                  <button @click="viewItem(row)" class="btn btn-view btn-icon-view" title="Details ansehen">
+                    <svg viewBox="0 0 24 24" class="mdi-icon">
+                      <path fill="currentColor" d="M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17M12,4.5C7,4.5 2.73,7.61 1,12C2.73,16.39 7,19.5 12,19.5C17,19.5 21.27,16.39 23,12C21.27,7.61 17,4.5 12,4.5Z" />
+                    </svg>
+                  </button>
+
+                  <template v-if="!currentSchema.readOnly">
+                    <button @click="editItem(row)" class="btn btn-edit" title="Bearbeiten">
+                      <svg viewBox="0 0 24 24" class="mdi-icon">
+                        <path fill="currentColor" d="M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.12,5.12L18.87,8.87M3,17.25V21H6.75L17.81,9.93L14.06,6.18L3,17.25Z" />
+                      </svg>
+                    </button>
+                    <button @click="deleteItem(row)" class="btn btn-delete" title="Löschen">
+                      <svg viewBox="0 0 24 24" class="mdi-icon">
+                          <path fill="currentColor" d="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z" />
+                      </svg>
+                    </button>
+                  </template>
+                </div>
+              </td>
+            </tr>
+            </tbody>
+          </table>
+          
+          <p class="info-text">
+            Zeige {{ sortedData.length }} von {{ filteredCount }} Einträgen
+          </p>
+        </div>
+
+        <div v-if="showDetailModal" class="modal-overlay" id="detail-modal" @click.self="closeDetailModal">
+          <div class="modal-content modal-lg">
+            <div class="modal-header">
+              <h3>Details: {{ formatHeader(selectedTable) }}</h3>
+              <button @click="closeDetailModal" class="btn-close" id="btn-close-detail">×</button>
+            </div>
+            
+            <div class="detail-grid">
+              <div v-for="(value, key) in itemToView" :key="key" class="detail-row">
+                <div class="detail-label">{{ formatHeader(key) }}</div>
+                
+                <div class="detail-value" :id="'detail-'+key">
+                  {{ formatCell(key, value) }}
+                </div>
+              </div>
+            </div>
+
+            <div class="modal-actions">
+              <button @click="closeDetailModal" class="btn btn-cancel">Schließen</button>
+              <button 
+                v-if="!currentSchema.readOnly" 
+                @click="editFromDetail(itemToView)" 
+                class="btn btn-edit"
+                id="btn-edit-from-detail"
+              >
+                Bearbeiten
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div v-if="itemToEdit" class="form-container" ref="formContainer">
+          <h3>
+            {{ isNewItem ? 'Neuer Eintrag' : 'Bearbeiten' }}: {{ formatHeader(selectedTable) }}
+          </h3>
+          
+          <div class="form-grid">
+            <div v-for="col in formColumns" :key="col" class="form-group">
+              <label :for="'field-'+col">
+                {{ formatHeader(col) }} 
+                <span v-if="isFieldRequired(col)" class="required-mark">*</span>
+              </label>
+
+              <input 
+                v-if="isFieldImmutable(col) && !isNewItem && getFieldConfig(col).type === 'datetime'"
+                :id="'field-'+col"
+                :value="toDateTimeLocal(itemToEdit[col])"
+                type="datetime-local"
+                disabled
+                class="input-disabled"
+              />
+
+              <input 
+                v-else-if="isFieldImmutable(col) && !isNewItem"
+                :id="'field-'+col"
+                :value="itemToEdit[col]"
+                disabled
+                class="input-disabled"
+              />
+
+              <input 
+                v-else-if="getFieldConfig(col).type === 'datetime'"
+                :id="'field-'+col"
+                type="datetime-local"
+                v-model="itemToEdit[col]"
+                :step="1"
+              />
+
+              <select 
+                v-else-if="selectedTable === 'box' && col === 'type'"
+                v-model.number="itemToEdit[col]"
+              >
+                <option v-for="n in 9" :key="n" :value="n">Typ {{ n }}</option>
+              </select>
+
+              <input 
+                v-else-if="getFieldConfig(col).type === 'number'"
+                :id="'field-'+col"
+                type="number"
+                v-model.number="itemToEdit[col]"
+                :step="getFieldConfig(col).step"
+                :min="getFieldConfig(col).min"
+                :max="getFieldConfig(col).max"
+              />
+
+              <input 
+                v-else
+                :id="'field-'+col"
+                type="text"
+                v-model="itemToEdit[col]"
+                :maxlength="getFieldConfig(col).maxLength"
+                :required="isFieldRequired(col)"
+                :placeholder="col.includes('flags') ? 'z.B. -----' : ''"
+                :class="col.includes('flags') ? 'code-input' : ''"
+              />
+              
+              <small class="field-hint" v-if="getFieldConfig(col).hint">
+                {{ getFieldConfig(col).hint }}
+              </small>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button @click="cancelEdit" class="btn btn-cancel">Abbrechen</button>
+            <button @click="saveItem" class="btn btn-save">Speichern</button>
+          </div>
+        </div>
+
+      </section>
+    </main>
+
+    <div v-if="showDeleteModal" class="modal-overlay">
+      <div class="modal-content">
+        <h3>Eintrag löschen?</h3>
+        <p>Möchten Sie diesen Eintrag wirklich löschen? Dieser Vorgang kann nicht rückgängig gemacht werden.</p>
+        <div class="modal-actions">
+          <button @click="closeDeleteModal" class="btn btn-cancel">Abbrechen</button>
+          <button @click="confirmDelete" class="btn btn-delete">Löschen</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</template>
+
+<script>
+import LoadingBar from '@/components/Loadingbar.vue'
+const API_BASE_URL = '/api/911';
+
+const SCHEMAS = {
+  analysis: {
+    endpoint: 'analysis',
+    pk: 'a_id',
+    displayColumns: ['a_id', 's_id', 's_stamp', 'pol', 'nat', 'glu', 'date_in', 'a_flags'],
+    formColumns: [
+      's_id', 'pol', 'nat', 'kal', 'an', 'glu', 'dry',
+      'date_in', 'date_out', 'weight_mea', 'weight_nrm', 'weight_cur',
+      'weight_dif', 'density', 'a_flags', 'lane', 'comment'
+    ],
+    immutable: ['a_id'], 
+    fieldConfigs: {
+      s_id: { maxLength: 13, required: true },
+      s_stamp: { type: 'datetime', required: true },
+      pol: { type: 'number', step: '0.01' },
+      nat: { type: 'number', step: '0.01' },
+      kal: { type: 'number', step: '0.01' },
+      an: { type: 'number', step: '0.01' },
+      glu: { type: 'number', step: '0.01' },
+      dry: { type: 'number', step: '0.01' },
+      density: { type: 'number', step: '0.01' },
+      date_in: { type: 'datetime' },
+      date_out: { type: 'datetime' },
+      a_flags: { maxLength: 15 },
+      lane: { type: 'number', step: 1 },
+      comment: { maxLength: 255 }
+    }
+  },
+  sample: {
+    endpoint: 'samples',
+    pk: ['s_id', 's_stamp'], 
+    displayColumns: ['s_id', 's_stamp', 'name', 'quantity', 'weight_net', 's_flags'],
+    formColumns: [
+      's_id', 's_stamp', 'name', 'weight_net', 'weight_bru', 'weight_tar',
+      'quantity', 'distance', 'date_crumbled', 's_flags', 'lane', 'comment'
+    ],
+    immutable: ['s_id', 's_stamp'],
+    fieldConfigs: {
+      s_id: { maxLength: 13, required: true },
+      s_stamp: { type: 'datetime', required: true },
+      name: { maxLength: 255 },
+      weight_net: { type: 'number', step: '0.01' },
+      weight_bru: { type: 'number', step: '0.01' },
+      weight_tar: { type: 'number', step: '0.01' },
+      quantity: { type: 'number', step: 1 },
+      distance: { type: 'number', step: '0.01' },
+      date_crumbled: { type: 'datetime' },
+      s_flags: { maxLength: 10 },
+      comment: { maxLength: 255 }
+    }
+  },
+  box: {
+    endpoint: 'boxes',
+    pk: 'b_id',
+    displayColumns: ['b_id', 'name', 'num_max', 'type', 'comment'],
+    formColumns: ['b_id', 'name', 'num_max', 'type', 'comment'],
+    immutable: ['b_id'], 
+    fieldConfigs: {
+      b_id: { maxLength: 4, required: true },
+      name: { maxLength: 255 },
+      num_max: { type: 'number', step: 1, min: 1, max: 999 },
+      type: { type: 'number', step: 1, min: 1, max: 9 },
+      comment: { maxLength: 255 }
+    }
+  },
+  boxpos: {
+    endpoint: 'boxpos',
+    pk: ['b_id', 'bpos_id'], 
+    displayColumns: ['b_id', 'bpos_id', 's_id', 's_stamp', 'date_exported'],
+    formColumns: ['b_id', 'bpos_id', 's_id', 'date_exported'],
+    immutable: ['b_id', 'bpos_id'], 
+    fieldConfigs: {
+      b_id: { maxLength: 4, required: true },
+      bpos_id: { type: 'number', step: 1, required: true },
+      s_id: { maxLength: 13 },
+      s_stamp: { type: 'datetime' },
+      date_exported: { type: 'datetime' }
+    }
+  },
+  log: {
+    endpoint: 'logs',
+    pk: 'log_id',
+    displayColumns: ['log_id', 'date_created', 'level', 'info', 's_id', 'a_id'],
+    readOnly: true
+  },
+  threshold: {
+    endpoint: 'thresholds',
+    pk: 'th_id',
+    displayColumns: ['th_id', 'value_min', 'value_max', 'date_changed'],
+    formColumns: ['th_id', 'value_min', 'value_max'],
+    immutable: ['th_id'],
+    fieldConfigs: {
+      th_id: { maxLength: 10, required: true },
+      value_min: { type: 'number', step: '0.01' },
+      value_max: { type: 'number', step: '0.01' }
+    }
+  }
+};
+
+export default {
+  name: 'VenlabFrontend',
+  components: { LoadingBar },
+
+  data() {
+    return {
+      selectedTable: 'analysis',
+      tableData: [],
+      displayLimit: 25,
+      loading: false,
+      error: null,
+      
+      searchQuery: '',
+      activeSearchQuery: '',
+      sortKey: '',
+      sortAsc: true,
+
+      itemToEdit: null,
+      isNewItem: false,
+
+      showDeleteModal: false,
+      itemToDelete: null,
+
+      showDetailModal: false,
+      itemToView: null,
+    };
+  },
+
+  computed: {
+    currentSchema() {
+      return SCHEMAS[this.selectedTable] || SCHEMAS.analysis;
+    },
+    visibleColumns() {
+      if (this.currentSchema.displayColumns) {
+        return this.currentSchema.displayColumns;
+      }
+      if (this.tableData.length > 0) {
+        return Object.keys(this.tableData[0]);
+      }
+      return [];
+    },
+    formColumns() {
+      return this.currentSchema.formColumns || [];
+    },
+    filteredCount() {
+       let data = this.tableData;
+       if (this.activeSearchQuery) {
+        const query = this.activeSearchQuery.toLowerCase();
+        data = data.filter(row => {
+          return Object.values(row).some(val => 
+            String(val || '').toLowerCase().includes(query)
+          );
+        });
+       }
+       return data.length;
+    },
+    sortedData() {
+      let data = this.tableData.slice();
+      
+      if (this.activeSearchQuery) {
+        const query = this.activeSearchQuery.toLowerCase();
+        data = data.filter(row => {
+          return Object.values(row).some(val => 
+            String(val || '').toLowerCase().includes(query)
+          );
+        });
+      }
+
+      if (this.sortKey) {
+        data.sort((a, b) => {
+          let aVal = a[this.sortKey];
+          let bVal = b[this.sortKey];
+          
+          if (aVal === null) aVal = '';
+          if (bVal === null) bVal = '';
+
+          if (!isNaN(parseFloat(aVal)) && isFinite(aVal) && !this.sortKey.includes('id')) {
+            aVal = parseFloat(aVal);
+            bVal = parseFloat(bVal);
+          } else {
+            aVal = String(aVal).toLowerCase();
+            bVal = String(bVal).toLowerCase();
+          }
+
+          if (aVal < bVal) return this.sortAsc ? -1 : 1;
+          if (aVal > bVal) return this.sortAsc ? 1 : -1;
+          return 0;
+        });
+      }
+      
+      return data.slice(0, this.displayLimit);
+    }
+  },
+
+  mounted() {
+    this.fetchTableData();
+  },
+
+  methods: {
+    onTableChange() {
+      this.tableData = [];
+      this.itemToEdit = null;
+      this.error = null;
+      this.sortKey = '';
+      this.searchQuery = '';
+      this.activeSearchQuery = '';
+      this.fetchTableData();
+    },
+
+    applySearch() {
+        this.activeSearchQuery = this.searchQuery;
+    },
+
+    async fetchTableData() {
+      this.loading = true;
+      this.error = null;
+      this.itemToEdit = null;
+      
+      try {
+        const response = await fetch(`${API_BASE_URL}/${this.currentSchema.endpoint}`);
+        const data = await response.json(); 
+        if (!response.ok) {
+          throw new Error(data.message || `Fehler beim Laden von ${this.selectedTable}`);
+        }
+        this.tableData = data;
+      } catch (error) {
+        console.error('Fetch error:', error);
+        this.error = error;
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    createNew() {
+      this.isNewItem = true;
+      const emptyItem = {};
+      const config = this.currentSchema.fieldConfigs || {};
+
+      this.formColumns.forEach(col => {
+        const fieldType = config[col]?.type;
+        if (fieldType === 'number') {
+           emptyItem[col] = null;
+        } else if (fieldType === 'datetime') {
+           emptyItem[col] = null;
+        } else {
+           emptyItem[col] = '';
+        }
+      });
+
+      // Defaults
+      if (this.selectedTable === 'box') {
+        emptyItem['num_max'] = 40;
+        emptyItem['type'] = 1;
+      }
+
+      this.itemToEdit = emptyItem;
+      this.scrollToForm();
+    },
+
+    editItem(item) {
+  this.isNewItem = false;
+  const copy = JSON.parse(JSON.stringify(item));
+
+  copy.__pk = {
+    s_id: item.s_id,
+    s_stamp: item.s_stamp
+  };
+
+  const config = this.currentSchema.fieldConfigs || {};
+  for (const [key, value] of Object.entries(copy)) {
+    if (config[key]?.type === 'datetime' && value) {
+      copy[key] = this.toDateTimeLocal(value);
+    }
+  }
+
+  this.itemToEdit = copy;
+  this.scrollToForm();
+}
+,
+
+    cancelEdit() {
+      this.itemToEdit = null;
+    },
+
+    async saveItem() {
+      const schema = this.currentSchema;
+      const dataToSend = { ...this.itemToEdit };
+      const config = schema.fieldConfigs || {};
+
+      for (const key in dataToSend) {
+        if (config[key]?.type === 'number' && dataToSend[key] === '') {
+           dataToSend[key] = null;
+        }
+        // Konvertiere local datetime zurück zu ISO für JSON Body
+        if (config[key]?.type === 'datetime' && dataToSend[key]) {
+           try {
+             dataToSend[key] = new Date(dataToSend[key]).toISOString();
+           } catch(e) { 
+             console.warn("Date parsing issue", e);
+           }
+        }
+      }
+
+      let url = `${API_BASE_URL}/${schema.endpoint}`;
+      let method = 'POST';
+
+      if (!this.isNewItem) {
+        method = 'PUT';
+        // Hier bauen wir die URL. 
+        url = this.constructUrlWithId(schema, dataToSend); 
+      }
+
+      try {
+        const response = await fetch(url, {
+          method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(dataToSend),
+        });
+
+        const respData = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(respData.message || 'Speichern fehlgeschlagen.');
+        }
+
+        await this.fetchTableData();
+        this.itemToEdit = null;
+      } catch (error) {
+        console.log(`Fehler beim Speichern:\n${error.message}`);
+      }
+    },
+
+    deleteItem(item) {
+      this.itemToDelete = item;
+      this.showDeleteModal = true;
+    },
+
+    closeDeleteModal() {
+      this.showDeleteModal = false;
+      this.itemToDelete = null;
+    },
+
+    async confirmDelete() {
+      if (!this.itemToDelete) return;
+      
+      const schema = this.currentSchema;
+      const item = this.itemToDelete;
+      this.closeDeleteModal();
+
+      try {
+        const url = this.constructUrlWithId(schema, item);
+        const response = await fetch(url, { method: 'DELETE' });
+        
+        if (!response.ok) {
+           const d = await response.json().catch(() => ({}));
+           throw new Error(d.message || 'Löschen fehlgeschlagen');
+        }
+
+        await this.fetchTableData();
+        if (this.itemToEdit && JSON.stringify(this.itemToEdit) === JSON.stringify(item)) {
+            this.itemToEdit = null;
+        }
+      } catch (error) {
+        console.log(`Fehler beim Löschen: ${error.message}`);
+      } finally {
+        this.closeDeleteModal();
+      }
+    },
+
+    constructUrlWithId(schema, item) {
+  let url = `${API_BASE_URL}/${schema.endpoint}`;
+
+  if (Array.isArray(schema.pk)) {
+    schema.pk.forEach(key => {
+      const val =
+        item.__pk && item.__pk[key] !== undefined
+          ? item.__pk[key]
+          : item[key];
+
+      url += `/${encodeURIComponent(val)}`;
+    });
+  } else {
+    url += `/${item[schema.pk]}`;
+  }
+  return url;
+}
+,
+
+    formatHeader(col) {
+      if(!col) return '';
+      return col.charAt(0).toUpperCase() + col.slice(1).replace(/_/g, ' ');
+    },
+
+    formatCell(col, value) {
+      if (value === null || value === undefined) return '-';
+      const config = this.currentSchema.fieldConfigs || {};
+      if (config[col]?.type === 'datetime' || col.includes('date') || col.includes('stamp')) {
+        try {
+           return new Date(value).toLocaleString('de-DE');
+        } catch (e) { return value; }
+      }
+      return value;
+    },
+
+    toDateTimeLocal(isoString) {
+      if (!isoString) return '';
+      return new Date(isoString).toISOString().slice(0, 19); 
+    },
+
+    getFieldConfig(col) {
+      return (this.currentSchema.fieldConfigs && this.currentSchema.fieldConfigs[col]) || {};
+    },
+    
+    isFieldRequired(col) {
+      return this.getFieldConfig(col).required === true;
+    },
+    
+    isFieldImmutable(col) {
+      return this.currentSchema.immutable && this.currentSchema.immutable.includes(col);
+    },
+
+    scrollToForm() {
+      this.$nextTick(() => {
+        if (this.$refs.formContainer) {
+          this.$refs.formContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      });
+    },
+    
+    sortBy(col) {
+      if (this.sortKey === col) {
+        this.sortAsc = !this.sortAsc;
+      } else {
+        this.sortKey = col;
+        this.sortAsc = true;
+      }
+    },
+
+    viewItem(item) {
+      this.itemToView = { ...item }; 
+      this.showDetailModal = true;
+    },
+
+    closeDetailModal() {
+      this.showDetailModal = false;
+      this.itemToView = null;
+    },
+    
+    editFromDetail(item) {
+      this.closeDetailModal();
+      this.editItem(item);
+    },
+  }
+};
+</script>
+
+<style scoped>
+.container {
+  font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 20px;
+  background: #f8f9fa;
+  min-height: 100vh;
+  color: #333;
+}
+
+header h1 {
+  margin-bottom: 20px;
+  color: #2c3e50;
+}
+
+.table-selector {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 15px;
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  margin-bottom: 20px;
+}
+
+.control-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.control-group label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #6c757d;
+  text-transform: uppercase;
+}
+
+.search-wrapper {
+  flex-grow: 1;
+}
+
+.search-input-group {
+  display: flex;
+}
+
+input, select, .search-input {
+  padding: 8px 12px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+.search-input {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+  flex: 1;
+}
+
+/* Buttons */
+.button-group {
+  margin-left: auto;
+  display: flex;
+  gap: 10px;
+}
+
+.btn {
+  border: none;
+  border-radius: 4px;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.2s, color 0.2s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btn-search {
+  background: #910dfd; 
+  color: white;
+  border-radius: 0 4px 4px 0;
+  padding: 0 12px;
+}
+.btn-load { background: #6c757d; color: white; }
+.btn-save { background: #198754; color: white; }
+.btn-cancel { background: #f8f9fa; color: #333; border: 1px solid #ddd; }
+
+/* Table Action Buttons */
+.action-buttons {
+    display: flex;
+    gap: 5px;
+}
+
+.action-buttons .btn {
+    padding: 6px;
+}
+
+/* Edit: Blue */
+.btn-edit {
+    background: #adfd0d;
+    color: white;
+}
+.btn-edit:hover { background: #0bd752; }
+
+/* Delete: Red */
+.btn-delete {
+    background: #dc3545;
+    color: white;
+}
+.btn-delete:hover { background: #bb2d3b; }
+
+.btn:hover { opacity: 0.9; }
+
+.mdi-icon {
+  width: 20px;
+  height: 20px;
+}
+
+.action-buttons .mdi-icon {
+    width: 18px;
+    height: 18px;
+}
+
+/* Table */
+.table-wrapper {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+th, td {
+  padding: 12px 15px;
+  text-align: left;
+  border-bottom: 1px solid #e9ecef;
+}
+
+th {
+  background: #f1f3f5;
+  font-weight: 600;
+  color: #495057;
+  white-space: nowrap;
+}
+.sortable-header { cursor: pointer; user-select: none; }
+.sortable-header:hover { background: #e2e6ea; }
+
+tr:hover { background: #f8f9fa; }
+
+/* Sticky Columns */
+.sticky-col { position: sticky; right: 0; box-shadow: -2px 0 5px rgba(0,0,0,0.05); }
+.th-sticky { background: #f1f3f5; z-index: 2; }
+.td-sticky { background: white; }
+tr:hover .td-sticky { background: #f8f9fa; }
+
+/* Form Container */
+.form-container {
+  background: white;
+  padding: 30px;
+  border-radius: 8px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+  margin-top: 30px;
+  border-top: 4px solid #198754;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group label {
+  font-weight: 600;
+  margin-bottom: 5px;
+  font-size: 0.9rem;
+}
+
+.form-group input:focus, .form-group select:focus {
+  border-color: #198754;
+  outline: 0;
+  box-shadow: 0 0 0 0.2rem rgba(25, 135, 84, 0.25);
+}
+
+.input-disabled {
+  background-color: #e9ecef;
+  cursor: not-allowed;
+  color: #6c757d;
+}
+
+.code-input {
+  font-family: 'Courier New', monospace;
+  letter-spacing: 1px;
+}
+
+.required-mark { color: red; }
+.field-hint { font-size: 0.75rem; color: #6c757d; margin-top: 3px; }
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  border-top: 1px solid #e9ecef;
+  padding-top: 20px;
+}
+
+/* Utils */
+.status-text { text-align: center; margin-top: 50px; color: #6c757d; }
+.error-text { text-align: center; margin-top: 20px; color: #dc3545; background: #f8d7da; padding: 15px; border-radius: 4px; }
+.info-text { padding: 10px 15px; color: #6c757d; font-size: 0.85rem; text-align: right; }
+
+.th-content {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.small-icon {
+  width: 16px;
+  height: 16px;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  padding: 25px;
+  border-radius: 8px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  width: 100%;
+  max-width: 400px;
+  animation: fadeIn 0.2s;
+}
+
+.modal-content h3 {
+  margin-top: 0;
+  color: #dc3545;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.btn-view {
+  background: #0d6efd;
+  color: white;
+}
+.btn-view:hover { background: #0b5ed7; }
+
+.modal-lg {
+  max-width: 600px;
+  max-height: 90vh; 
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  border-bottom: 1px solid #dee2e6;
+  padding-bottom: 10px;
+}
+
+.modal-header h3 {
+  margin: 0;
+  color: #2c3e50;
+}
+
+.btn-close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #6c757d;
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.5fr;
+  gap: 10px;
+  overflow-y: auto;
+  padding-right: 5px;
+  margin-bottom: 20px;
+}
+
+.detail-row {
+  display: contents;
+}
+
+.detail-label {
+  font-weight: 600;
+  color: #6c757d;
+  padding: 8px 0;
+  border-bottom: 1px solid #f1f3f5;
+  align-self: center;
+}
+
+.detail-value {
+  color: #212529;
+  padding: 8px 0;
+  border-bottom: 1px solid #f1f3f5;
+  word-break: break-all;
+}
+
+</style>

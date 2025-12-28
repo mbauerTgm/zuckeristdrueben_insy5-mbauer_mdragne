@@ -23,7 +23,7 @@ Beim ersten Start kann der Vorgang etwas länger dauern, da Images gebaut oder h
 
 #### Frontend updaten ohne kompletten Container neu zu bauen
 ```bash
-docker exec -it frontend sh -c "cd frontend && yarn build && cp -r dist/* /usr/share/nginx/html"
+docker-compose build frontend
 ```
 ---
 
