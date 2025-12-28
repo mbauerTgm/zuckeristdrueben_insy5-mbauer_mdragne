@@ -1,0 +1,19 @@
+FROM node:22-alpine
+
+RUN apk add --no-cache nginx
+
+WORKDIR /app
+
+COPY frontend ./frontend
+COPY nginx.conf /etc/nginx/http.d/default.conf
+
+EXPOSE 80
+
+CMD sh -c '\
+  if [ ! -f /usr/share/nginx/html/index.html ]; then \
+    cd frontend && yarn && yarn build && \
+    mkdir -p /usr/share/nginx/html && \
+    cp -r dist/* /usr/share/nginx/html; \
+  fi && \
+  nginx -g "daemon off;" \
+'
