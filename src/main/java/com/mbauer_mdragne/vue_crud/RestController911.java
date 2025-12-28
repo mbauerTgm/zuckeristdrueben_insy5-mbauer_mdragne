@@ -3,6 +3,24 @@ package com.mbauer_mdragne.vue_crud;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import com.mbauer_mdragne.vue_crud.Entities.Analysis;
+import com.mbauer_mdragne.vue_crud.Entities.Box;
+import com.mbauer_mdragne.vue_crud.Entities.BoxPos;
+import com.mbauer_mdragne.vue_crud.Entities.BoxPosId;
+import com.mbauer_mdragne.vue_crud.Entities.Log;
+import com.mbauer_mdragne.vue_crud.Entities.Sample;
+import com.mbauer_mdragne.vue_crud.Entities.SampleId;
+import com.mbauer_mdragne.vue_crud.Entities.Threshold;
+import com.mbauer_mdragne.vue_crud.Errors.BadRequestException;
+import com.mbauer_mdragne.vue_crud.Errors.ResourceNotFoundException;
+import com.mbauer_mdragne.vue_crud.Repositories.AnalysisRepository;
+import com.mbauer_mdragne.vue_crud.Repositories.BoxPosRepository;
+import com.mbauer_mdragne.vue_crud.Repositories.BoxRepository;
+import com.mbauer_mdragne.vue_crud.Repositories.LogRepository;
+import com.mbauer_mdragne.vue_crud.Repositories.SampleRepository;
+import com.mbauer_mdragne.vue_crud.Repositories.ThresholdRepository;
+
 import jakarta.persistence.EntityManager;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeParseException;

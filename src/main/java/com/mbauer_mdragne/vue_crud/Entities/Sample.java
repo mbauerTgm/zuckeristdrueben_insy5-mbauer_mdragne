@@ -1,4 +1,4 @@
-package com.mbauer_mdragne.vue_crud;
+package com.mbauer_mdragne.vue_crud.Entities;
 
 import jakarta.persistence.*;
 import java.math.BigDecimal;

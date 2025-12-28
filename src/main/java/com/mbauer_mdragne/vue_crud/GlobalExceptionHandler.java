@@ -7,6 +7,10 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
+import com.mbauer_mdragne.vue_crud.Errors.ApiError;
+import com.mbauer_mdragne.vue_crud.Errors.BadRequestException;
+import com.mbauer_mdragne.vue_crud.Errors.ResourceNotFoundException;
+
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
