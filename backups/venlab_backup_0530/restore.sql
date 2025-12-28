@@ -527,6 +527,54 @@ ALTER TABLE venlab.threshold OWNER TO postgres;
 
 ALTER TABLE ONLY venlab.analysis ALTER COLUMN a_id SET DEFAULT nextval('venlab.analysis_a_id_seq'::regclass);
 
+--
+-- Name: role; Type: TABLE; Schema: venlab; Owner: postgres
+--
+CREATE TABLE venlab.role (
+    role_id SERIAL PRIMARY KEY,
+    role_name character varying(50) NOT NULL UNIQUE,
+    description character varying(255)
+);
+
+ALTER TABLE venlab.role OWNER TO postgres;
+
+--
+-- Insert Roles (Reader, Admin, Researcher)
+--
+INSERT INTO venlab.role (role_name, description) VALUES 
+('Admin', 'Admin Rights'),
+('Reader', 'Read Only'),
+('Researcher', 'Partial Rights: only validated Data (Flags F/V)');
+
+--
+-- Name: user; Type: TABLE; Schema: venlab; Owner: postgres
+--
+
+CREATE TABLE venlab.users (
+    u_id SERIAL PRIMARY KEY,
+    username character varying(100) NOT NULL UNIQUE,
+    password_hash character varying(255) NOT NULL,
+    role_id integer NOT NULL,
+    created_at timestamp without time zone DEFAULT now(),
+    CONSTRAINT fk_user_role FOREIGN KEY (role_id) REFERENCES venlab.role(role_id)
+)
+
+ALTER TABLE venlab.users OWNER TO postgres;
+
+CREATE INDEX idx_users_username ON venlab.users(username);
+
+--
+-- Name: log_log_id_seq; Type: SEQUENCE OWNED BY; Schema: venlab; Owner: postgres
+--
+CREATE SEQUENCE venlab.log_log_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE venlab.user_u_id_seq OWNER TO postgres;
 
 --
 -- Name: log log_id; Type: DEFAULT; Schema: venlab; Owner: postgres
