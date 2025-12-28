@@ -2,7 +2,7 @@
 von: Maximilian Bauer, Matei Dragne, Denis Gernesch 5CHITM
 
 # Informationssysteme "PWA Deployment" EK
-von: Maximilian Bauer, Matei Dragne 5CHIT&M
+von: Maximilian Bauer, Matei Dragne 5CHITM
 
 ## Projekt starten – Schritt-für-Schritt Anleitung
 
