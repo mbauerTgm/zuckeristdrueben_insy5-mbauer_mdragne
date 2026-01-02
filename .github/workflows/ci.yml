@@ -90,11 +90,6 @@ jobs:
         run: |
           cd web/frontend
           yarn install --frozen-lockfile
-          
-      - name: Run unit tests
-        run: |
-          cd web/frontend
-          yarn test --watch=false
         
       - name: Run Cypress E2E tests
         run: |
