@@ -1,7 +1,7 @@
 <template>
   <div class="container">
     <header>
-      <h1>INSY Frontend</h1>
+      <h1 class="main-title">INSY Frontend</h1>
     </header>
 
     <main>
@@ -67,6 +67,15 @@
                 <path fill="currentColor" d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z" />
               </svg>
               Neuer Eintrag
+            </button>
+            <button @click="toggleDarkMode" class="btn btn-dark-mode" :title="darkMode ? 'Licht an' : 'Dunkel machen'">
+              <svg v-if="darkMode" viewBox="0 0 24 24" class="mdi-icon">
+                <path fill="currentColor" d="M12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,2L14.39,4.39L12,6.78L9.61,4.39L12,2M5.61,5.61L8,8L5.61,10.39L3.22,8L5.61,5.61M2,12L4.39,9.61L6.78,12L4.39,14.39L2,12M5.61,18.39L8,16L10.39,18.39L8,20.78L5.61,18.39M12,22L9.61,19.61L12,17.22L14.39,19.61L12,22M18.39,18.39L16,16L18.39,13.61L20.78,16L18.39,18.39M22,12L19.61,14.39L17.22,12L19.61,9.61L22,12M18.39,5.61L16,8L13.61,5.61L16,3.22L18.39,5.61Z" />
+              </svg>
+              <svg v-else viewBox="0 0 24 24" class="mdi-icon">
+                <path fill="currentColor" d="M17.75,4.09L15.22,6.03L16.13,9.09L13.5,7.28L10.87,9.09L11.78,6.03L9.25,4.09L12.44,4L13.5,1L14.56,4L17.75,4.09M21.25,11L19.61,12.25L20.2,14.23L18.5,13.06L16.8,14.23L17.39,12.25L15.75,11L17.81,10.95L18.5,9L19.19,10.95L21.25,11M18.97,15.95C19.8,15.87 20.69,15.89 21.44,16.05C19.38,18.2 16.3,19.5 13,19.5C6.92,19.5 2,14.58 2,8.5C2,5.2 3.3,2.12 5.45,0.06C5.61,0.81 5.63,1.7 5.55,2.53C5.55,7.58 9.63,11.66 14.68,11.66C15.8,11.66 16.89,11.46 17.9,11.09C18.27,13.11 18.63,14.79 18.97,15.95Z" />
+              </svg>
+              {{ darkMode ? 'Light' : 'Dark' }} Mode
             </button>
           </div>
         </div>
@@ -391,6 +400,8 @@ export default {
 
       showDetailModal: false,
       itemToView: null,
+
+      darkMode: localStorage.getItem('darkMode') === 'true',
     };
   },
 
@@ -462,6 +473,7 @@ export default {
 
   mounted() {
     this.fetchTableData();
+    this.applyDarkMode();
   },
 
   methods: {
@@ -717,6 +729,18 @@ export default {
       this.closeDetailModal();
       this.editItem(item);
     },
+    toggleDarkMode() {
+    this.darkMode = !this.darkMode;
+    localStorage.setItem('darkMode', this.darkMode);
+    this.applyDarkMode();
+    },
+    applyDarkMode() {
+      if (this.darkMode) {
+        document.body.classList.add('dark-theme');
+      } else {
+        document.body.classList.remove('dark-theme');
+      }
+    },
   }
 };
 </script>
@@ -727,9 +751,9 @@ export default {
   max-width: 1400px;
   margin: 0 auto;
   padding: 20px;
-  background: #f8f9fa;
   min-height: 100vh;
   color: #333;
+  transition: background-color 0.3s; 
 }
 
 header h1 {
@@ -981,7 +1005,6 @@ tr:hover .td-sticky { background: #f8f9fa; }
 
 .modal-content h3 {
   margin-top: 0;
-  color: #dc3545;
 }
 
 .modal-actions {
@@ -1058,5 +1081,226 @@ tr:hover .td-sticky { background: #f8f9fa; }
   border-bottom: 1px solid #f1f3f5;
   word-break: break-all;
 }
+.btn-dark-mode {
+  background: #495057;
+  color: white;
+}
+.btn-dark-mode:hover {
+  background: #343a40;
+}
 
+/* ============================================
+   DARK MODE STYLES
+   ============================================ */
+
+/* Body Hintergrund */
+:global(body.dark-theme) {
+  background-color:  #0f172a !important;
+}
+
+/* Überschrift weiß */
+:global(body.dark-theme h1) {
+  color: #ffffff !important;
+}
+
+/* ============================================
+   DUNKLE KONTROLLLEISTE (Table Selector)
+   ============================================ */
+
+:global(body.dark-theme .table-selector) {
+  background-color: #1e293b !important;
+  border-radius: 8px !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Labels in der Kontrollleiste (weiß) */
+:global(body.dark-theme .table-selector .control-group label) {
+  color: #94a3b8 !important;
+}
+
+/* Inputs und Selects in der Kontrollleiste */
+:global(body.dark-theme .table-selector input),
+:global(body.dark-theme .table-selector select) {
+  background-color: #0f172a !important;
+  color: #ffffff !important;
+  border: 1px solid #334155 !important;
+}
+
+:global(body.dark-theme .table-selector input::placeholder) {
+  color:  #64748b !important;
+}
+
+:global(body.dark-theme .table-selector input:focus),
+:global(body.dark-theme .table-selector select:focus) {
+  border-color: #910dfd !important;
+  box-shadow: 0 0 0 0.2rem rgba(145, 13, 253, 0.25) !important;
+}
+
+/* ============================================
+   DUNKLE TABELLE
+   ============================================ */
+
+:global(body.dark-theme .table-wrapper) {
+  background-color: #0f172a !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5) !important;
+}
+
+:global(body.dark-theme th) {
+  background-color: #1e293b !important;
+  color:  #ffffff !important;
+  border-bottom: 2px solid #334155 !important;
+}
+
+:global(body.dark-theme .th-sticky) {
+  background-color: #1e293b !important;
+}
+
+:global(body.dark-theme td) {
+  background-color: #0f172a !important;
+  color:  #ffffff !important;
+  border-bottom: 1px solid #334155 ! important;
+}
+
+:global(body.dark-theme .td-sticky) {
+  background-color:  #0f172a !important;
+}
+
+:global(body.dark-theme tr:hover td),
+:global(body.dark-theme tr:hover .td-sticky) {
+  background-color: #1e293b ! important;
+}
+
+:global(body.dark-theme .sortable-header:hover) {
+  background-color: #334155 !important;
+}
+
+:global(body.dark-theme .info-text) {
+  color: #94a3b8 ! important;
+}
+
+/* ============================================
+   BUTTONS
+   ============================================ */
+
+:global(body.dark-theme .btn-load) {
+  background-color: #475569 !important;
+  color: white ! important;
+}
+
+:global(body.dark-theme .btn-load:hover) {
+  background-color:  #64748b !important;
+}
+
+:global(body.dark-theme .btn-search) {
+  background-color: #910dfd !important;
+  color: white !important;
+}
+
+:global(body.dark-theme .btn-dark-mode) {
+  background-color:  #334155 !important;
+  color: white !important;
+}
+
+:global(body.dark-theme .btn-dark-mode:hover) {
+  background-color: #475569 !important;
+}
+
+/* ============================================
+   FORMULAR (bleibt weiß oder auch dunkel)
+   ============================================ */
+
+:global(body.dark-theme .form-container) {
+  background-color: #1e293b !important;
+  border-top: 4px solid #22c55e !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5) !important;
+}
+
+:global(body.dark-theme .form-container h3) {
+  color: #ffffff !important;
+}
+
+:global(body.dark-theme .form-group label) {
+  color: #cbd5e1 ! important;
+}
+
+:global(body.dark-theme .form-container input),
+:global(body.dark-theme .form-container select) {
+  background-color: #0f172a !important;
+  color: #ffffff !important;
+  border: 1px solid #334155 !important;
+}
+
+:global(body.dark-theme .form-container input:focus),
+:global(body.dark-theme .form-container select:focus) {
+  border-color: #22c55e !important;
+  box-shadow: 0 0 0 0.2rem rgba(34, 197, 94, 0.25) !important;
+}
+
+:global(body.dark-theme .input-disabled) {
+  background-color:  #334155 !important;
+  color: #94a3b8 !important;
+}
+
+:global(body.dark-theme .form-actions) {
+  border-top: 1px solid #334155 !important;
+}
+
+:global(body.dark-theme .btn-cancel) {
+  background-color: #475569 !important;
+  color: #ffffff !important;
+  border: 1px solid #64748b !important;
+}
+
+/* ============================================
+   MODAL
+   ============================================ */
+
+:global(body.dark-theme .modal-overlay) {
+  background-color: rgba(0, 0, 0, 0.7) !important;
+}
+
+:global(body.dark-theme .modal-content) {
+  background-color: #1e293b !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5) !important;
+  color: #ffffff !important;
+}
+
+:global(body.dark-theme .modal-header) {
+  border-bottom: 1px solid #334155 !important;
+}
+
+:global(body.dark-theme .modal-header h3) {
+  color: #ffffff !important;
+}
+
+:global(body.dark-theme .btn-close) {
+  color: #94a3b8 !important;
+}
+
+:global(body.dark-theme .btn-close:hover) {
+  color:  #ffffff !important;
+}
+
+:global(body.dark-theme .detail-label) {
+  color: #94a3b8 !important;
+  border-bottom: 1px solid #334155 !important;
+}
+
+:global(body.dark-theme .detail-value) {
+  color:  #ffffff !important;
+  border-bottom: 1px solid #334155 ! important;
+}
+
+/* ============================================
+   SONSTIGES
+   ============================================ */
+
+:global(body.dark-theme .status-text) {
+  color: #94a3b8 !important;
+}
+
+:global(body.dark-theme .error-text) {
+  background-color: #7f1d1d ! important;
+  color: #fecaca !important;
+}
 </style>
