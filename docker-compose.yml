@@ -27,6 +27,7 @@ services:
         ipv4_address: 172.28.0.11
 
   backend:
+    image: ghcr.io/TGM-HIT/insy5-informationssysteme-vue-pwa-pwa_mbauer_mdragne_dgernesch/backend:latest
     build: 
       context: .
       dockerfile: backend/dockerfile
@@ -45,6 +46,7 @@ services:
         ipv4_address: 172.28.0.12
 
   frontend:
+    image: ghcr.io/TGM-HIT/insy5-informationssysteme-vue-pwa-pwa_mbauer_mdragne_dgernesch/frontend:latest
     build:
       context: ./web
       dockerfile: Dockerfile.frontend

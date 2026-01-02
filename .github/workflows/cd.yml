@@ -2,30 +2,73 @@ name: CD – Deployment (main)
 
 on:
   push:
-    branches:
-      - main
+    branches: [ "main" ]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME_BACKEND: ghcr.io/TGM-HIT/insy5-informationssysteme-vue-pwa-pwa_mbauer_mdragne_dgernesch/backend
+  IMAGE_NAME_FRONTEND: ghcr.io/TGM-HIT/insy5-informationssysteme-vue-pwa-pwa_mbauer_mdragne_dgernesch/frontend
 
 jobs:
-  cd:
-    name: Continuous Deployment
+  build-and-push:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
-    # -------------------------
-    # Deployment
-    # -------------------------
-    - name: Deploy via SSH
-      uses: appleboy/ssh-action@master
-      with:
-        host: ${{secrets.SSH_HOST}}
-        username: ${{secrets.SSH_USERNAME}}
-        key: ${{secrets.SSH_PRIVATE_KEY}}
-        script: |
-          cd /home/ubuntu/insy_zuckeristdrueben_application
-          git pull origin main
-          docker compose down
-          docker compose up -d --build
-          docker exec frontend sh -c "cd frontend && yarn install && yarn build && cp -r dist/* /usr/share/nginx/html"
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # BACKEND BAUEN
+      - name: Build and push Backend
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: backend/dockerfile
+          push: true
+          tags: ${{ env.IMAGE_NAME_BACKEND }}:latest
+
+      # FRONTEND BAUEN
+      - name: Build and push Frontend
+        uses: docker/build-push-action@v5
+        with:
+          context: ./web
+          file: ./web/Dockerfile.frontend
+          push: true
+          tags: ${{ env.IMAGE_NAME_FRONTEND }}:latest
+
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            # 1. Login damit wir ziehen dürfen
+            echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+            # 2. Ordner und Git update (nur für die docker-compose files)
+            cd /home/ubuntu/insy_zuckeristdrueben_application
+            git pull origin main
+
+            # 3. Aufräumen & Neustart
+            # Wir nutzen BEIDE Files. Die prod.yml überschreibt die lokale config.
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml down
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml pull
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+
+            # HINWEIS: Der 'docker exec' schritt fällt weg, weil das Frontend-Image jetzt schon fertig gebaut ist!
+            docker image prune -f
