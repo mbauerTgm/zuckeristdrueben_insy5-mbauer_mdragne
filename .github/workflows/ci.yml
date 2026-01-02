@@ -79,7 +79,13 @@ jobs:
           node-version: '22'
           cache: 'yarn'
           cache-dependency-path: web/frontend/yarn.lock
-          
+
+      - name: Remove node_modules created by Docker
+        run: |
+          sudo rm -rf web/frontend/node_modules
+          sudo rm -rf web/frontend/.yarn
+          sudo rm -rf web/frontend/.cache
+
       - name: Install dependencies
         run: |
           cd web/frontend
