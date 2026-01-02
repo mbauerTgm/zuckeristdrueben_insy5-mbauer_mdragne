@@ -1,0 +1,3 @@
+zuckeristdrueben.live {
+    reverse_proxy frontend:80
+}
