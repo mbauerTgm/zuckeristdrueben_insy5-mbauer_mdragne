@@ -53,13 +53,10 @@ jobs:
           docker ps -a
       - name: Restore database
         run: |
-          echo "Restoring database..."
-          # 1. Drop & recreate database clean
-          docker exec -i postgres911 psql -U postgres -d postgres -c "DROP DATABASE IF EXISTS venlab;"
-          docker exec -i postgres911 psql -U postgres -d postgres -c "CREATE DATABASE venlab;"
+          docker exec -i postgres911 psql -U postgres -d database < db_init_schema/init_schema.sql
 
-          # 2. Execute schema initialization SQL
-          docker exec -i postgres911 psql -U postgres -d venlab < db_init_schema/init_schema.sql
+      - name: Restart backend after DB reset
+        run: docker restart rest_backend
 
 
       - name: Wait for frontend build
