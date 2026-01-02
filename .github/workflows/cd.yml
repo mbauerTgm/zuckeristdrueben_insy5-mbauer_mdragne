@@ -33,8 +33,18 @@ jobs:
         docker exec frontend sh -c "cd frontend && yarn install && yarn build && cp -r dist/* /usr/share/nginx/html"
 
     # -------------------------
-    # (Optional) Deployment will be implemented soon
+    # Deployment
     # -------------------------
-    # - SSH
-    # - Docker Push
-    # - Cloud
+    - name: Deploy via SSH
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          script: |
+            cd /home/ubuntu/insy_zuckeristdrueben_application
+            git pull origin main
+            docker compose down
+            docker compose up -d --build
+            docker exec frontend sh -c "cd frontend && yarn install && yarn build && cp -r dist/* /usr/share/nginx/html"
