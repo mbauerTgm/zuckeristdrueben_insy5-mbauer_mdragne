@@ -5,6 +5,14 @@ on:
     branches: [ "**" ]
   pull_request:
     branches: [ "**" ]
+    
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+  actions: write
+  checks: write
+  statuses: write
 
 jobs:
   ci:
@@ -13,6 +21,11 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Set full permissions on entire workspace
+        run: |
+          sudo chown -R $USER:$USER $GITHUB_WORKSPACE
+          sudo chmod -R 777 $GITHUB_WORKSPACE
         
       - name: Create .env file
         run: |
