@@ -30,7 +30,12 @@ jobs:
 
     - name: Build frontend for production
       run: |
-        docker exec frontend sh -c "cd frontend && yarn install && yarn build && cp -r dist/* /usr/share/nginx/html"
+        cd web/frontend
+        yarn install
+        yarn build
+        # Kopiere danach ins nginx-Verzeichnis
+        docker cp dist/. frontend:/usr/share/nginx/html
+
 
     # -------------------------
     # Deployment

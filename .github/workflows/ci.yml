@@ -51,7 +51,11 @@ jobs:
           echo "Waiting for containers to start..."
           sleep 20
           docker ps -a
-        
+      - name: Restore database
+        run: |
+          echo "Restoring database..."
+          docker exec -i postgres911 psql -U postgres -d database < backups/venlab_backup_0530/restore.sql
+
       - name: Wait for frontend build
         run: |
           echo "Waiting for frontend build..."
