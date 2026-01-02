@@ -13,9 +13,6 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
-      with:
-        node-version: '22'
-        cache: 'yarn'
 
     - name: Set up Docker
       uses: docker/setup-buildx-action@v3
@@ -28,16 +25,23 @@ jobs:
     # -------------------------
     # Produktion bauen
     # -------------------------
-    - name: Build and start containers
-      run: docker compose up -d --build
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+        cache: 'yarn'
 
     - name: Build frontend for production
       run: |
         cd web/frontend
         yarn install
         yarn build
-        # Kopiere danach ins nginx-Verzeichnis
-        docker cp dist/. frontend:/usr/share/nginx/html
+
+    - name: Build and start containers
+      run: docker compose up -d --build
+
+    - name: Copy frontend to nginx container
+      run: docker cp web/frontend/dist/. frontend:/usr/share/nginx/html
 
 
     # -------------------------
