@@ -39,7 +39,7 @@ jobs:
           cat > docker-compose.ci.yml << 'EOF'
           services:
             frontend:
-              volumes: []
+              volumes: null
           EOF
           cat docker-compose.ci.yml
         
