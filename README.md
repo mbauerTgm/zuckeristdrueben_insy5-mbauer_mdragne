@@ -1,16 +1,32 @@
 # Informationssysteme "PWA Deployment" GK
 von: Maximilian Bauer, Matei Dragne, Denis Gernesch 5CHITM
 
+## Deployment & CD
+Während dieser Aufgabe wurden ein automatisches Deployment mittels Github Actions ermöglicht. Dabei werden bei einem Push auf den Main-Branch im CD alle Images erstellt. Anschließend werden diese auf einem Cloudserver gepulled und gestartet. 
+
+Die Website ist unter [https://zuckeristdrueben.live](https://zuckeristdrueben.live) erreichbar.
+
+Um das SSL-Zertifikat zu erhalten wurde der Caddy Reverse-Proxy verwendet.
+
+### Einspielen von Backups
+Damit der Postgres Container direkt mit einem DB Schema bespielt wird wurde das Restore.sql aufgeteilt, in init_schema.sql und import_backups.sql aufgeteilt. Für eine lokale- bzw. Testumgebung einget sich weiterhin der in "lokale Verwendung" beschriebene Befehl mit der Restore.sql Datei.
+
+Um die Backupdateien auf dem Server einspielen zukönnen muss selbstverständlich direkter Zugriff auf den Server bestehen. Ist das der Fall und die Dateien sind unter /backups/venlab_backup_0530 verfügbar kann folgender Befehlt ausgeführt werden um die Daten in die Datenbank einzuspielen:
+
+```bash
+cat db_init_schema/import_backups.sql | docker exec -i postgres911 psql -U postgres -d venlab
+```
+
 # Informationssysteme "PWA Deployment" EK
 von: Maximilian Bauer, Matei Dragne 5CHITM
 
-## Projekt starten – Schritt-für-Schritt Anleitung
+## Projekt lokal starten – Schritt-für-Schritt Anleitung (aus vorherigen Aufgaben)
 
 Diese Anleitung beschreibt, wie der Container gestartet werden kann und das Frontend aufgerufen werden kann
 
 ---
 
-### 1. Container erstellen
+### 1. Container lokal erstellen
 
 In der Konsole muss folgender Befehl ausgeführt werden:
 
