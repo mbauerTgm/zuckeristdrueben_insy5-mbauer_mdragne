@@ -11,10 +11,10 @@ Um das SSL-Zertifikat zu erhalten wurde der Caddy Reverse-Proxy verwendet.
 ### Einspielen von Backups
 Damit der Postgres Container direkt mit einem DB Schema bespielt wird wurde das Restore.sql aufgeteilt, in init_schema.sql und import_backups.sql aufgeteilt. Für eine lokale- bzw. Testumgebung einget sich weiterhin der in "lokale Verwendung" beschriebene Befehl mit der Restore.sql Datei.
 
-Um die Backupdateien auf dem Server einspielen zukönnen muss selbstverständlich direkter Zugriff auf den Server bestehen. Ist das der Fall und die Dateien sind unter /backups/venlab_backup_0530 verfügbar kann folgender Befehlt ausgeführt werden um die Daten in die Datenbank einzuspielen:
+Um die Backupdateien auf dem Server einspielen zukönnen muss selbstverständlich direkter Zugriff auf den Server bestehen. Ist das der Fall und die Dateien sind unter /backups/ verfügbar, kann folgender Befehlt ausgeführt werden um die Daten in die Datenbank einzuspielen:
 
 ```bash
-cat db_init_schema/import_backups.sql | docker exec -i postgres911 psql -U postgres -d venlab
+cat backups/import_backups.sql | docker exec -i postgres911 psql -U postgres -d postgres
 ```
 
 # Informationssysteme "PWA Deployment" EK

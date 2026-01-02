@@ -558,16 +558,16 @@ CREATE TABLE venlab.users (
     role_id integer NOT NULL,
     created_at timestamp without time zone DEFAULT now(),
     CONSTRAINT fk_user_role FOREIGN KEY (role_id) REFERENCES venlab.role(role_id)
-)
+);
 
 ALTER TABLE venlab.users OWNER TO postgres;
 
 CREATE INDEX idx_users_username ON venlab.users(username);
 
 --
--- Name: log_log_id_seq; Type: SEQUENCE OWNED BY; Schema: venlab; Owner: postgres
+-- Name: user_u_id_seq; Type: SEQUENCE OWNED BY; Schema: venlab; Owner: postgres
 --
-CREATE SEQUENCE venlab.log_log_id_seq
+CREATE SEQUENCE venlab.user_u_id_seq
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -578,10 +578,10 @@ CREATE SEQUENCE venlab.log_log_id_seq
 ALTER TABLE venlab.user_u_id_seq OWNER TO postgres;
 
 --
--- Name: log log_id; Type: DEFAULT; Schema: venlab; Owner: postgres
+-- Name: user u_id_seq; Type: DEFAULT; Schema: venlab; Owner: postgres
 --
 
-ALTER TABLE ONLY venlab.log ALTER COLUMN log_id SET DEFAULT nextval('venlab.log_log_id_seq'::regclass);
+ALTER TABLE ONLY venlab.users ALTER COLUMN u_id SET DEFAULT nextval('venlab.user_u_id_seq'::regclass);
 
 
 --
