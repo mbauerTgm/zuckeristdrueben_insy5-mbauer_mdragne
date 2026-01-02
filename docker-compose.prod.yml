@@ -1,4 +1,16 @@
 services:
+  postgres:
+    image: postgres:13
+    volumes:
+      - ./postgres-data:/var/lib/postgresql/data
+      - ./backups:/backups
+      
+      # Schema: Wird AUTOMATISCH ausgeführt beim ersten Start (weil im initdb.d Ordner)
+      - ./db_init_schema/init_schema.sql:/docker-entrypoint-initdb.d/10-schema.sql
+      
+      # 2. Import-Skript: Liegt nur bereit (z.B. im Root oder Backups Ordner), wird NICHT ausgeführt
+      - ./backups/venlab_backup_0530/import_backups.sql:/backups/import_backups.sql
+
   backend:
     restart: always
 
