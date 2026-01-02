@@ -54,8 +54,15 @@ jobs:
       - name: Restore database
         run: |
           echo "Restoring database..."
+          # 1. Drop & recreate database clean
+          docker exec -i postgres911 psql -U postgres -d postgres -c "DROP DATABASE IF EXISTS venlab;"
           docker exec -i postgres911 psql -U postgres -d postgres -c "CREATE DATABASE venlab;"
-          docker exec -i postgres911 psql -U postgres -d venlab < backups/venlab_backup_0530/restore.sql
+
+          # 2. Import restore.sql ohne COPY FROM Dateien
+          # Wir filtern die COPY FROM Befehle, die auf .dat zeigen, raus
+          sed '/COPY .*FROM .\+\.dat/d' backups/venlab_backup_0530/restore.sql | \
+          docker exec -i postgres911 psql -U postgres -d venlab
+
 
       - name: Wait for frontend build
         run: |
