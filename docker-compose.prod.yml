@@ -29,4 +29,9 @@ services:
 
   frontend:
     restart: always
+    ports: []
     volumes: []
+
+volumes:
+  caddy_data:
+  caddy_config:
