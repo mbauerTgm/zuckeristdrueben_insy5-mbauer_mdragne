@@ -30,6 +30,7 @@ jobs:
       with:
         node-version: '22'
         cache: 'yarn'
+        cache-dependency-path: web/frontend/yarn.lock
 
     - name: Build frontend for production
       run: |
