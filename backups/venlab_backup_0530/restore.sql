@@ -577,7 +577,7 @@ CREATE SEQUENCE venlab.user_u_id_seq
 ALTER TABLE venlab.user_u_id_seq OWNER TO postgres;
 
 --
--- Name: log log_id; Type: DEFAULT; Schema: venlab; Owner: postgres
+-- Name: users u_id; Type: DEFAULT; Schema: venlab; Owner: postgres
 --
 
 ALTER TABLE ONLY venlab.users ALTER COLUMN u_id SET DEFAULT nextval('venlab.user_u_id_seq'::regclass);

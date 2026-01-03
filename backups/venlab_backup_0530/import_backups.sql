@@ -21,3 +21,6 @@ COPY venlab.threshold FROM '/backups/2215.dat';
 -- 5. Sequenzen setzen
 SELECT pg_catalog.setval('venlab.analysis_a_id_seq', 576256, true);
 SELECT pg_catalog.setval('venlab.log_log_id_seq', 11987488, true);
+
+-- 6. Users & Rollen
+\i /backups/venlab_backup_0530/import_user_role.sql

@@ -14,7 +14,7 @@ Damit der Postgres Container direkt mit einem DB Schema bespielt wird wurde das 
 Um die Backupdateien auf dem Server einspielen zukönnen muss selbstverständlich direkter Zugriff auf den Server bestehen. Ist das der Fall und die Dateien sind unter /backups/ verfügbar, kann folgender Befehlt ausgeführt werden um die Daten in die Datenbank einzuspielen:
 
 ```bash
-docker exec -i postgres911 psql -U postgres -d database -f /backups/import_backups.sql
+docker exec -i postgres psql -U postgres -d database -f /backups/import_backups.sql
 ```
 
 Um die forcefully alle Daten der Datenbank zu löschen (inklusive der Schemas und der gesammten Datenbank) kann auf dem Server im Ordner in dem auch der Container liegt folgender Befehl benutzt werden:
@@ -52,15 +52,15 @@ docker exec -it frontend sh -c "cd frontend && yarn build && cp -r dist/* /usr/s
 
 ### 2. Datenbank-Backup wiederherstellen
 
-Sobald der PostgreSQL-Container läuft, kann das Datenbank-Backup wiederhergestellt werden. Dazu müssen die .dat Datein mit dem Backup, sowie das Restore.sql File im Ordner /backups vorhanden sein.
+Sobald der PostgreSQL-Container läuft, kann das Datenbank-Backup wiederhergestellt werden. Dazu müssen die .dat Datein mit dem Backup, sowie das Restore.sql File im Ordner /backups vorhanden sein. Dieser Befehl verwendet das tar.dat file alle Schema Anweisungen die in diesem File nicht enthalten sind werden nicht übernommen.
 
 ```bash
-docker exec -i postgres911 pg_restore -U postgres -d database -Fd /backups/venlab_backup_0530
+docker exec -i postgres pg_restore -U postgres -d database -Fd /backups/venlab_backup_0530
 ```
 
 **Erklärung:**
 
-* `docker exec -i postgres911` führt den Befehl im laufenden Postgres-Container aus.
+* `docker exec -i postgres` führt den Befehl im laufenden Postgres-Container aus.
 * `pg_restore` importiert das Datenbank-Backup.
 * `-U postgres` gibt den Datenbank-User an.
 * `-d database` ist der Name der Ziel-Datenbank.

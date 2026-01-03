@@ -9,6 +9,7 @@ build/
 .env
 postgres-data/
 backups/**/*.dat
+backups/**/backup_user_role.sql
 
 ### STS ###
 .apt_generated

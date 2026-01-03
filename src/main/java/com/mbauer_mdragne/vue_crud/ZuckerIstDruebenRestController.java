@@ -30,8 +30,8 @@ import java.sql.Timestamp;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/911")
-public class RestController911 {
+@RequestMapping("/api")
+public class ZuckerIstDruebenRestController {
 
     @Autowired private AnalysisRepository repo;
     @Autowired private SampleRepository sampleRepo;
