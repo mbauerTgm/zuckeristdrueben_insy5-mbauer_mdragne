@@ -17,6 +17,14 @@ Um die Backupdateien auf dem Server einspielen zukönnen muss selbstverständlic
 docker exec -i postgres psql -U postgres -d database -f /backups/import_backups.sql
 ```
 
+### Server zurücksetzten
+
+Um die Container zulöschen, damit sie beim nächsten deploy komplett neu gemacht werden, kann folgender Befehl verwendet werden:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.prod.yml down
+```
+
 Um die forcefully alle Daten der Datenbank zu löschen (inklusive der Schemas und der gesammten Datenbank) kann auf dem Server im Ordner in dem auch der Container liegt folgender Befehl benutzt werden:
 
 ```bash

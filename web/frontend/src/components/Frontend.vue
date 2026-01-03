@@ -39,35 +39,34 @@
           </div>
 
           <div class="control-group">
-            <label>Anzeige-Limit:</label>
+            <label>Limit:</label>
             <select v-model.number="displayLimit" style="width: auto;">
               <option :value="10">10</option>
               <option :value="25">25</option>
               <option :value="50">50</option>
               <option :value="100">100</option>
-              <option :value="200">200</option>
               <option :value="tableData.length">Alle</option>
             </select>
           </div>
 
           <div class="button-group">
-            <button @click="fetchTableData" class="btn btn-load">
+            <button @click="fetchTableData" class="btn btn-load" title="Daten neu laden">
               <svg viewBox="0 0 24 24" class="mdi-icon">
                 <path fill="currentColor" d="M17.65,6.35C16.2,4.9 14.21,4 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20C15.73,20 18.84,17.45 19.73,14H17.65C16.83,16.33 14.61,18 12,18A6,6 0 0,1 6,12A6,6 0 0,1 12,6C13.66,6 15.14,6.69 16.22,7.78L13,11H20V4L17.65,6.35Z" />
               </svg>
-              Daten laden
             </button>
             
             <button 
-              v-if="currentSchema && !currentSchema.readOnly" 
+              v-if="canEdit && !currentSchema.readOnly" 
               @click="createNew" 
               class="btn btn-save" 
             >
               <svg viewBox="0 0 24 24" class="mdi-icon">
                 <path fill="currentColor" d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z" />
               </svg>
-              Neuer Eintrag
+              Neu
             </button>
+            
             <button @click="toggleDarkMode" class="btn btn-dark-mode" :title="darkMode ? 'Licht an' : 'Dunkel machen'">
               <svg v-if="darkMode" viewBox="0 0 24 24" class="mdi-icon">
                 <path fill="currentColor" d="M12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,2L14.39,4.39L12,6.78L9.61,4.39L12,2M5.61,5.61L8,8L5.61,10.39L3.22,8L5.61,5.61M2,12L4.39,9.61L6.78,12L4.39,14.39L2,12M5.61,18.39L8,16L10.39,18.39L8,20.78L5.61,18.39M12,22L9.61,19.61L12,17.22L14.39,19.61L12,22M18.39,18.39L16,16L18.39,13.61L20.78,16L18.39,18.39M22,12L19.61,14.39L17.22,12L19.61,9.61L22,12M18.39,5.61L16,8L13.61,5.61L16,3.22L18.39,5.61Z" />
@@ -75,7 +74,12 @@
               <svg v-else viewBox="0 0 24 24" class="mdi-icon">
                 <path fill="currentColor" d="M17.75,4.09L15.22,6.03L16.13,9.09L13.5,7.28L10.87,9.09L11.78,6.03L9.25,4.09L12.44,4L13.5,1L14.56,4L17.75,4.09M21.25,11L19.61,12.25L20.2,14.23L18.5,13.06L16.8,14.23L17.39,12.25L15.75,11L17.81,10.95L18.5,9L19.19,10.95L21.25,11M18.97,15.95C19.8,15.87 20.69,15.89 21.44,16.05C19.38,18.2 16.3,19.5 13,19.5C6.92,19.5 2,14.58 2,8.5C2,5.2 3.3,2.12 5.45,0.06C5.61,0.81 5.63,1.7 5.55,2.53C5.55,7.58 9.63,11.66 14.68,11.66C15.8,11.66 16.89,11.46 17.9,11.09C18.27,13.11 18.63,14.79 18.97,15.95Z" />
               </svg>
-              {{ darkMode ? 'Light' : 'Dark' }} Mode
+            </button>
+
+            <button @click="$emit('logout')" class="btn btn-delete" title="Abmelden">
+              <svg viewBox="0 0 24 24" class="mdi-icon">
+                <path fill="currentColor" d="M17,17.25V14H10V10H17V6.75L22.25,12L17,17.25M13,2A2,2 0 0,1 15,4V8H13V4H4V20H13V16H15V20A2,2 0 0,1 13,22H4A2,2 0 0,1 2,20V4A2,2 0 0,1 4,2Z" />
+              </svg>
             </button>
           </div>
         </div>
@@ -124,18 +128,27 @@
                     </svg>
                   </button>
 
-                  <template v-if="!currentSchema.readOnly">
-                    <button @click="editItem(row)" class="btn btn-edit" title="Bearbeiten">
-                      <svg viewBox="0 0 24 24" class="mdi-icon">
-                        <path fill="currentColor" d="M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.12,5.12L18.87,8.87M3,17.25V21H6.75L17.81,9.93L14.06,6.18L3,17.25Z" />
-                      </svg>
-                    </button>
-                    <button @click="deleteItem(row)" class="btn btn-delete" title="Löschen">
-                      <svg viewBox="0 0 24 24" class="mdi-icon">
-                          <path fill="currentColor" d="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z" />
-                      </svg>
-                    </button>
-                  </template>
+                  <button 
+                    v-if="canEdit && !currentSchema.readOnly" 
+                    @click="editItem(row)" 
+                    class="btn btn-edit" 
+                    title="Bearbeiten"
+                  >
+                    <svg viewBox="0 0 24 24" class="mdi-icon">
+                      <path fill="currentColor" d="M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.12,5.12L18.87,8.87M3,17.25V21H6.75L17.81,9.93L14.06,6.18L3,17.25Z" />
+                    </svg>
+                  </button>
+
+                  <button 
+                    v-if="canDelete && !currentSchema.readOnly" 
+                    @click="deleteItem(row)" 
+                    class="btn btn-delete" 
+                    title="Löschen"
+                  >
+                    <svg viewBox="0 0 24 24" class="mdi-icon">
+                        <path fill="currentColor" d="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z" />
+                    </svg>
+                  </button>
                 </div>
               </td>
             </tr>
@@ -151,26 +164,20 @@
           <div class="modal-content modal-lg">
             <div class="modal-header">
               <h3>Details: {{ formatHeader(selectedTable) }}</h3>
-              <button @click="closeDetailModal" class="btn-close" id="btn-close-detail">×</button>
+              <button @click="closeDetailModal" class="btn-close">×</button>
             </div>
-            
             <div class="detail-grid">
               <div v-for="(value, key) in itemToView" :key="key" class="detail-row">
                 <div class="detail-label">{{ formatHeader(key) }}</div>
-                
-                <div class="detail-value" :id="'detail-'+key">
-                  {{ formatCell(key, value) }}
-                </div>
+                <div class="detail-value">{{ formatCell(key, value) }}</div>
               </div>
             </div>
-
             <div class="modal-actions">
               <button @click="closeDetailModal" class="btn btn-cancel">Schließen</button>
               <button 
-                v-if="!currentSchema.readOnly" 
+                v-if="canEdit && !currentSchema.readOnly" 
                 @click="editFromDetail(itemToView)" 
                 class="btn btn-edit"
-                id="btn-edit-from-detail"
               >
                 Bearbeiten
               </button>
@@ -179,96 +186,38 @@
         </div>
 
         <div v-if="itemToEdit" class="form-container" ref="formContainer">
-          <h3>
-            {{ isNewItem ? 'Neuer Eintrag' : 'Bearbeiten' }}: {{ formatHeader(selectedTable) }}
-          </h3>
-          
+          <h3>{{ isNewItem ? 'Neuer Eintrag' : 'Bearbeiten' }}: {{ formatHeader(selectedTable) }}</h3>
           <div class="form-grid">
             <div v-for="col in formColumns" :key="col" class="form-group">
               <label :for="'field-'+col">
-                {{ formatHeader(col) }} 
-                <span v-if="isFieldRequired(col)" class="required-mark">*</span>
+                {{ formatHeader(col) }} <span v-if="isFieldRequired(col)" class="required-mark">*</span>
               </label>
-
-              <input 
-                v-if="isFieldImmutable(col) && !isNewItem && getFieldConfig(col).type === 'datetime'"
-                :id="'field-'+col"
-                :value="toDateTimeLocal(itemToEdit[col])"
-                type="datetime-local"
-                disabled
-                class="input-disabled"
-              />
-
-              <input 
-                v-else-if="isFieldImmutable(col) && !isNewItem"
-                :id="'field-'+col"
-                :value="itemToEdit[col]"
-                disabled
-                class="input-disabled"
-              />
-
-              <input 
-                v-else-if="getFieldConfig(col).type === 'datetime'"
-                :id="'field-'+col"
-                type="datetime-local"
-                v-model="itemToEdit[col]"
-                :step="1"
-              />
-
-              <select 
-                v-else-if="selectedTable === 'box' && col === 'type'"
-                v-model.number="itemToEdit[col]"
-              >
-                <option v-for="n in 9" :key="n" :value="n">Typ {{ n }}</option>
-              </select>
-
-              <input 
-                v-else-if="getFieldConfig(col).type === 'number'"
-                :id="'field-'+col"
-                type="number"
-                v-model.number="itemToEdit[col]"
-                :step="getFieldConfig(col).step"
-                :min="getFieldConfig(col).min"
-                :max="getFieldConfig(col).max"
-              />
-
-              <input 
-                v-else
-                :id="'field-'+col"
-                type="text"
-                v-model="itemToEdit[col]"
-                :maxlength="getFieldConfig(col).maxLength"
-                :required="isFieldRequired(col)"
-                :placeholder="col.includes('flags') ? 'z.B. -----' : ''"
-                :class="col.includes('flags') ? 'code-input' : ''"
-              />
               
-              <small class="field-hint" v-if="getFieldConfig(col).hint">
-                {{ getFieldConfig(col).hint }}
-              </small>
+              <input v-if="isFieldImmutable(col) && !isNewItem" :value="itemToEdit[col]" disabled class="input-disabled" />
+              <input v-else-if="getFieldConfig(col).type === 'datetime'" type="datetime-local" v-model="itemToEdit[col]" :step="1" />
+              <input v-else-if="getFieldConfig(col).type === 'number'" type="number" v-model.number="itemToEdit[col]" :step="getFieldConfig(col).step" />
+              <input v-else type="text" v-model="itemToEdit[col]" :required="isFieldRequired(col)" />
             </div>
           </div>
-
           <div class="form-actions">
             <button @click="cancelEdit" class="btn btn-cancel">Abbrechen</button>
             <button @click="saveItem" class="btn btn-save">Speichern</button>
           </div>
         </div>
 
+        <div v-if="showDeleteModal" class="modal-overlay">
+          <div class="modal-content">
+            <h3>Eintrag löschen?</h3>
+            <p>Sind Sie sicher, dass Sie diesen Eintrag löschen möchten?</p>
+            <div class="modal-actions">
+              <button @click="closeDeleteModal" class="btn btn-cancel">Abbrechen</button>
+              <button @click="confirmDelete" class="btn btn-delete">Löschen</button>
+            </div>
+          </div>
+        </div>
+
       </section>
     </main>
-
-    <div v-if="showDeleteModal" class="modal-overlay">
-      <div class="modal-content">
-        <h3>Eintrag löschen?</h3>
-        <p>Möchten Sie diesen Eintrag wirklich löschen? Dieser Vorgang kann nicht rückgängig gemacht werden.</p>
-        <div class="modal-actions">
-          <button @click="closeDeleteModal" class="btn btn-cancel">Abbrechen</button>
-          <button @click="confirmDelete" class="btn btn-delete">Löschen</button>
-        </div>
-      </div>
-    </div>
-
   </div>
 </template>
 
@@ -402,6 +351,9 @@ export default {
       itemToView: null,
 
       darkMode: localStorage.getItem('darkMode') === 'true',
+      
+      // NEU: Speichert die aktuelle Rolle
+      currentUserRole: '',
     };
   },
 
@@ -435,7 +387,6 @@ export default {
     },
     sortedData() {
       let data = this.tableData.slice();
-      
       if (this.activeSearchQuery) {
         const query = this.activeSearchQuery.toLowerCase();
         data = data.filter(row => {
@@ -444,12 +395,10 @@ export default {
           );
         });
       }
-
       if (this.sortKey) {
         data.sort((a, b) => {
           let aVal = a[this.sortKey];
           let bVal = b[this.sortKey];
-          
           if (aVal === null) aVal = '';
           if (bVal === null) bVal = '';
 
@@ -460,23 +409,43 @@ export default {
             aVal = String(aVal).toLowerCase();
             bVal = String(bVal).toLowerCase();
           }
-
           if (aVal < bVal) return this.sortAsc ? -1 : 1;
           if (aVal > bVal) return this.sortAsc ? 1 : -1;
           return 0;
         });
       }
-      
       return data.slice(0, this.displayLimit);
+    },
+    
+    // RBAC: Computed Properties für Rechte
+    canEdit() {
+      return ['Admin', 'Researcher'].includes(this.currentUserRole);
+    },
+    canDelete() {
+      return this.currentUserRole === 'Admin';
     }
   },
 
   mounted() {
+    this.updateUserRole();
     this.fetchTableData();
     this.applyDarkMode();
   },
 
   methods: {
+    // Helper zum Auslesen von Cookies
+    getCookie(name) {
+      const value = `; ${document.cookie}`;
+      const parts = value.split(`; ${name}=`);
+      if (parts.length === 2) return parts.pop().split(';').shift();
+      return null;
+    },
+
+    updateUserRole() {
+      // Holt die Rolle aus dem Cookie. Falls das nicht geht, Fallback auf LocalStorage
+      this.currentUserRole = this.getCookie('role') || localStorage.getItem('role') || '';
+    },
+
     onTableChange() {
       this.tableData = [];
       this.itemToEdit = null;
@@ -495,9 +464,20 @@ export default {
       this.loading = true;
       this.error = null;
       this.itemToEdit = null;
+      this.updateUserRole(); // Sicherstellen, dass die Rolle aktuell ist
       
       try {
-        const response = await fetch(`${API_BASE_URL}/${this.currentSchema.endpoint}`);
+        // WICHTIG: credentials: 'include' sorgt dafür, dass das HttpOnly Cookie mitgesendet wird
+        const response = await fetch(`${API_BASE_URL}/${this.currentSchema.endpoint}`, {
+          method: 'GET',
+          credentials: 'include' 
+        });
+
+        if (response.status === 401 || response.status === 403) {
+           this.$emit('logout');
+           return;
+        }
+
         const data = await response.json(); 
         if (!response.ok) {
           throw new Error(data.message || `Fehler beim Laden von ${this.selectedTable}`);
@@ -518,45 +498,38 @@ export default {
 
       this.formColumns.forEach(col => {
         const fieldType = config[col]?.type;
-        if (fieldType === 'number') {
-           emptyItem[col] = null;
-        } else if (fieldType === 'datetime') {
+        if (fieldType === 'number' || fieldType === 'datetime') {
            emptyItem[col] = null;
         } else {
            emptyItem[col] = '';
         }
       });
-
-      // Defaults
       if (this.selectedTable === 'box') {
         emptyItem['num_max'] = 40;
         emptyItem['type'] = 1;
       }
-
       this.itemToEdit = emptyItem;
       this.scrollToForm();
     },
 
     editItem(item) {
-  this.isNewItem = false;
-  const copy = JSON.parse(JSON.stringify(item));
+      this.isNewItem = false;
+      const copy = JSON.parse(JSON.stringify(item));
 
-  copy.__pk = {
-    s_id: item.s_id,
-    s_stamp: item.s_stamp
-  };
+      copy.__pk = {
+        s_id: item.s_id,
+        s_stamp: item.s_stamp
+      };
 
-  const config = this.currentSchema.fieldConfigs || {};
-  for (const [key, value] of Object.entries(copy)) {
-    if (config[key]?.type === 'datetime' && value) {
-      copy[key] = this.toDateTimeLocal(value);
-    }
-  }
-
-  this.itemToEdit = copy;
-  this.scrollToForm();
-}
-,
+      const config = this.currentSchema.fieldConfigs || {};
+      for (const [key, value] of Object.entries(copy)) {
+        if (config[key]?.type === 'datetime' && value) {
+          copy[key] = this.toDateTimeLocal(value);
+        }
+      }
+      this.itemToEdit = copy;
+      this.scrollToForm();
+    },
 
     cancelEdit() {
       this.itemToEdit = null;
@@ -571,13 +544,10 @@ export default {
         if (config[key]?.type === 'number' && dataToSend[key] === '') {
            dataToSend[key] = null;
         }
-        // Konvertiere local datetime zurück zu ISO für JSON Body
         if (config[key]?.type === 'datetime' && dataToSend[key]) {
            try {
              dataToSend[key] = new Date(dataToSend[key]).toISOString();
-           } catch(e) { 
-             console.warn("Date parsing issue", e);
-           }
+           } catch(e) { console.warn("Date parsing issue", e); }
         }
       }
 
@@ -586,7 +556,6 @@ export default {
 
       if (!this.isNewItem) {
         method = 'PUT';
-        // Hier bauen wir die URL. 
         url = this.constructUrlWithId(schema, dataToSend); 
       }
 
@@ -594,8 +563,14 @@ export default {
         const response = await fetch(url, {
           method,
           headers: { 'Content-Type': 'application/json' },
+          credentials: 'include', // WICHTIG für Cookies
           body: JSON.stringify(dataToSend),
         });
+
+        if (response.status === 401 || response.status === 403) {
+           this.$emit('logout');
+           return;
+        }
 
         const respData = await response.json().catch(() => ({}));
         if (!response.ok) {
@@ -606,6 +581,7 @@ export default {
         this.itemToEdit = null;
       } catch (error) {
         console.log(`Fehler beim Speichern:\n${error.message}`);
+        this.error = error;
       }
     },
 
@@ -628,8 +604,17 @@ export default {
 
       try {
         const url = this.constructUrlWithId(schema, item);
-        const response = await fetch(url, { method: 'DELETE' });
         
+        const response = await fetch(url, { 
+          method: 'DELETE',
+          credentials: 'include' // WICHTIG für Cookies
+        });
+        
+        if (response.status === 401 || response.status === 403) {
+           this.$emit('logout');
+           return;
+        }
+
         if (!response.ok) {
            const d = await response.json().catch(() => ({}));
            throw new Error(d.message || 'Löschen fehlgeschlagen');
@@ -641,29 +626,21 @@ export default {
         }
       } catch (error) {
         console.log(`Fehler beim Löschen: ${error.message}`);
-      } finally {
-        this.closeDeleteModal();
       }
     },
 
     constructUrlWithId(schema, item) {
-  let url = `${API_BASE_URL}/${schema.endpoint}`;
-
-  if (Array.isArray(schema.pk)) {
-    schema.pk.forEach(key => {
-      const val =
-        item.__pk && item.__pk[key] !== undefined
-          ? item.__pk[key]
-          : item[key];
-
-      url += `/${encodeURIComponent(val)}`;
-    });
-  } else {
-    url += `/${item[schema.pk]}`;
-  }
-  return url;
-}
-,
+      let url = `${API_BASE_URL}/${schema.endpoint}`;
+      if (Array.isArray(schema.pk)) {
+        schema.pk.forEach(key => {
+          const val = item.__pk && item.__pk[key] !== undefined ? item.__pk[key] : item[key];
+          url += `/${encodeURIComponent(val)}`;
+        });
+      } else {
+        url += `/${item[schema.pk]}`;
+      }
+      return url;
+    },
 
     formatHeader(col) {
       if(!col) return '';
@@ -730,9 +707,9 @@ export default {
       this.editItem(item);
     },
     toggleDarkMode() {
-    this.darkMode = !this.darkMode;
-    localStorage.setItem('darkMode', this.darkMode);
-    this.applyDarkMode();
+      this.darkMode = !this.darkMode;
+      localStorage.setItem('darkMode', this.darkMode);
+      this.applyDarkMode();
     },
     applyDarkMode() {
       if (this.darkMode) {
@@ -746,561 +723,110 @@ export default {
 </script>
 
 <style scoped>
-.container {
-  font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 20px;
-  min-height: 100vh;
-  color: #333;
-  transition: background-color 0.3s; 
-}
-
-header h1 {
-  margin-bottom: 20px;
-  color: #2c3e50;
-}
-
-.table-selector {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  gap: 15px;
-  background: white;
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-  margin-bottom: 20px;
-}
-
-.control-group {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-.control-group label {
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: #6c757d;
-  text-transform: uppercase;
-}
-
-.search-wrapper {
-  flex-grow: 1;
-}
-
-.search-input-group {
-  display: flex;
-}
-
-input, select, .search-input {
-  padding: 8px 12px;
-  border: 1px solid #ced4da;
-  border-radius: 4px;
-  font-size: 1rem;
-}
-.search-input {
-  border-top-right-radius: 0;
-  border-bottom-right-radius: 0;
-  flex: 1;
-}
-
-/* Buttons */
-.button-group {
-  margin-left: auto;
-  display: flex;
-  gap: 10px;
-}
-
-.btn {
-  border: none;
-  border-radius: 4px;
-  padding: 8px 16px;
-  cursor: pointer;
-  font-weight: 600;
-  transition: background 0.2s, color 0.2s;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-}
-
-.btn-search {
-  background: #910dfd; 
-  color: white;
-  border-radius: 0 4px 4px 0;
-  padding: 0 12px;
-}
+/* Dein CSS-Styling bleibt erhalten */
+.container { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 1400px; margin: 0 auto; padding: 20px; min-height: 100vh; color: #333; transition: background-color 0.3s; }
+header h1 { margin-bottom: 20px; color: #2c3e50; }
+.table-selector { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 15px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 20px; }
+.control-group { display: flex; flex-direction: column; gap: 5px; }
+.control-group label { font-size: 0.85rem; font-weight: 600; color: #6c757d; text-transform: uppercase; }
+.search-wrapper { flex-grow: 1; }
+.search-input-group { display: flex; }
+input, select, .search-input { padding: 8px 12px; border: 1px solid #ced4da; border-radius: 4px; font-size: 1rem; }
+.search-input { border-top-right-radius: 0; border-bottom-right-radius: 0; flex: 1; }
+.button-group { margin-left: auto; display: flex; gap: 10px; }
+.btn { border: none; border-radius: 4px; padding: 8px 16px; cursor: pointer; font-weight: 600; transition: background 0.2s, color 0.2s; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+.btn-search { background: #910dfd; color: white; border-radius: 0 4px 4px 0; padding: 0 12px; }
 .btn-load { background: #6c757d; color: white; }
 .btn-save { background: #198754; color: white; }
 .btn-cancel { background: #f8f9fa; color: #333; border: 1px solid #ddd; }
-
-/* Table Action Buttons */
-.action-buttons {
-    display: flex;
-    gap: 5px;
-}
-
-.action-buttons .btn {
-    padding: 6px;
-}
-
-/* Edit: Blue */
-.btn-edit {
-    background: #adfd0d;
-    color: white;
-}
+.action-buttons { display: flex; gap: 5px; }
+.action-buttons .btn { padding: 6px; }
+.btn-edit { background: #adfd0d; color: white; }
 .btn-edit:hover { background: #0bd752; }
-
-/* Delete: Red */
-.btn-delete {
-    background: #dc3545;
-    color: white;
-}
+.btn-delete { background: #dc3545; color: white; }
 .btn-delete:hover { background: #bb2d3b; }
-
 .btn:hover { opacity: 0.9; }
-
-.mdi-icon {
-  width: 20px;
-  height: 20px;
-}
-
-.action-buttons .mdi-icon {
-    width: 18px;
-    height: 18px;
-}
-
-/* Table */
-.table-wrapper {
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-  overflow-x: auto;
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.95rem;
-}
-
-th, td {
-  padding: 12px 15px;
-  text-align: left;
-  border-bottom: 1px solid #e9ecef;
-}
-
-th {
-  background: #f1f3f5;
-  font-weight: 600;
-  color: #495057;
-  white-space: nowrap;
-}
+.mdi-icon { width: 20px; height: 20px; }
+.action-buttons .mdi-icon { width: 18px; height: 18px; }
+.table-wrapper { background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
+th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #e9ecef; }
+th { background: #f1f3f5; font-weight: 600; color: #495057; white-space: nowrap; }
 .sortable-header { cursor: pointer; user-select: none; }
 .sortable-header:hover { background: #e2e6ea; }
-
 tr:hover { background: #f8f9fa; }
-
-/* Sticky Columns */
 .sticky-col { position: sticky; right: 0; box-shadow: -2px 0 5px rgba(0,0,0,0.05); }
 .th-sticky { background: #f1f3f5; z-index: 2; }
 .td-sticky { background: white; }
 tr:hover .td-sticky { background: #f8f9fa; }
-
-/* Form Container */
-.form-container {
-  background: white;
-  padding: 30px;
-  border-radius: 8px;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-  margin-top: 30px;
-  border-top: 4px solid #198754;
-}
-
-.form-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: 20px;
-  margin-bottom: 20px;
-}
-
-.form-group {
-  display: flex;
-  flex-direction: column;
-}
-
-.form-group label {
-  font-weight: 600;
-  margin-bottom: 5px;
-  font-size: 0.9rem;
-}
-
-.form-group input:focus, .form-group select:focus {
-  border-color: #198754;
-  outline: 0;
-  box-shadow: 0 0 0 0.2rem rgba(25, 135, 84, 0.25);
-}
-
-.input-disabled {
-  background-color: #e9ecef;
-  cursor: not-allowed;
-  color: #6c757d;
-}
-
-.code-input {
-  font-family: 'Courier New', monospace;
-  letter-spacing: 1px;
-}
-
+.form-container { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-top: 30px; border-top: 4px solid #198754; }
+.form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; margin-bottom: 20px; }
+.form-group { display: flex; flex-direction: column; }
+.form-group label { font-weight: 600; margin-bottom: 5px; font-size: 0.9rem; }
+.form-group input:focus, .form-group select:focus { border-color: #198754; outline: 0; box-shadow: 0 0 0 0.2rem rgba(25, 135, 84, 0.25); }
+.input-disabled { background-color: #e9ecef; cursor: not-allowed; color: #6c757d; }
+.code-input { font-family: 'Courier New', monospace; letter-spacing: 1px; }
 .required-mark { color: red; }
 .field-hint { font-size: 0.75rem; color: #6c757d; margin-top: 3px; }
-
-.form-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  border-top: 1px solid #e9ecef;
-  padding-top: 20px;
-}
-
-/* Utils */
+.form-actions { display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid #e9ecef; padding-top: 20px; }
 .status-text { text-align: center; margin-top: 50px; color: #6c757d; }
 .error-text { text-align: center; margin-top: 20px; color: #dc3545; background: #f8d7da; padding: 15px; border-radius: 4px; }
 .info-text { padding: 10px 15px; color: #6c757d; font-size: 0.85rem; text-align: right; }
-
-.th-content {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-
-.small-icon {
-  width: 16px;
-  height: 16px;
-}
-
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-}
-
-.modal-content {
-  background: white;
-  padding: 25px;
-  border-radius: 8px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-  width: 100%;
-  max-width: 400px;
-  animation: fadeIn 0.2s;
-}
-
-.modal-content h3 {
-  margin-top: 0;
-}
-
-.modal-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  margin-top: 20px;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.btn-view {
-  background: #0d6efd;
-  color: white;
-}
+.th-content { display: flex; align-items: center; gap: 5px; }
+.small-icon { width: 16px; height: 16px; }
+.modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); display: flex; justify-content: center; align-items: center; z-index: 1000; }
+.modal-content { background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); width: 100%; max-width: 400px; animation: fadeIn 0.2s; }
+.modal-content h3 { margin-top: 0; }
+.modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+.btn-view { background: #0d6efd; color: white; }
 .btn-view:hover { background: #0b5ed7; }
-
-.modal-lg {
-  max-width: 600px;
-  max-height: 90vh; 
-  display: flex;
-  flex-direction: column;
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-  border-bottom: 1px solid #dee2e6;
-  padding-bottom: 10px;
-}
-
-.modal-header h3 {
-  margin: 0;
-  color: #2c3e50;
-}
-
-.btn-close {
-  background: none;
-  border: none;
-  font-size: 1.5rem;
-  cursor: pointer;
-  color: #6c757d;
-}
-
-.detail-grid {
-  display: grid;
-  grid-template-columns: 1fr 1.5fr;
-  gap: 10px;
-  overflow-y: auto;
-  padding-right: 5px;
-  margin-bottom: 20px;
-}
-
-.detail-row {
-  display: contents;
-}
-
-.detail-label {
-  font-weight: 600;
-  color: #6c757d;
-  padding: 8px 0;
-  border-bottom: 1px solid #f1f3f5;
-  align-self: center;
-}
-
-.detail-value {
-  color: #212529;
-  padding: 8px 0;
-  border-bottom: 1px solid #f1f3f5;
-  word-break: break-all;
-}
-.btn-dark-mode {
-  background: #495057;
-  color: white;
-}
-.btn-dark-mode:hover {
-  background: #343a40;
-}
-
-/* ============================================
-   DARK MODE STYLES
-   ============================================ */
-
-/* Body Hintergrund */
-:global(body.dark-theme) {
-  background-color:  #0f172a !important;
-}
-
-/* Überschrift weiß */
-:global(body.dark-theme h1) {
-  color: #ffffff !important;
-}
-
-/* ============================================
-   DUNKLE KONTROLLLEISTE (Table Selector)
-   ============================================ */
-
-:global(body.dark-theme .table-selector) {
-  background-color: #1e293b !important;
-  border-radius: 8px !important;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5) !important;
-}
-
-/* Labels in der Kontrollleiste (weiß) */
-:global(body.dark-theme .table-selector .control-group label) {
-  color: #94a3b8 !important;
-}
-
-/* Inputs und Selects in der Kontrollleiste */
-:global(body.dark-theme .table-selector input),
-:global(body.dark-theme .table-selector select) {
-  background-color: #0f172a !important;
-  color: #ffffff !important;
-  border: 1px solid #334155 !important;
-}
-
-:global(body.dark-theme .table-selector input::placeholder) {
-  color:  #64748b !important;
-}
-
-:global(body.dark-theme .table-selector input:focus),
-:global(body.dark-theme .table-selector select:focus) {
-  border-color: #910dfd !important;
-  box-shadow: 0 0 0 0.2rem rgba(145, 13, 253, 0.25) !important;
-}
-
-/* ============================================
-   DUNKLE TABELLE
-   ============================================ */
-
-:global(body.dark-theme .table-wrapper) {
-  background-color: #0f172a !important;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5) !important;
-}
-
-:global(body.dark-theme th) {
-  background-color: #1e293b !important;
-  color:  #ffffff !important;
-  border-bottom: 2px solid #334155 !important;
-}
-
-:global(body.dark-theme .th-sticky) {
-  background-color: #1e293b !important;
-}
-
-:global(body.dark-theme td) {
-  background-color: #0f172a !important;
-  color:  #ffffff !important;
-  border-bottom: 1px solid #334155 ! important;
-}
-
-:global(body.dark-theme .td-sticky) {
-  background-color:  #0f172a !important;
-}
-
-:global(body.dark-theme tr:hover td),
-:global(body.dark-theme tr:hover .td-sticky) {
-  background-color: #1e293b ! important;
-}
-
-:global(body.dark-theme .sortable-header:hover) {
-  background-color: #334155 !important;
-}
-
-:global(body.dark-theme .info-text) {
-  color: #94a3b8 ! important;
-}
-
-/* ============================================
-   BUTTONS
-   ============================================ */
-
-:global(body.dark-theme .btn-load) {
-  background-color: #475569 !important;
-  color: white ! important;
-}
-
-:global(body.dark-theme .btn-load:hover) {
-  background-color:  #64748b !important;
-}
-
-:global(body.dark-theme .btn-search) {
-  background-color: #910dfd !important;
-  color: white !important;
-}
-
-:global(body.dark-theme .btn-dark-mode) {
-  background-color:  #334155 !important;
-  color: white !important;
-}
-
-:global(body.dark-theme .btn-dark-mode:hover) {
-  background-color: #475569 !important;
-}
-
-/* ============================================
-   FORMULAR (bleibt weiß oder auch dunkel)
-   ============================================ */
-
-:global(body.dark-theme .form-container) {
-  background-color: #1e293b !important;
-  border-top: 4px solid #22c55e !important;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5) !important;
-}
-
-:global(body.dark-theme .form-container h3) {
-  color: #ffffff !important;
-}
-
-:global(body.dark-theme .form-group label) {
-  color: #cbd5e1 ! important;
-}
-
-:global(body.dark-theme .form-container input),
-:global(body.dark-theme .form-container select) {
-  background-color: #0f172a !important;
-  color: #ffffff !important;
-  border: 1px solid #334155 !important;
-}
-
-:global(body.dark-theme .form-container input:focus),
-:global(body.dark-theme .form-container select:focus) {
-  border-color: #22c55e !important;
-  box-shadow: 0 0 0 0.2rem rgba(34, 197, 94, 0.25) !important;
-}
-
-:global(body.dark-theme .input-disabled) {
-  background-color:  #334155 !important;
-  color: #94a3b8 !important;
-}
-
-:global(body.dark-theme .form-actions) {
-  border-top: 1px solid #334155 !important;
-}
-
-:global(body.dark-theme .btn-cancel) {
-  background-color: #475569 !important;
-  color: #ffffff !important;
-  border: 1px solid #64748b !important;
-}
-
-/* ============================================
-   MODAL
-   ============================================ */
-
-:global(body.dark-theme .modal-overlay) {
-  background-color: rgba(0, 0, 0, 0.7) !important;
-}
-
-:global(body.dark-theme .modal-content) {
-  background-color: #1e293b !important;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5) !important;
-  color: #ffffff !important;
-}
-
-:global(body.dark-theme .modal-header) {
-  border-bottom: 1px solid #334155 !important;
-}
-
-:global(body.dark-theme .modal-header h3) {
-  color: #ffffff !important;
-}
-
-:global(body.dark-theme .btn-close) {
-  color: #94a3b8 !important;
-}
-
-:global(body.dark-theme .btn-close:hover) {
-  color:  #ffffff !important;
-}
-
-:global(body.dark-theme .detail-label) {
-  color: #94a3b8 !important;
-  border-bottom: 1px solid #334155 !important;
-}
-
-:global(body.dark-theme .detail-value) {
-  color:  #ffffff !important;
-  border-bottom: 1px solid #334155 ! important;
-}
-
-/* ============================================
-   SONSTIGES
-   ============================================ */
-
-:global(body.dark-theme .status-text) {
-  color: #94a3b8 !important;
-}
-
-:global(body.dark-theme .error-text) {
-  background-color: #7f1d1d ! important;
-  color: #fecaca !important;
-}
+.modal-lg { max-width: 600px; max-height: 90vh; display: flex; flex-direction: column; }
+.modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #dee2e6; padding-bottom: 10px; }
+.modal-header h3 { margin: 0; color: #2c3e50; }
+.btn-close { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #6c757d; }
+.detail-grid { display: grid; grid-template-columns: 1fr 1.5fr; gap: 10px; overflow-y: auto; padding-right: 5px; margin-bottom: 20px; }
+.detail-row { display: contents; }
+.detail-label { font-weight: 600; color: #6c757d; padding: 8px 0; border-bottom: 1px solid #f1f3f5; align-self: center; }
+.detail-value { color: #212529; padding: 8px 0; border-bottom: 1px solid #f1f3f5; word-break: break-all; }
+.btn-dark-mode { background: #495057; color: white; }
+.btn-dark-mode:hover { background: #343a40; }
+:global(body.dark-theme) { background-color: #0f172a !important; }
+:global(body.dark-theme h1) { color: #ffffff !important; }
+:global(body.dark-theme .table-selector) { background-color: #1e293b !important; border-radius: 8px !important; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5) !important; }
+:global(body.dark-theme .table-selector .control-group label) { color: #94a3b8 !important; }
+:global(body.dark-theme .table-selector input), :global(body.dark-theme .table-selector select) { background-color: #0f172a !important; color: #ffffff !important; border: 1px solid #334155 !important; }
+:global(body.dark-theme .table-selector input::placeholder) { color: #64748b !important; }
+:global(body.dark-theme .table-selector input:focus), :global(body.dark-theme .table-selector select:focus) { border-color: #910dfd !important; box-shadow: 0 0 0 0.2rem rgba(145, 13, 253, 0.25) !important; }
+:global(body.dark-theme .table-wrapper) { background-color: #0f172a !important; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5) !important; }
+:global(body.dark-theme th) { background-color: #1e293b !important; color: #ffffff !important; border-bottom: 2px solid #334155 !important; }
+:global(body.dark-theme .th-sticky) { background-color: #1e293b !important; }
+:global(body.dark-theme td) { background-color: #0f172a !important; color: #ffffff !important; border-bottom: 1px solid #334155 !important; }
+:global(body.dark-theme .td-sticky) { background-color: #0f172a !important; }
+:global(body.dark-theme tr:hover td), :global(body.dark-theme tr:hover .td-sticky) { background-color: #1e293b !important; }
+:global(body.dark-theme .sortable-header:hover) { background-color: #334155 !important; }
+:global(body.dark-theme .info-text) { color: #94a3b8 !important; }
+:global(body.dark-theme .btn-load) { background-color: #475569 !important; color: white !important; }
+:global(body.dark-theme .btn-load:hover) { background-color: #64748b !important; }
+:global(body.dark-theme .btn-search) { background-color: #910dfd !important; color: white !important; }
+:global(body.dark-theme .btn-dark-mode) { background-color: #334155 !important; color: white !important; }
+:global(body.dark-theme .btn-dark-mode:hover) { background-color: #475569 !important; }
+:global(body.dark-theme .form-container) { background-color: #1e293b !important; border-top: 4px solid #22c55e !important; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5) !important; }
+:global(body.dark-theme .form-container h3) { color: #ffffff !important; }
+:global(body.dark-theme .form-group label) { color: #cbd5e1 !important; }
+:global(body.dark-theme .form-container input), :global(body.dark-theme .form-container select) { background-color: #0f172a !important; color: #ffffff !important; border: 1px solid #334155 !important; }
+:global(body.dark-theme .form-container input:focus), :global(body.dark-theme .form-container select:focus) { border-color: #22c55e !important; box-shadow: 0 0 0 0.2rem rgba(34, 197, 94, 0.25) !important; }
+:global(body.dark-theme .input-disabled) { background-color: #334155 !important; color: #94a3b8 !important; }
+:global(body.dark-theme .form-actions) { border-top: 1px solid #334155 !important; }
+:global(body.dark-theme .btn-cancel) { background-color: #475569 !important; color: #ffffff !important; border: 1px solid #64748b !important; }
+:global(body.dark-theme .modal-overlay) { background-color: rgba(0, 0, 0, 0.7) !important; }
+:global(body.dark-theme .modal-content) { background-color: #1e293b !important; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5) !important; color: #ffffff !important; }
+:global(body.dark-theme .modal-header) { border-bottom: 1px solid #334155 !important; }
+:global(body.dark-theme .modal-header h3) { color: #ffffff !important; }
+:global(body.dark-theme .btn-close) { color: #94a3b8 !important; }
+:global(body.dark-theme .btn-close:hover) { color: #ffffff !important; }
+:global(body.dark-theme .detail-label) { color: #94a3b8 !important; border-bottom: 1px solid #334155 !important; }
+:global(body.dark-theme .detail-value) { color: #ffffff !important; border-bottom: 1px solid #334155 !important; }
+:global(body.dark-theme .status-text) { color: #94a3b8 !important; }
+:global(body.dark-theme .error-text) { background-color: #7f1d1d !important; color: #fecaca !important; }
 </style>

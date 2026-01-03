@@ -9,6 +9,7 @@ import com.mbauer_mdragne.vue_crud.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
@@ -36,7 +37,7 @@ public class AuthController {
         this.passwordEncoder = passwordEncoder;
     }
 
-    // ===== SignIn =====
+    // ===== SignIn mit HttpOnly Cookie =====
     @PostMapping("/login")
     public ResponseEntity<?> signIn(@RequestBody LoginRequest req) {
         if (req == null || req.UsersID == null || req.password == null) {
@@ -53,14 +54,40 @@ public class AuthController {
 
         String token = jwtUtil.generateToken(Users.getId().toString(), List.of(Users.getRole().getName()));
 
+        // Cookie Erstellen
+        ResponseCookie jwtCookie = ResponseCookie.from("jwt", token)
+                .httpOnly(true) // JS kann es nicht lesen
+                .secure(false) // false für Localhost, true für Produktion (HTTPS)
+                .path("/") // Gilt für die ganze Seite
+                .maxAge(24 * 60 * 60) // 1 Tag gültig (in Sekunden)
+                .sameSite("Strict")// Schutz vor CSRF
+                .build();
+
         Map<String, Object> body = new LinkedHashMap<>();
         body.put("message", "login_success");
-        body.put("token", token);
-        body.put("UsersId", Users.getId());
         body.put("UsersID", Users.getUserID());
         body.put("role", Users.getRole().getName());
 
-        return ResponseEntity.ok(body);
+        // Cookie in den Header setzen
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, jwtCookie.toString())
+                .body(body);
+    }
+
+    // ===== Logout (Cookie löschen) =====
+    // Da das Frontend das Cookie nicht löschen kann, muss das Backend ein "leeres" Cookie senden
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout() {
+        ResponseCookie cleanCookie = ResponseCookie.from("jwt", "")
+                .httpOnly(true)
+                .secure(false)
+                .path("/")
+                .maxAge(0) // Sofort ablaufen lassen
+                .build();
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, cleanCookie.toString())
+                .body(Map.of("message", "logout_success"));
     }
 
     // ===== Register (Admin only) =====
