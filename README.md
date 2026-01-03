@@ -17,6 +17,8 @@ Um die Backupdateien auf dem Server einspielen zukönnen muss selbstverständlic
 cat backups/import_backups.sql | docker exec -i postgres911 psql -U postgres -d postgres
 ```
 
+Aus Test erfahrung hat sich gezeigt, dass der verwendete Server nicht mit der Last der ganzen Daten klarkommt.
+
 # Informationssysteme "PWA Deployment" EK
 von: Maximilian Bauer, Matei Dragne 5CHITM
 
