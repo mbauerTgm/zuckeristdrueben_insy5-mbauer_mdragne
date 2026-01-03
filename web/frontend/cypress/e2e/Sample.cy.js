@@ -180,15 +180,11 @@ describe('Sample Test:', () => {
     //delete item
     cy.get('.btn-delete').click()
     cy.get('.modal-actions > .btn-delete').click()
-    cy.get('body').then(($body) => {
-      if ($body.find('.info-text:contains("Zeige 0 von 0 Einträgen")').length > 0) {
-        cy.log('Info-Text ist da')
-      } else if ($body.find('.status-text:contains("Keine Daten vorhanden.")').length > 0) {
-        cy.log('Status-Text ist da')
-      } else {
-        throw new Error('Keiner der Texte ist vorhanden')
-      }
-    })
+    cy.get('body').should($body => {
+      const infoText = $body.find('.info-text:contains("Zeige 0 von 0 Einträgen")').length > 0;
+      const statusText = $body.find('.status-text:contains("Keine Daten vorhanden.")').length > 0;
 
+      expect(infoText || statusText, 'Info- oder Status-Text vorhanden').to.be.true;
+    });
   })
 })

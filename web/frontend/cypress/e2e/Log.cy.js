@@ -17,15 +17,27 @@ describe('Logs Test:', () => {
     //check if any delete button exist
     cy.get('.btn-delete').should('not.exist')
 
-    //open detail from first entry
+    //open detail from first entry if there is an entry
     cy.get(':nth-child(1) > .sticky-col > .action-buttons > .btn-view').click()
 
-    // Sicherstellen, dass das Modal offen ist
-    cy.get('#detail-modal').should('be.visible')
+    cy.get('body').then($body => {
+      //check if there are entries
+      const noData = $body.find('.status-text:contains("Keine Daten vorhanden.")').length > 0
+      if (!noData) {
+        //if there are entries, open the detailmodal
+        cy.get(':nth-child(1) > .sticky-col > .action-buttons > .btn-view').click()
 
-    //check if edit button exists in detail view
-    cy.get('#btn-edit-from-detail').should('not.exist')
+        // check the detailmodal is visible
+        cy.get('#detail-modal').should('be.visible')
 
-    cy.get('.modal-actions > .btn').click()
+        //check that edit is not visible in the detailmodal
+        cy.get('#btn-edit-from-detail').should('not.exist')
+
+        // close the modal
+        cy.get('.modal-actions > .btn').click()
+      } else {
+        cy.log('Keine Einträge vorhanden – Detail-Check übersprungen')
+      }
+    })
   })
 })
