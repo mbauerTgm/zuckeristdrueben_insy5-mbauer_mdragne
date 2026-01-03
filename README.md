@@ -14,10 +14,14 @@ Damit der Postgres Container direkt mit einem DB Schema bespielt wird wurde das 
 Um die Backupdateien auf dem Server einspielen zukönnen muss selbstverständlich direkter Zugriff auf den Server bestehen. Ist das der Fall und die Dateien sind unter /backups/ verfügbar, kann folgender Befehlt ausgeführt werden um die Daten in die Datenbank einzuspielen:
 
 ```bash
-cat backups/import_backups.sql | docker exec -i postgres911 psql -U postgres -d postgres
+docker exec -i postgres911 psql -U postgres -d database -f /backups/import_backups.sql
 ```
 
-Aus Test erfahrung hat sich gezeigt, dass der verwendete Server nicht mit der Last der ganzen Daten klarkommt.
+Um die forcefully alle Daten der Datenbank zu löschen (inklusive der Schemas und der gesammten Datenbank) kann auf dem Server im Ordner in dem auch der Container liegt folgender Befehl benutzt werden:
+
+```bash
+sudo rm -rf postgres-data
+```
 
 # Informationssysteme "PWA Deployment" EK
 von: Maximilian Bauer, Matei Dragne 5CHITM
