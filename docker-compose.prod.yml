@@ -15,19 +15,27 @@ services:
   postgres:
     image: postgres:13
     volumes:
+      # Datenbank-Speicher (Server-Festplatte)
       - ./postgres-data:/var/lib/postgresql/data
-      - ./backups:/backups
       
       # Schema: Wird AUTOMATISCH ausgeführt beim ersten Start (weil im initdb.d Ordner)
       - ./db_init_schema/init_schema.sql:/docker-entrypoint-initdb.d/10-schema.sql
       
-      # 2. Import-Skript: Liegt nur bereit (z.B. im Root oder Backups Ordner), wird NICHT ausgeführt
-      - ./backups/venlab_backup_0530/import_backups.sql:/backups/import_backups.sql
+      # Alle Backup-Dateien & Skripte (Ordner-Mapping)
+      # Bringt import_backups.sql UND die .dat Dateien auf einmal rein.
+      - ./backups/venlab_backup_0530:/backups
 
   backend:
+    build:
+    image: ghcr.io/tgm-hit/insy5-informationssysteme-vue-pwa-pwa_mbauer_mdragne_dgernesch/backend:latest
     restart: always
+    environment:
+      # Begrenzt Java auf maximal 350MB RAM
+      - JAVA_TOOL_OPTIONS=-Xms256m -Xmx350m
 
   frontend:
+    build:
+    image: ghcr.io/tgm-hit/insy5-informationssysteme-vue-pwa-pwa_mbauer_mdragne_dgernesch/frontend:latest
     restart: always
     ports: []
     volumes: []
