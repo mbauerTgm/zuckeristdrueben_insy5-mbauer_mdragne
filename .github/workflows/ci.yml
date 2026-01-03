@@ -63,13 +63,13 @@ jobs:
         run: |
           echo "Waiting for frontend build..."
           for i in {1..90}; do
-            if docker exec frontend test -f /usr/share/nginx/html/index.html 2>/dev/null; then
+            if docker exec frontend_istFrueben test -f /usr/share/nginx/html/index.html 2>/dev/null; then
               echo "Frontend ready!"
               break
             fi
             if [ $i -eq 90 ]; then
               echo "Timeout!"
-              docker logs frontend
+              docker logs frontend_istFrueben
               exit 1
             fi
             sleep 2
@@ -140,11 +140,11 @@ jobs:
         if: failure()
         run: |
           echo "=== FRONTEND ==="
-          docker logs frontend
+          docker logs frontend_istFrueben
           echo "=== BACKEND ==="
           docker logs rest_backend
           echo "=== POSTGRES ==="
-          docker logs postgres911
+          docker logs zuckerpostgres
           
       - name: Cleanup
         if: always()
