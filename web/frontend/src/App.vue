@@ -3,7 +3,7 @@
 </template>
 
 <script>
-import Comp_911_Frontend from './components/911_Frontend.vue'
+import Comp_911_Frontend from './components/Frontend.vue'
 
 export default {
   name: 'App',

@@ -274,7 +274,7 @@
 
 <script>
 import LoadingBar from '@/components/Loadingbar.vue'
-const API_BASE_URL = '/api/911';
+const API_BASE_URL = '/api';
 
 const SCHEMAS = {
   analysis: {
