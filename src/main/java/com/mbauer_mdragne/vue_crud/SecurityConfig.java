@@ -34,7 +34,7 @@ public class SecurityConfig {
 
             .addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class)
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/auth/**").permitAll() // Login ist immer erlaubt
+                .requestMatchers("/api/auth/**").permitAll() // Login ist immer erlaubt
                 .anyRequest().authenticated()            // Alles andere braucht Token
             );
         return http.build();

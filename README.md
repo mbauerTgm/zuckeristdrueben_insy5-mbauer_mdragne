@@ -14,7 +14,7 @@ Damit der Postgres Container direkt mit einem DB Schema bespielt wird wurde das 
 Um die Backupdateien auf dem Server einspielen zukönnen muss selbstverständlich direkter Zugriff auf den Server bestehen. Ist das der Fall und die Dateien sind unter /backups/ verfügbar, kann folgender Befehlt ausgeführt werden um die Daten in die Datenbank einzuspielen:
 
 ```bash
-docker exec -i postgres psql -U postgres -d database -f /backups/import_backups.sql
+docker exec -i zuckerpostgres psql -U postgres -d database -f /backups/import_backups.sql
 ```
 
 ### Server zurücksetzten

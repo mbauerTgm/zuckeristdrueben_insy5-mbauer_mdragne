@@ -86,7 +86,7 @@ export default {
       this.checkLogin = "";
       try {
         // withCredentials: true sorgt dafür, dass Cookies angenommen werden
-        const response = await axios.post("/auth/login", {
+        const response = await axios.post("/api/auth/login", {
           UsersID: this.userName, 
           password: this.password,
         }, { withCredentials: true });

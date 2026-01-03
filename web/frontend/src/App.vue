@@ -37,7 +37,7 @@ export default {
     async onLogout() {
       try {
         // Backend den HttpOnly Cookie löschen lassen
-        await axios.post("/auth/logout", {}, { withCredentials: true });
+        await axios.post("/api/auth/logout", {}, { withCredentials: true });
       } catch (e) {
         console.log("Logout Warning:", e);
       }
