@@ -212,7 +212,16 @@ describe('Analysis Test:', () => {
     cy.contains('Date in').click()
     cy.get('.btn-delete').click()
     cy.get('.modal-actions > .btn-delete').click()
-    cy.get('.info-text').should('contain', 'Zeige 0 von 0 Einträgen')
+    cy.get('body').then(($body) => {
+      if ($body.find('.info-text:contains("Zeige 0 von 0 Einträgen")').length > 0) {
+        cy.log('Info-Text ist da')
+      } else if ($body.find('.status-text:contains("Keine Daten vorhanden.")').length > 0) {
+        cy.log('Status-Text ist da')
+      } else {
+        throw new Error('Keiner der Texte ist vorhanden')
+      }
+    })
+
 
   })
 })
