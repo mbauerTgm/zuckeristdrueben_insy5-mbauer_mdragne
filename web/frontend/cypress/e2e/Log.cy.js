@@ -17,9 +17,6 @@ describe('Logs Test:', () => {
     //check if any delete button exist
     cy.get('.btn-delete').should('not.exist')
 
-    //open detail from first entry if there is an entry
-    cy.get(':nth-child(1) > .sticky-col > .action-buttons > .btn-view').click()
-
     cy.get('body').then($body => {
       //check if there are entries
       const noData = $body.find('.status-text:contains("Keine Daten vorhanden.")').length > 0
