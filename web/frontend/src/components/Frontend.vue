@@ -467,7 +467,7 @@ export default {
       this.updateUserRole(); // Sicherstellen, dass die Rolle aktuell ist
       
       try {
-        // WICHTIG: credentials: 'include' sorgt dafür, dass das HttpOnly Cookie mitgesendet wird
+        // credentials: 'include' sorgt dafür, dass das HttpOnly Cookie mitgesendet wird
         const response = await fetch(`${API_BASE_URL}/${this.currentSchema.endpoint}`, {
           method: 'GET',
           credentials: 'include' 
