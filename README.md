@@ -35,7 +35,14 @@ sudo rm -rf postgres-data
 von: Maximilian Bauer, Matei Dragne 5CHITM
 
 ## Login mit JWT Tokens und Roles
+Wir haben das Projekt um ein Security System erweitert, dass mit JWT/JWA und HTTP-Only Cookies logins sicher hält. Dazu wurden zwei neue Datenbank Schemas, Users und Role in der Datenbank eingebracht. Dann haben wir im Backend einen AuthControler hinzugefügt, der die API Endpoint für Login & out enthält, als auch einige Services wie den Passwortencrypter und den Service der die JTW Tokens erstellt. Diese werden dem Browser des Users übergeben, in den Cookies gespeichert.
 
+ Nun wird bei jedem API Call durch den Befhel "credentials: 'include'" im Browser nach Cookies für die Domain gesucht und im Request mit geschickt. Bevor irgendein Controller (z.B. getAllAnalysis) ausgeführt wird, fängt dieser Filter in der Klasse 'JwtTokenFilter' die Anfrage ab. Er sucht im Request nach dem Cookie 'jwt', wenn er vorhanden ist überprüft er ihn. Wenn alles passt, liest er die User-ID und die Rollen (z.B. "Admin", "Researcher") aus dem Token aus und leitet den Befehl an den gesuchten Controller weiter.
+
+Es gibt folgende Rollen:
+- Admin: Hat volle Rechte, kann alle Daten einsehen, bearbeiten und löschen, kann neue Datensätze anlegen und (im Frontend noch nicht implementiert) neue Nutzer anlegen.
+- Researcher: Kann Datensätze bearbeiten und erstellen, aber nicht löschen. Er kann in den Tabellen nur Daten aus Sample und Analysis sehen, bei denen die Flags mit F oder V beginnen.
+- Reader: Kann alle Daten lesen (Read Only)
 
 #### Einfügen eines Testusers in die Datenbank
 Falls für das das lokale verwenden oder das ausführen der Tests, eine User benötigt wird kann mit folgendem Befehl ein User mit dem Username: 'TestAdmin' und dem Passwort 'Sehr_Schwieriges_Test_Passwort!!_Sehr_Geheim_12253', in die Datenbank integriert werden:
@@ -43,6 +50,8 @@ Falls für das das lokale verwenden oder das ausführen der Tests, eine User ben
 ```bash
 docker exec -i zuckerpostgres psql -U postgres -d database -c "INSERT INTO venlab.users (username, password_hash, role_id, created_at) VALUES ('TestAdmin', '$2a$12$/x3aVXCCLs6YCvN5O4lwhu3TLNLfncNqhRAiIrkfFXkC0GrPYVU..', 1, NOW());"
 ```
+Der Vorletzte Parameter in diesem INSERT Befehl ist die Rolle des Users. 1 - Admin, 2 - Researcher, 3- Reader. 
+Der letzte Parameter ist der erstellungs Zeitstempel.
 
 
 # Projekt lokal starten – Schritt-für-Schritt Anleitung (aus vorherigen Aufgaben)
