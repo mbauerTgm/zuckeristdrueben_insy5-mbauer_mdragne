@@ -73,7 +73,7 @@ jobs:
       - name: Restart backend after DB reset
         run: |
           docker restart rest_backend
-          sleep 5
+          sleep 10  # Erhöht für Stabilität
       - name: Wait for frontend build
         run: |
           for i in {1..90}; do
@@ -89,6 +89,19 @@ jobs:
       - name: Verify frontend
         run: |
           curl -f http://localhost:8082 || (docker logs frontend_istFrueben && exit 1)
+      # NEUER SCHRITT: Simuliere Login und zeige Backend-Logs
+      - name: Debug: Test login and show backend logs
+        run: |
+          echo "=== DEBUG: Testing login with curl ==="
+          # Simuliere den Login-POST (wie Cypress es macht)
+          curl -X POST http://localhost:8082/api/auth/login \
+            -H "Content-Type: application/json" \
+            -d '{"UsersID": "TestAdmin", "password": "Sehr_Schwieriges_Test_Passwort!!_Sehr_Geheim_12253"}' \
+            -c cookies.txt -b cookies.txt  # Speichere Cookies (für Session)
+          echo "Curl exit code: $?"
+          echo "=== DEBUG: Backend logs after login attempt ==="
+          docker logs rest_backend | tail -100  # Zeige die letzten 100 Zeilen (inkl. 500-Fehler)
+          echo "=== END DEBUG ==="
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
