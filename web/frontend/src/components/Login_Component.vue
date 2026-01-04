@@ -175,13 +175,28 @@ export default {
 
 /* Label bewegt sich nach oben */
 .floating-group input:focus + label,
-.floating-group input:not(:placeholder-shown) + label {
+.floating-group input:not(:placeholder-shown) + label,
+.floating-group input:-webkit-autofill + label {
   top: 8px;
   left: 16px;
   transform: translateY(0);
   font-size: 0.75rem;
   font-weight: 600;
   color: #198754;
+}
+
+.floating-group input:-webkit-autofill,
+.floating-group input:-webkit-autofill:hover, 
+.floating-group input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0px 1000px #f8fafc inset !important;
+  -webkit-text-fill-color: #0f172a !important;
+  transition: background-color 5000s ease-in-out 0s;
+  padding-top: 24px !important; 
+  padding-bottom: 8px !important;
+}
+
+.floating-group input:focus:-webkit-autofill {
+  -webkit-box-shadow: 0 0 0px 1000px #ffffff inset !important;
 }
 
 /* Eye Button Position */
