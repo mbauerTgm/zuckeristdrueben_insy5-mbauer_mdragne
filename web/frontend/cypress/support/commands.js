@@ -106,3 +106,10 @@ Cypress.Commands.add('deleteBox', (searchTerm) => {
     }
   })
 })
+Cypress.Commands.add('login',(userid, password) => {
+
+  cy.get('#username').type(userid)
+  cy.get('#password').type(password)
+  cy.get('.submit-btn').click()
+  cy.wait(2000)
+})

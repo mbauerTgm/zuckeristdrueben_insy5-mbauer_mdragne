@@ -34,7 +34,18 @@ sudo rm -rf postgres-data
 # Informationssysteme "PWA Deployment" EK
 von: Maximilian Bauer, Matei Dragne 5CHITM
 
-## Projekt lokal starten – Schritt-für-Schritt Anleitung (aus vorherigen Aufgaben)
+## Login mit JWT Tokens und Roles
+
+
+#### Einfügen eines Testusers in die Datenbank
+Falls für das das lokale verwenden oder das ausführen der Tests, eine User benötigt wird kann mit folgendem Befehl ein User mit dem Username: 'TestAdmin' und dem Passwort 'Sehr_Schwieriges_Test_Passwort!!_Sehr_Geheim_12253', in die Datenbank integriert werden:
+
+```bash
+docker exec -i zuckerpostgres psql -U postgres -d database -c "INSERT INTO venlab.users (username, password_hash, role_id, created_at) VALUES ('TestAdmin', '$2a$12$/x3aVXCCLs6YCvN5O4lwhu3TLNLfncNqhRAiIrkfFXkC0GrPYVU..', 1, NOW());"
+```
+
+
+# Projekt lokal starten – Schritt-für-Schritt Anleitung (aus vorherigen Aufgaben)
 
 Diese Anleitung beschreibt, wie der Container gestartet werden kann und das Frontend aufgerufen werden kann
 
@@ -81,7 +92,7 @@ Wenn alle Container erfolgreich laufen, kann das Frontend über folgenden Link g
 Dort sollte das Frontend mit den geladenen Daten sichtbar sein.
 
 ## Starten von Cypress-Tests
-Durch den folgenden Befehl, der unter /web/frontend ausgeführt werden muss, werden alle E2E Test von Cypress ausgeführt. Nach Abschluss lassen sich unter web/frontend/cypress/reports der Test Report und unter web/frontend/cypress/videos eine Video aufnahme der Test finden.
+Durch den folgenden Befehl, der unter /web/frontend ausgeführt werden muss, werden alle E2E Test von Cypress ausgeführt. Nach Abschluss lassen sich unter web/frontend/cypress/reports der Test Report und unter web/frontend/cypress/videos eine Video aufnahme der Test finden. !ACHTUNG: Dadurch das es jetzt eine Login Page gibt muss wie "Einfügen eines Testusers in die Datenbank" beschrieben ein User in die Datenbank eingefügt werden!
 
 ```bash
 yarn test:report

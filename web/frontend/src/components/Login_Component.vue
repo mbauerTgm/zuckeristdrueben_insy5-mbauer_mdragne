@@ -56,11 +56,17 @@
               <svg v-else viewBox="0 0 24 24" width="20" height="20" fill="#94a3b8"><path d="M11.83,9L15,12.16C15,12.11 15,12.05 15,12A3,3 0 0,0 12,9C11.94,9 11.89,9 11.83,9M7.53,9.8L9.08,11.35C9.03,11.56 9,11.77 9,12A3,3 0 0,0 12,15C12.22,15 12.44,14.97 12.65,14.92L14.2,16.47C13.53,16.8 12.79,17 12,17A5,5 0 0,1 7,12C7,11.21 7.2,10.47 7.53,9.8M2,4.27L4.28,6.55L4.73,7C3.08,8.3 1.78,10 1,12C2.73,16.39 7,19.5 12,19.5C13.55,19.5 15.03,19.2 16.38,18.66L16.81,19.08L19.73,22L21,20.73L3.27,3M12,7A5,5 0 0,1 17,12C17,12.64 16.87,13.26 16.64,13.82L19.57,16.75C21.07,15.5 22.27,13.86 23,12C21.27,7.61 17,4.5 12,4.5C10.6,4.5 9.27,4.73 8.04,5.16L10.12,7.24C10.7,7.09 11.32,7 12,7Z" /></svg>
             </button>
           </div>
-
-          <button type="submit" class="submit-btn">
-            Einloggen
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M4,11V13H16L10.5,18.5L11.92,19.92L19.84,12L11.92,4.08L10.5,5.5L16,11H4Z" /></svg>
+          
+          <button type="submit" class="submit-btn" :disabled="isLoading">
+            <template v-if="!isLoading">
+              Einloggen
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M4,11V13H16L10.5,18.5L11.92,19.92L19.84,12L11.92,4.08L10.5,5.5L16,11H4Z" /></svg>
+            </template>
+            <template v-else>
+              <Login_Loader />
+            </template>
           </button>
+
         </form>
 
         <p class="footer-text">© 2025/26 zuckeristdrueben.live</p>
@@ -71,15 +77,20 @@
 
 <script>
 import axios from "axios";
+import Login_Loader from "./Login_Loader.vue";
 
 export default {
   name: "LoginComponent",
+  components: {
+    Login_Loader
+  },
   data() {
     return {
       userName: "",
       password: "",
       showPassword: false,
       checkLogin: "",
+      isLoading: false,
     };
   },
   mounted() {
@@ -88,6 +99,8 @@ export default {
   methods: {
     async login() {
       this.checkLogin = "";
+      this.isLoading = true;
+
       try {
         const response = await axios.post("/api/auth/login", {
           UsersID: this.userName, 
@@ -102,7 +115,6 @@ export default {
         
         axios.defaults.withCredentials = true; 
 
-        // Wenn der User vorher Darkmode hatte, wieder aktivieren (optional)
         if (localStorage.getItem('darkMode') === 'true') {
            document.body.classList.add('dark-theme');
         }
@@ -112,6 +124,8 @@ export default {
       } catch (error) {
         console.error(error);
         this.checkLogin = "Zugangsdaten ungültig.";
+      } finally {
+        this.isLoading = false;
       }
     },
     togglePasswordVisibility() {
@@ -122,18 +136,16 @@ export default {
 </script>
 
 <style scoped>
-/* Reset für Login Page */
 .split-screen {
   display: flex;
   height: 100vh;
   width: 100vw;
   font-family: 'Inter', sans-serif;
-  background-color: white; /* Immer Weiß erzwingen */
-  color: #0f172a; /* Dunkle Schrift erzwingen */
+  background-color: white;
+  color: #0f172a;
   overflow: hidden;
 }
 
-/* --- Floating Labels CSS --- */
 .floating-group {
   position: relative;
   margin-bottom: 24px;
@@ -150,7 +162,7 @@ export default {
   outline: none;
   transition: all 0.2s ease;
   box-sizing: border-box;
-  height: 56px; /* Feste Höhe */
+  height: 56px;
 }
 
 .floating-group label {
@@ -160,7 +172,7 @@ export default {
   transform: translateY(-50%);
   font-size: 1.05rem;
   color: #64748b;
-  pointer-events: none; /* Klicks gehen durch */
+  pointer-events: none;
   transition: all 0.2s ease;
   background-color: transparent;
 }
@@ -173,7 +185,6 @@ export default {
   padding-bottom: 8px;
 }
 
-/* Label bewegt sich nach oben */
 .floating-group input:focus + label,
 .floating-group input:not(:placeholder-shown) + label,
 .floating-group input:-webkit-autofill + label {
@@ -199,7 +210,6 @@ export default {
   -webkit-box-shadow: 0 0 0px 1000px #ffffff inset !important;
 }
 
-/* Eye Button Position */
 .eye-btn {
   position: absolute;
   right: 16px;
@@ -271,7 +281,7 @@ export default {
 .form-side {
   flex: 0 0 500px;
   display: flex; align-items: center; justify-content: center;
-  background-color: #ffffff; /* Weiß erzwingen */
+  background-color: #ffffff;
   padding: 40px;
 }
 
@@ -287,8 +297,20 @@ export default {
   border: none; border-radius: 12px;
   cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;
   transition: all 0.2s; margin-top: 10px;
+  
+  min-height: 54px; 
 }
-.submit-btn:hover { background-color: #198754; transform: translateY(-1px); }
+.submit-btn:hover:not(:disabled) { 
+  background-color: #198754; 
+  transform: translateY(-1px); 
+}
+
+/* Deaktivierter Button während Loading */
+.submit-btn:disabled {
+  background-color: #0f172a;
+  opacity: 0.8;
+  cursor: not-allowed;
+}
 
 .error-banner {
   background-color: #fef2f2; border: 1px solid #fecaca; color: #b91c1c;

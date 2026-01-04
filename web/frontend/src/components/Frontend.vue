@@ -76,7 +76,7 @@
               </svg>
             </button>
 
-            <button @click="$emit('logout')" class="btn btn-delete" title="Abmelden">
+            <button @click="$emit('logout')" class="btn btn-logout" title="Abmelden">
               <svg viewBox="0 0 24 24" class="mdi-icon">
                 <path fill="currentColor" d="M17,17.25V14H10V10H17V6.75L22.25,12L17,17.25M13,2A2,2 0 0,1 15,4V8H13V4H4V20H13V16H15V20A2,2 0 0,1 13,22H4A2,2 0 0,1 2,20V4A2,2 0 0,1 4,2Z" />
               </svg>
@@ -169,13 +169,14 @@
             <div class="detail-grid">
               <div v-for="(value, key) in itemToView" :key="key" class="detail-row">
                 <div class="detail-label">{{ formatHeader(key) }}</div>
-                <div class="detail-value">{{ formatCell(key, value) }}</div>
+                <div class="detail-value" :id="'detail-' + key">{{ formatCell(key, value) }}</div>
               </div>
             </div>
             <div class="modal-actions">
-              <button @click="closeDetailModal" class="btn btn-cancel">Schließen</button>
+              <button id="btn-close-detail" @click="closeDetailModal" class="btn btn-cancel">Schließen</button>
               <button 
                 v-if="canEdit && !currentSchema.readOnly" 
+                id="btn-edit-from-detail"
                 @click="editFromDetail(itemToView)" 
                 class="btn btn-edit"
               >
@@ -193,10 +194,48 @@
                 {{ formatHeader(col) }} <span v-if="isFieldRequired(col)" class="required-mark">*</span>
               </label>
               
-              <input v-if="isFieldImmutable(col) && !isNewItem" :value="itemToEdit[col]" disabled class="input-disabled" />
-              <input v-else-if="getFieldConfig(col).type === 'datetime'" type="datetime-local" v-model="itemToEdit[col]" :step="1" />
-              <input v-else-if="getFieldConfig(col).type === 'number'" type="number" v-model.number="itemToEdit[col]" :step="getFieldConfig(col).step" />
-              <input v-else type="text" v-model="itemToEdit[col]" :required="isFieldRequired(col)" />
+              <input 
+                v-if="isFieldImmutable(col) && !isNewItem" 
+                :id="'field-'+col"
+                :value="itemToEdit[col]" 
+                disabled 
+                class="input-disabled" 
+              />
+              
+              <select 
+                v-else-if="selectedTable === 'box' && (col === 'type' || col === 'typ')"
+                :id="'field-'+col"
+                v-model="itemToEdit[col]"
+              >
+                  <option>Typ 1</option>
+                  <option>Typ 7</option>
+                  <option>Typ 8</option>
+                  <option>Typ 9</option>
+              </select>
+
+              <input 
+                v-else-if="getFieldConfig(col).type === 'datetime'" 
+                :id="'field-'+col"
+                type="datetime-local" 
+                v-model="itemToEdit[col]" 
+                :step="1" 
+              />
+              
+              <input 
+                v-else-if="getFieldConfig(col).type === 'number'" 
+                :id="'field-'+col"
+                type="number" 
+                v-model.number="itemToEdit[col]" 
+                :step="getFieldConfig(col).step" 
+              />
+              
+              <input 
+                v-else 
+                :id="'field-'+col"
+                type="text" 
+                v-model="itemToEdit[col]" 
+                :required="isFieldRequired(col)" 
+              />
             </div>
           </div>
           <div class="form-actions">
@@ -506,7 +545,7 @@ export default {
       });
       if (this.selectedTable === 'box') {
         emptyItem['num_max'] = 40;
-        emptyItem['type'] = 1;
+        emptyItem['type'] = 1; // Default
       }
       this.itemToEdit = emptyItem;
       this.scrollToForm();
@@ -723,7 +762,6 @@ export default {
 </script>
 
 <style scoped>
-/* Dein CSS-Styling bleibt erhalten */
 .container { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 1400px; margin: 0 auto; padding: 20px; min-height: 100vh; color: #333; transition: background-color 0.3s; }
 header h1 { margin-bottom: 20px; color: #2c3e50; }
 .table-selector { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 15px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 20px; }
@@ -744,6 +782,7 @@ input, select, .search-input { padding: 8px 12px; border: 1px solid #ced4da; bor
 .btn-edit { background: #adfd0d; color: white; }
 .btn-edit:hover { background: #0bd752; }
 .btn-delete { background: #dc3545; color: white; }
+.btn-logout { background: #dc3545; color: white; }
 .btn-delete:hover { background: #bb2d3b; }
 .btn:hover { opacity: 0.9; }
 .mdi-icon { width: 20px; height: 20px; }

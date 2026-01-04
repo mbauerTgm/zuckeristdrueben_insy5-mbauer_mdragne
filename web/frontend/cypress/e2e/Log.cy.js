@@ -1,7 +1,7 @@
 describe('Logs Test:', () => {
   it('Check if Log is Read Only', () => {
     cy.visit('http://localhost:8082/')
-
+    cy.login('TestAdmin','Sehr_Schwieriges_Test_Passwort!!_Sehr_Geheim_12253')
     //---------- Create
     cy.get(':nth-child(1) > select').select('Log (Read-Only)')
 
