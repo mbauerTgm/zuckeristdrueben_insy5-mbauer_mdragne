@@ -6,7 +6,6 @@
 
     <main>
       <section>
-
         <div class="table-selector">
           <div class="control-group">
             <label>Tabelle:</label>
@@ -205,12 +204,9 @@
               <select 
                 v-else-if="selectedTable === 'box' && (col === 'type' || col === 'typ')"
                 :id="'field-'+col"
-                v-model="itemToEdit[col]"
+                v-model.number="itemToEdit[col]"
               >
-                  <option>Typ 1</option>
-                  <option>Typ 7</option>
-                  <option>Typ 8</option>
-                  <option>Typ 9</option>
+                  <option v-for="n in 9" :key="n" :value="n">Typ {{ n }}</option>
               </select>
 
               <input 
@@ -557,7 +553,7 @@ export default {
       });
       if (this.selectedTable === 'box') {
         emptyItem['num_max'] = 40;
-        emptyItem['type'] = 1; // Default
+        emptyItem['type'] = 1; 
       }
       this.itemToEdit = emptyItem;
       this.scrollToForm();
@@ -567,10 +563,14 @@ export default {
       this.isNewItem = false;
       const copy = JSON.parse(JSON.stringify(item));
 
-      copy.__pk = {
-        s_id: item.s_id,
-        s_stamp: item.s_stamp
-      };
+      copy.__pk = {};
+      if (Array.isArray(this.currentSchema.pk)) {
+        this.currentSchema.pk.forEach(key => {
+          copy.__pk[key] = item[key];
+        });
+      } else {
+        copy.__pk[this.currentSchema.pk] = item[this.currentSchema.pk];
+      }
 
       const config = this.currentSchema.fieldConfigs || {};
       for (const [key, value] of Object.entries(copy)) {
@@ -594,8 +594,12 @@ export default {
       const config = schema.fieldConfigs || {};
 
       for (const key in dataToSend) {
-        if (config[key]?.type === 'number' && dataToSend[key] === '') {
-           dataToSend[key] = null;
+        if (config[key]?.type === 'number') {
+           if (dataToSend[key] === '' || dataToSend[key] === null) {
+              dataToSend[key] = null;
+           } else {
+              dataToSend[key] = Number(dataToSend[key]);
+           }
         }
         if (config[key]?.type === 'datetime' && dataToSend[key]) {
            try {
