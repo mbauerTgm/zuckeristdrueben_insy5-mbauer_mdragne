@@ -65,8 +65,7 @@ jobs:
             NOW()
           );
           EOF
-      # NEUER SCHRITT: User-Tabelle ausgeben (für Debugging)
-      - name: Debug: Show users in database
+      - name: Debug Show Users
         run: |
           echo "=== DEBUG: Users in venlab.users table ==="
           docker exec -i zuckerpostgres psql -U postgres -d venlab -c "SELECT u_id, username, password_hash, role_id, created_at FROM venlab.users;"
