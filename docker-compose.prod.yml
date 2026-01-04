@@ -31,7 +31,16 @@ services:
     restart: always
     environment:
       # Begrenzt Java auf maximal 350MB RAM
-      - JAVA_TOOL_OPTIONS=-Xms256m -Xmx350m
+      JAVA_TOOL_OPTIONS: "-Xms256m -Xmx350m"
+      
+      # Sicherheitshalber hier explizit definieren, falls das Merging fehlschlägt:
+      POSTGRES_DB: "${POSTGRES_DB}"
+      POSTGRES_USER: "${POSTGRES_USER}"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
+      SPRING_DATASOURCE_URL: "jdbc:postgresql://postgres:5432/${POSTGRES_DB}"
+      SPRING_DATASOURCE_USERNAME: "${POSTGRES_USER}"
+      SPRING_DATASOURCE_PASSWORD: "${POSTGRES_PASSWORD}"
+      JWT_TOKEN: "${JWT_SECRET}"
 
   frontend:
     build:
