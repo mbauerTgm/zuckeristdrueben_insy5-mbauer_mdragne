@@ -56,8 +56,10 @@ jobs:
           
       - name: Ensure clean database
         run: |
-          docker exec -i zuckerpostgres psql -U postgres -c "DROP DATABASE IF EXISTS venlab;"
-          docker exec -i zuckerpostgres psql -U postgres -c "CREATE DATABASE venlab;"
+          docker exec -i zuckerpostgres psql -U postgres -d postgres -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname='venlab';"
+          docker exec -i zuckerpostgres psql -U postgres -d postgres -c "DROP DATABASE IF EXISTS venlab;"
+          docker exec -i zuckerpostgres psql -U postgres -d postgres -c "CREATE DATABASE venlab;"
+
 
       - name: Restore database
         run: |
