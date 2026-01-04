@@ -18,7 +18,7 @@ describe('Analysis Test:', () => {
 
   beforeEach(() => {
     cy.visit('http://localhost:8082/')
-
+    cy.login('TestAdmin','Sehr_Schwieriges_Test_Passwort!!_Sehr_Geheim_12253')
     cy.createSample(sampleData);
     cy.wait(500)
   });
