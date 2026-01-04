@@ -239,8 +239,15 @@
             </div>
           </div>
           <div class="form-actions">
-            <button @click="cancelEdit" class="btn btn-cancel">Abbrechen</button>
-            <button @click="saveItem" class="btn btn-save">Speichern</button>
+            <button @click="cancelEdit" class="btn btn-cancel" :disabled="isSaving">Abbrechen</button>
+            <button @click="saveItem" class="btn btn-save" :disabled="isSaving">
+              <template v-if="!isSaving">
+                Speichern
+              </template>
+              <template v-else>
+                <Create_Loader />
+              </template>
+            </button>
           </div>
         </div>
 
@@ -262,6 +269,7 @@
 
 <script>
 import LoadingBar from '@/components/Loadingbar.vue'
+import Create_Loader from './Create_Loader.vue';
 const API_BASE_URL = '/api';
 
 const SCHEMAS = {
@@ -365,7 +373,10 @@ const SCHEMAS = {
 
 export default {
   name: 'VenlabFrontend',
-  components: { LoadingBar },
+  components: { 
+    LoadingBar,
+    Create_Loader
+   },
 
   data() {
     return {
@@ -391,8 +402,9 @@ export default {
 
       darkMode: localStorage.getItem('darkMode') === 'true',
       
-      // NEU: Speichert die aktuelle Rolle
       currentUserRole: '',
+
+      isSaving: false,
     };
   },
 
@@ -575,6 +587,8 @@ export default {
     },
 
     async saveItem() {
+      this.isSaving = true;
+
       const schema = this.currentSchema;
       const dataToSend = { ...this.itemToEdit };
       const config = schema.fieldConfigs || {};
@@ -621,6 +635,8 @@ export default {
       } catch (error) {
         console.log(`Fehler beim Speichern:\n${error.message}`);
         this.error = error;
+      } finally {
+        this.isSaving = false;
       }
     },
 
