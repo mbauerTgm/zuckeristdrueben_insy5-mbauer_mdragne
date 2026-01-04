@@ -30,8 +30,8 @@ services:
     image: ghcr.io/tgm-hit/insy5-informationssysteme-vue-pwa-pwa_mbauer_mdragne_dgernesch/backend:latest
     restart: always
     environment:
-      # Begrenzt Java auf maximal 350MB RAM
-      JAVA_TOOL_OPTIONS: "-Xms256m -Xmx350m"
+      # Begrenzt Java auf maximal 475MB RAM
+      JAVA_TOOL_OPTIONS: "-Xms256m -Xmx475m"
       
       # Sicherheitshalber hier explizit definieren, falls das Merging fehlschlägt:
       POSTGRES_DB: "${POSTGRES_DB}"
