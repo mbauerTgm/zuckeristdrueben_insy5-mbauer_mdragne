@@ -51,11 +51,6 @@ Dadurch wird automatisch der Container erstellt und sowohl das Back- und Fronten
 Docker liest die `docker-compose.yml` und startet alle definierten Services.
 Beim ersten Start kann der Vorgang etwas länger dauern, da Images gebaut oder heruntergeladen werden.
 
-Danach muss mit folgendem Befehl das Frontend eingebunden werden.
-
-```bash
-docker exec -it frontend sh -c "cd frontend && yarn build && cp -r dist/* /usr/share/nginx/html"
-```
 ---
 
 ### 2. Datenbank-Backup wiederherstellen
