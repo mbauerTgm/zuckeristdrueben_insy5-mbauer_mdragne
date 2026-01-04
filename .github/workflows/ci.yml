@@ -57,8 +57,7 @@ jobs:
 
       - name: Insert CI test user
         run: |
-          docker exec -i zuckerpostgres psql -U postgres -d venlab -c "INSERT INTO venlab.users (username, password_hash, role_id, created_at) VALUES ('TestAdmin', '\$2a\$12\$PJk5qDz5vOkVt7yGmw7e6eEJ0b/OS3eUfl2I/SjepbboUae4.XMM.', 1, NOW());"
-
+          docker exec -i zuckerpostgres psql -U postgres -d database -c "INSERT INTO venlab.users (username, password_hash, role_id, created_at) VALUES ('TestAdmin', '$2a$12$/x3aVXCCLs6YCvN5O4lwhu3TLNLfncNqhRAiIrkfFXkC0GrPYVU..', 1, NOW());"
       - name: Restart backend after DB reset
         run: docker restart rest_backend
 
