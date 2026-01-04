@@ -773,17 +773,17 @@ input, select, .search-input { padding: 8px 12px; border: 1px solid #ced4da; bor
 .search-input { border-top-right-radius: 0; border-bottom-right-radius: 0; flex: 1; }
 .button-group { margin-left: auto; display: flex; gap: 10px; }
 .btn { border: none; border-radius: 4px; padding: 8px 16px; cursor: pointer; font-weight: 600; transition: background 0.2s, color 0.2s; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
-.btn-search { background: #910dfd; color: white; border-radius: 0 4px 4px 0; padding: 0 12px; }
-.btn-load { background: #6c757d; color: white; }
-.btn-save { background: #198754; color: white; }
+.btn-search { background: #7108c7; color: white; border-radius: 0 4px 4px 0; padding: 0 12px; }
+.btn-load { background: #7ca7cd; color: white; }
+.btn-save { background: #18ad68; color: white; }
 .btn-cancel { background: #f8f9fa; color: #333; border: 1px solid #ddd; }
 .action-buttons { display: flex; gap: 5px; }
 .action-buttons .btn { padding: 6px; }
-.btn-edit { background: #adfd0d; color: white; }
-.btn-edit:hover { background: #0bd752; }
-.btn-delete { background: #dc3545; color: white; }
+.btn-edit { background: #ffea06; color: white; }
+.btn-edit:hover { background: #ffb006; }
+.btn-delete { background: #980615; color: white; }
 .btn-logout { background: #dc3545; color: white; }
-.btn-delete:hover { background: #bb2d3b; }
+.btn-delete:hover { background: #75030e; }
 .btn:hover { opacity: 0.9; }
 .mdi-icon { width: 20px; height: 20px; }
 .action-buttons .mdi-icon { width: 18px; height: 18px; }
