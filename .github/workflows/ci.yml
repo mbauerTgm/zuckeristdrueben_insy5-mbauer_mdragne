@@ -54,11 +54,11 @@ jobs:
 
       - name: Restore database
         run: |
-          docker exec -i postgres911 psql -U postgres -d venlab < db_init_schema/init_schema.sql
+          docker exec -i zuckerpostgres psql -U postgres -d venlab < db_init_schema/init_schema.sql
 
       - name: Insert CI test user
         run: |
-          docker exec -i postgres911 psql -U postgres -d venlab <<'EOF'
+          docker exec -i zuckerpostgres psql -U postgres -d venlab <<'EOF'
           INSERT INTO venlab.users (username, password_hash, role_id, created_at)
           VALUES (
             'TestAdmin',
@@ -74,7 +74,7 @@ jobs:
       - name: Wait for frontend build
         run: |
           for i in {1..90}; do
-            if docker exec frontend test -f /usr/share/nginx/html/index.html 2>/dev/null; then
+            if docker exec frontend_istFrueben test -f /usr/share/nginx/html/index.html 2>/dev/null; then
               break
             fi
             if [ $i -eq 90 ]; then
@@ -144,9 +144,9 @@ jobs:
       - name: Show logs on failure
         if: failure()
         run: |
-          docker logs frontend
+          docker logs frontend_istFrueben
           docker logs rest_backend
-          docker logs postgres911
+          docker logs zuckerpostgres
 
       - name: Cleanup
         if: always()
