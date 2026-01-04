@@ -89,8 +89,7 @@ jobs:
       - name: Verify frontend
         run: |
           curl -f http://localhost:8082 || (docker logs frontend_istFrueben && exit 1)
-      # NEUER SCHRITT: Simuliere Login und zeige Backend-Logs
-      - name: Debug: Test login and show backend logs
+      - name: Debug Test login and show backend logs
         run: |
           echo "=== DEBUG: Testing login with curl ==="
           # Simuliere den Login-POST (wie Cypress es macht)
