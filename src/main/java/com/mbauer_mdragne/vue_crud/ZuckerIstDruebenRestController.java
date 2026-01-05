@@ -21,6 +21,13 @@ import com.mbauer_mdragne.vue_crud.Repositories.BoxRepository;
 import com.mbauer_mdragne.vue_crud.Repositories.LogRepository;
 import com.mbauer_mdragne.vue_crud.Repositories.SampleRepository;
 import com.mbauer_mdragne.vue_crud.Repositories.ThresholdRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.data.jpa.domain.Specification;
+import com.mbauer_mdragne.vue_crud.DTOs.AnalysisFilterDto;
+import com.mbauer_mdragne.vue_crud.Repositories.AnalysisSpecifications;
 
 import jakarta.persistence.EntityManager;
 import java.time.OffsetDateTime;
@@ -54,6 +61,20 @@ public class ZuckerIstDruebenRestController {
             return analysisRepo.findAllForResearcher();
         }
         return analysisRepo.findAll();
+    }
+
+    @GetMapping("/analysis/filter")
+    public ResponseEntity<Page<Analysis>> filterAnalysis( AnalysisFilterDto searchDto, @PageableDefault(size = 20, sort = "id", direction = Sort.Direction.DESC) Pageable pageable) {
+        Specification<Analysis> spec = AnalysisSpecifications.withDynamicFilter(searchDto);
+
+        if (isResearcher()) {
+            spec = spec.and(AnalysisSpecifications.forResearcher());
+        }
+        
+        //Suchen: Gibt immer eine Page zurück, niemals alle Daten auf einmal
+        Page<Analysis> result = analysisRepo.findAll(spec, pageable);
+        
+        return ResponseEntity.ok(result);
     }
 
     @GetMapping("/analysis/{id}")
