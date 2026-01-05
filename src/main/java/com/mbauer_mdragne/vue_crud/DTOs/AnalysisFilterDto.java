@@ -1,7 +1,7 @@
 package com.mbauer_mdragne.vue_crud.DTOs;
 
 import lombok.Data;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Data
 public class AnalysisFilterDto {
@@ -9,8 +9,8 @@ public class AnalysisFilterDto {
 
     private Range<String> sId;
 
-    private Range<LocalDate> dateIn;
-    private Range<LocalDate> dateOut;
+    private Range<LocalDateTime> dateIn;
+    private Range<LocalDateTime> dateOut;
 
     private Range<String> aFlags;
 }

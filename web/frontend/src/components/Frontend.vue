@@ -120,27 +120,27 @@
                         </div>
                     </div>
                     <div class="filter-group">
-                        <label>Date In</label>
-                        <div class="range-inputs">
-                            <input type="date" v-model="searchParams.dateInFrom" />
-                            <input type="date" v-model="searchParams.dateInTo" />
-                        </div>
-                    </div>
-                    <div class="filter-group">
-                        <label>Date Out</label>
-                        <div class="range-inputs">
-                            <input type="date" v-model="searchParams.dateOutFrom" />
-                            <input type="date" v-model="searchParams.dateOutTo" />
-                        </div>
-                    </div>
-                    <div class="filter-group">
-                        <label>A Flags</label>
-                        <div class="range-inputs">
-                            <input type="text" v-model="searchParams.aFlagsFrom" placeholder="Von" />
-                            <input type="text" v-model="searchParams.aFlagsTo" placeholder="Bis" />
-                        </div>
-                    </div>
-                    <button class="btn btn-save" style="width: 100%; margin-top: 10px;" @click="applyBackendFilter">Anwenden</button>
+                      <label>Date In</label>
+                      <div class="range-inputs">
+                          <input type="datetime-local" step="1" v-model="searchParams.dateInFrom" />
+                          <input type="datetime-local" step="1" v-model="searchParams.dateInTo" />
+                      </div>
+                  </div>
+                  <div class="filter-group">
+                      <label>Date Out</label>
+                      <div class="range-inputs">
+                          <input type="datetime-local" step="1" v-model="searchParams.dateOutFrom" />
+                          <input type="datetime-local" step="1" v-model="searchParams.dateOutTo" />
+                      </div>
+                  </div>
+                  <div class="filter-group">
+                      <label>A Flags</label>
+                      <div class="range-inputs">
+                          <input type="text" v-model="searchParams.aFlagsFrom" placeholder="Von" />
+                          <input type="text" v-model="searchParams.aFlagsTo" placeholder="Bis" />
+                      </div>
+                  </div>
+                  <button class="btn btn-save" style="width: 100%; margin-top: 10px;" @click="applyBackendFilter">Anwenden</button>
                 </div>
               </div>
             </div>
@@ -686,8 +686,8 @@ export default {
       params.append('size', this.displayLimit);
       
       if (this.selectedTable === 'analysis') {
-          if (this.searchParams.idFrom) params.append('id.from', this.searchParams.idFrom);
-          if (this.searchParams.idTo) params.append('id.to', this.searchParams.idTo);
+          if (this.searchParams.idFrom) params.append('aId.from', this.searchParams.idFrom);
+          if (this.searchParams.idTo) params.append('aId.to', this.searchParams.idTo);
           
           if (this.searchParams.sIdFrom) params.append('sId.from', this.searchParams.sIdFrom);
           if (this.searchParams.sIdTo) params.append('sId.to', this.searchParams.sIdTo);
