@@ -121,7 +121,7 @@ jobs:
         run: |
           cd web/frontend
           yarn test:report
-        continue-on-error: true
+        continue-on-error: false
 
       - name: Upload test results
         if: always()

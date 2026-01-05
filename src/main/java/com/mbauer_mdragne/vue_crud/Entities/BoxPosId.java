@@ -1,28 +1,20 @@
 package com.mbauer_mdragne.vue_crud.Entities;
 
 import java.io.Serializable;
-import java.util.Objects;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
 
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@EqualsAndHashCode
 public class BoxPosId implements Serializable {
-    private String b_id;
-    private Integer bpos_id;
 
-    public BoxPosId() {}
-    public BoxPosId(String b_id, Integer bpos_id) {
-        this.b_id = b_id;
-        this.bpos_id = bpos_id;
-    }
+    private String bId;
+    private Integer bposId;
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof BoxPosId)) return false;
-        BoxPosId that = (BoxPosId) o;
-        return Objects.equals(b_id, that.b_id) && Objects.equals(bpos_id, that.bpos_id);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(b_id, bpos_id);
-    }
 }
