@@ -54,8 +54,8 @@ public class ZuckerIstDruebenRestController {
     }
 
     @GetMapping("/analysis/filter")
-    public ResponseEntity<Page<Analysis>> filterAnalysis( AnalysisFilterDto searchDto, @PageableDefault(size = 20, sort = "aId", direction = Sort.Direction.DESC) Pageable pageable) {
-        Specification<Analysis> spec = AnalysisSpecifications.withDynamicFilter(searchDto);
+    public ResponseEntity<Page<Analysis>> filterAnalysis( AnalysisFilterDto filterDto, @PageableDefault(size = 20, sort = "aId", direction = Sort.Direction.DESC) Pageable pageable) {
+        Specification<Analysis> spec = AnalysisSpecifications.withDynamicFilter(filterDto);
 
         if (isResearcher()) {
             spec = spec.and(AnalysisSpecifications.forResearcher());
@@ -175,7 +175,7 @@ public class ZuckerIstDruebenRestController {
                     a.getPol(),
                     a.getNat(),
                     a.getKal(),
-                    a.getComment() != null ? a.getComment().replace(";", ",") : "" // Semikolon im Kommentar escapen
+                    a.getComment() != null ? a.getComment().replace(";", ",") : ""
                 ));
             }
         }
@@ -274,6 +274,39 @@ public class ZuckerIstDruebenRestController {
 
         } catch (NumberFormatException e) {
             throw new BadRequestException("Invalid timestamp: " + sStamp);
+        }
+    }
+    
+    @GetMapping("/samples/export")
+    public void exportSamplesToCsv(HttpServletResponse response) throws IOException {
+        List<Sample> list;
+    
+        if (isResearcher()) {
+            list = sampleRepo.findAllForResearcher(); 
+        } else {
+            list = sampleRepo.findAll();
+        }
+
+        response.setContentType("text/csv");
+        response.setCharacterEncoding("UTF-8");
+        response.setHeader("Content-Disposition", "attachment; filename=samples_export.csv");
+
+        try (PrintWriter writer = response.getWriter()) {
+            // Header-Zeile mit deinen echten Feldnamen
+            writer.println("SampleID;Timestamp;Name;WeightNet;Flags;Lane;Comment");
+
+            for (Sample s : list) {
+                writer.println(String.format("%s;%s;%s;%s;%s;%s;%s",
+                    s.getSId() != null ? s.getSId() : "",
+                    s.getSStamp() != null ? s.getSStamp().toString() : "",
+                    s.getName() != null ? s.getName() : "",
+                    s.getWeightNet() != null ? s.getWeightNet().toString() : "0",
+                    s.getSFlags() != null ? s.getSFlags() : "",
+                    s.getLane() != null ? s.getLane() : "",
+                    // Hier war der Fehler: es heißt bei dir 'comment'
+                    s.getComment() != null ? s.getComment().replace(";", ",") : ""
+                ));
+            }
         }
     }
 
