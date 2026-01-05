@@ -3,47 +3,34 @@ package com.mbauer_mdragne.vue_crud.Entities;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
 
 @Entity
 @Table(name = "threshold", schema = "venlab")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class Threshold {
 
     @Id
-    private String th_id;
+    @Column(name = "th_id")
+    @JsonProperty("th_id")
+    private String thId;
 
-    private BigDecimal value_min;
-    private BigDecimal value_max;
-    private Timestamp date_changed;
+    @Column(name = "value_min")
+    @JsonProperty("value_min")
+    private BigDecimal valueMin;
 
-    public String getTh_id() {
-        return th_id;
-    }
+    @Column(name = "value_max")
+    @JsonProperty("value_max")
+    private BigDecimal valueMax;
 
-    public void setTh_id(String th_id) {
-        this.th_id = th_id;
-    }
-
-    public BigDecimal getValue_min() {
-        return value_min;
-    }
-
-    public void setValue_min(BigDecimal value_min) {
-        this.value_min = value_min;
-    }
-
-    public BigDecimal getValue_max() {
-        return value_max;
-    }
-
-    public void setValue_max(BigDecimal value_max) {
-        this.value_max = value_max;
-    }
-
-    public Timestamp getDate_changed() {
-        return date_changed;
-    }
-
-    public void setDate_changed(Timestamp date_changed) {
-        this.date_changed = date_changed;
-    }
+    @Column(name = "date_changed")
+    @JsonProperty("date_changed")
+    private Timestamp dateChanged;
 }

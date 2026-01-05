@@ -1,10 +1,15 @@
 # Informationssysteme "PWA Deployment" GK
 von: Maximilian Bauer, Matei Dragne, Denis Gernesch 5CHITM
 
-## Deployment & CD
-Während dieser Aufgabe wurden ein automatisches Deployment mittels Github Actions ermöglicht. Dabei werden bei einem Push auf den Main-Branch im CD alle Images erstellt. Anschließend werden diese auf einem Cloudserver gepulled und gestartet. 
+## Continuous Integration
+Um bei jedem Push auf GitHub die vollständige Lauffähigkeit des Projekts sicherzustellen, wurde mithilfe von GitHub Actions ein automatisierter Integrationstest (CI – Build & Tests) eingerichtet. Darin wird das Projekt in Docker gebaut, die erforderliche Datenstruktur eingespielt und anschließend End-to-End-Tests (E2E) mit Cypress durchgeführt.
 
-Die Website ist unter [https://zuckeristdrueben.live](https://zuckeristdrueben.live) erreichbar.
+## Deployment & CD
+Vorbereitung des Servers: Auf einem Privaten Cloud Server (über Oracle) wurde die Website gehostet. Dazu mussten zuerst in der OCI die Port 80 und 443 im Subnetz der Servers freigegeben werden. Danach mussten sie aufgrund der Voreinstellungen von Oracle im Linux System extra freigegeben werden. 
+
+Während dieser Aufgabe wurden ein automatisches Deployment mittels Github Actions ermöglicht. Dabei werden bei einem Push auf den Main-Branch im CD alle Images erstellt. Anschließend werden diese auf einem Cloudserver gepulled und gestartet. Damit der Workflow auf den Server zugreifen kann wurden in den Github secrets sowohl die IP des Servers (HOST), als auch der Server Username und Privatekey des Servers eingetragen. Weiters wurde ein Deploy Key für den Serveruser erstellt, damit dieser änderungen aus dem Repo Pullen kann.
+
+Die Website ist unter [https://zuckeristdrueben.live](https://zuckeristdrueben.live) erreichbar. Die Domain wurde beim Anbieter mit der IP des Servers verbunden.
 
 Um das SSL-Zertifikat zu erhalten wurde der Caddy Reverse-Proxy verwendet.
 
@@ -78,7 +83,7 @@ Beim ersten Start kann der Vorgang etwas länger dauern, da Images gebaut oder h
 Sobald der PostgreSQL-Container läuft, kann das Datenbank-Backup wiederhergestellt werden. Dazu müssen die .dat Datein mit dem Backup, sowie das Restore.sql File im Ordner /backups vorhanden sein. Dieser Befehl verwendet das tar.dat file alle Schema Anweisungen die in diesem File nicht enthalten sind werden nicht übernommen.
 
 ```bash
-docker exec -i postgres pg_restore -U postgres -d database -Fd /backups/venlab_backup_0530
+docker exec -i zuckerpostgres pg_restore -U postgres -d database -Fd /backups/venlab_backup_0530
 ```
 
 **Erklärung:**

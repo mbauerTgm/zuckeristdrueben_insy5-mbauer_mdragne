@@ -1,34 +1,45 @@
 module.exports = {
   pwa: {
     name: 'INSY Frontend',
-    short_name: 'INSY',
     themeColor: '#0f172a',
-    backgroundColor: '#0f172a',
-    display: 'standalone',
-    
-    // Keine Icons generieren
+    msTileColor: '#0f172a',
+    appleMobileWebAppCapable: 'yes',
+    appleMobileWebAppStatusBarStyle: 'default',
+
+    // Pfade relativ zu /public
     iconPaths: {
-      faviconSVG: null,
-      favicon32: null,
-      favicon16: null,
-      appleTouchIcon: null,
-      maskIcon: null,
-      msTileImage: null
+      favicon32: 'img/icons/favicon-32x32.png',
+      favicon16: 'img/icons/favicon-16x16.png',
+      appleTouchIcon: 'img/icons/apple-touch-icon.png',
+      msTileImage: 'img/icons/msapplication-icon-144x144.png'
     },
-    
-    // Minimales Manifest
+
+    // Manifest-Inhalt (WICHTIG: icons NICHT leer!)
     manifestOptions: {
       name: 'INSY Frontend',
-      short_name:  'INSY',
+      short_name: 'INSY',
       description: 'INSY Frontend Anwendung',
       theme_color: '#0f172a',
-      background_color:  '#0f172a',
-      display:  'standalone',
+      background_color: '#0f172a',
+      display: 'standalone',
       start_url: '/',
-      icons: []
+      icons: [
+        {
+          src: '/img/icons/android-chrome-192x192.png',
+          sizes: '192x192',
+          type: 'image/png',
+          purpose: 'any'
+        },
+        {
+          src: '/img/icons/android-chrome-512x512.png',
+          sizes: '512x512',
+          type: 'image/png',
+          purpose: 'any'
+        }
+      ]
     },
-    
-    // Workbox Optionen
+
+    // Service Worker (Workbox)
     workboxPluginMode: 'GenerateSW',
     workboxOptions: {
       skipWaiting: true,

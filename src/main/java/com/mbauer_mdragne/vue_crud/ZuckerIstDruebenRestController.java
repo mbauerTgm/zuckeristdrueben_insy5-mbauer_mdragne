@@ -5,28 +5,25 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import com.mbauer_mdragne.vue_crud.Entities.Analysis;
-import com.mbauer_mdragne.vue_crud.Entities.Box;
-import com.mbauer_mdragne.vue_crud.Entities.BoxPos;
-import com.mbauer_mdragne.vue_crud.Entities.BoxPosId;
-import com.mbauer_mdragne.vue_crud.Entities.Log;
-import com.mbauer_mdragne.vue_crud.Entities.Sample;
-import com.mbauer_mdragne.vue_crud.Entities.SampleId;
-import com.mbauer_mdragne.vue_crud.Entities.Threshold;
+import com.mbauer_mdragne.vue_crud.Entities.*;
 import com.mbauer_mdragne.vue_crud.Errors.BadRequestException;
 import com.mbauer_mdragne.vue_crud.Errors.ResourceNotFoundException;
-import com.mbauer_mdragne.vue_crud.Repositories.AnalysisRepository;
-import com.mbauer_mdragne.vue_crud.Repositories.BoxPosRepository;
-import com.mbauer_mdragne.vue_crud.Repositories.BoxRepository;
-import com.mbauer_mdragne.vue_crud.Repositories.LogRepository;
-import com.mbauer_mdragne.vue_crud.Repositories.SampleRepository;
-import com.mbauer_mdragne.vue_crud.Repositories.ThresholdRepository;
+import com.mbauer_mdragne.vue_crud.Repositories.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.data.jpa.domain.Specification;
+import com.mbauer_mdragne.vue_crud.DTOs.AnalysisFilterDto;
+import com.mbauer_mdragne.vue_crud.Repositories.AnalysisSpecifications;
 
 import jakarta.persistence.EntityManager;
+import jakarta.servlet.http.HttpServletResponse;
+
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeParseException;
-
-
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.sql.Timestamp;
 import java.util.List;
 
@@ -56,6 +53,20 @@ public class ZuckerIstDruebenRestController {
         return analysisRepo.findAll();
     }
 
+    @GetMapping("/analysis/filter")
+    public ResponseEntity<Page<Analysis>> filterAnalysis( AnalysisFilterDto searchDto, @PageableDefault(size = 20, sort = "aId", direction = Sort.Direction.DESC) Pageable pageable) {
+        Specification<Analysis> spec = AnalysisSpecifications.withDynamicFilter(searchDto);
+
+        if (isResearcher()) {
+            spec = spec.and(AnalysisSpecifications.forResearcher());
+        }
+        
+        //Suchen: Gibt immer eine Page zurück, niemals alle Daten auf einmal
+        Page<Analysis> result = analysisRepo.findAll(spec, pageable);
+        
+        return ResponseEntity.ok(result);
+    }
+
     @GetMapping("/analysis/{id}")
     public ResponseEntity<Analysis> getAnalysisById(@PathVariable Long id) {
         Analysis analysis = analysisRepo.findById(id)
@@ -67,23 +78,23 @@ public class ZuckerIstDruebenRestController {
     @PostMapping("/analysis")
     public ResponseEntity<Analysis> createAnalysis(@RequestBody Analysis analysis) {
 
-        if (analysis.getS_id() == null) {
-            throw new BadRequestException("s_id darf nicht null sein");
+        if (analysis.getSId() == null) {
+            throw new BadRequestException("sId darf nicht null sein");
         }
 
         Sample sample = em.createQuery(
-                        "SELECT s FROM Sample s WHERE s.s_id = :sid ORDER BY s.s_stamp DESC",
+                        "SELECT s FROM Sample s WHERE s.sId = :sId ORDER BY s.sStamp DESC",
                         Sample.class
                 )
-                .setParameter("sid", analysis.getS_id())
+                .setParameter("sId", analysis.getSId())
                 .setMaxResults(1)
                 .getResultStream()
                 .findFirst()
                 .orElseThrow(() ->
-                        new BadRequestException("Kein Sample gefunden für s_id=" + analysis.getS_id())
+                        new BadRequestException("Kein Sample gefunden für sId=" + analysis.getSId())
                 );
 
-        analysis.setS_stamp(sample.getS_stamp());
+        analysis.setSStamp(sample.getSStamp());
 
         Analysis saved = analysisRepo.save(analysis);
         System.out.println("NatPost: " + analysis.getNat());
@@ -97,33 +108,33 @@ public class ZuckerIstDruebenRestController {
                 .orElseThrow(() -> new ResourceNotFoundException("Analysis not found with id=" + id));
 
         Sample sample = em.createQuery(
-                        "SELECT s FROM Sample s WHERE s.s_id = :sid ORDER BY s.s_stamp DESC",
+                        "SELECT s FROM Sample s WHERE s.sId = :sId ORDER BY s.sStamp DESC",
                         Sample.class
                 )
-                .setParameter("sid", updatedAnalysis.getS_id())
+                .setParameter("sId", updatedAnalysis.getSId())
                 .setMaxResults(1)
                 .getResultStream()
                 .findFirst()
-                .orElseThrow(() -> new BadRequestException("Kein Sample gefunden für s_id=" + updatedAnalysis.getS_id()));
-        existing.setS_id(sample.getS_id());
-        existing.setS_stamp(sample.getS_stamp());
+                .orElseThrow(() -> new BadRequestException("Kein Sample gefunden für sId=" + updatedAnalysis.getSId()));
+        existing.setSId(sample.getSId());
+        existing.setSStamp(sample.getSStamp());
         existing.setPol(updatedAnalysis.getPol());
         existing.setNat(updatedAnalysis.getNat());
         existing.setKal(updatedAnalysis.getKal());
         existing.setAn(updatedAnalysis.getAn());
         existing.setGlu(updatedAnalysis.getGlu());
         existing.setDry(updatedAnalysis.getDry());
-        existing.setDate_in(updatedAnalysis.getDate_in());
-        existing.setDate_out(updatedAnalysis.getDate_out());
-        existing.setWeight_mea(updatedAnalysis.getWeight_mea());
-        existing.setWeight_nrm(updatedAnalysis.getWeight_nrm());
-        existing.setWeight_cur(updatedAnalysis.getWeight_cur());
-        existing.setWeight_dif(updatedAnalysis.getWeight_dif());
+        existing.setDateIn(updatedAnalysis.getDateIn());
+        existing.setDateOut(updatedAnalysis.getDateOut());
+        existing.setWeightMea(updatedAnalysis.getWeightMea());
+        existing.setWeightNrm(updatedAnalysis.getWeightNrm());
+        existing.setWeightCur(updatedAnalysis.getWeightCur());
+        existing.setWeightDif(updatedAnalysis.getWeightDif());
         existing.setDensity(updatedAnalysis.getDensity());
-        existing.setA_flags(updatedAnalysis.getA_flags());
+        existing.setAFlags(updatedAnalysis.getAFlags());
         existing.setLane(updatedAnalysis.getLane());
         existing.setComment(updatedAnalysis.getComment());
-        existing.setDate_exported(updatedAnalysis.getDate_exported());
+        existing.setDateExported(updatedAnalysis.getDateExported());
 
         Analysis saved = analysisRepo.save(existing);
         return ResponseEntity.ok(saved);
@@ -138,6 +149,37 @@ public class ZuckerIstDruebenRestController {
         analysisRepo.deleteById(id);
         return ResponseEntity.noContent().build();
     }
+    @GetMapping("/analysis/export")
+    public void exportAnalysisToCsv(AnalysisFilterDto searchDto, HttpServletResponse response) throws IOException {
+        Specification<Analysis> spec = AnalysisSpecifications.withDynamicFilter(searchDto);
+        if (isResearcher()) {
+            spec = spec.and(AnalysisSpecifications.forResearcher());
+        }
+        // Daten ohne Paging laden
+        List<Analysis> list = analysisRepo.findAll(spec);
+
+        // HTTP Header für Datei-Download setzen
+        response.setContentType("text/csv");
+        response.setCharacterEncoding("UTF-8");
+        response.setHeader("Content-Disposition", "attachment; filename=analysis_export.csv");
+        // CSV schreiben
+        try (PrintWriter writer = response.getWriter()) {
+            // Header-Zeile (Spaltentitel)
+            writer.println("ID;SampleID;DateIn;Pol;Nat;Kal;Comment");
+
+            for (Analysis a : list) {
+                writer.println(String.format("%s;%s;%s;%s;%s;%s;%s",
+                    a.getAId(),
+                    a.getSId() != null ? a.getSId() : "",
+                    a.getDateIn() != null ? a.getDateIn() : "",
+                    a.getPol(),
+                    a.getNat(),
+                    a.getKal(),
+                    a.getComment() != null ? a.getComment().replace(";", ",") : "" // Semikolon im Kommentar escapen
+                ));
+            }
+        }
+    }
 
     // ------------------ Sample ------------------
 
@@ -148,11 +190,22 @@ public class ZuckerIstDruebenRestController {
         }
         return sampleRepo.findAll();
     }
+    @GetMapping("/samples/filter")
+    public ResponseEntity<Page<Sample>> filterSamples(
+        @PageableDefault(size = 20, sort = "sId", direction = Sort.Direction.DESC) Pageable pageable) {
+        Page<Sample> result;
+        if (isResearcher()) {
+            result = sampleRepo.findAllForResearcher(pageable);
+        } else {
+            result = sampleRepo.findAll(pageable);
+        }
+        return ResponseEntity.ok(result);
+    }
 
     @PostMapping("/samples")
     public ResponseEntity<Sample> createSample(@RequestBody Sample sample) {
-        if (sample.getS_stamp() == null) {
-            sample.setS_stamp(new Timestamp(System.currentTimeMillis()));
+        if (sample.getSStamp() == null) {
+            sample.setSStamp(new Timestamp(System.currentTimeMillis()));
         }
         Sample saved = sampleRepo.save(sample);
         return ResponseEntity.ok(saved);
@@ -174,8 +227,8 @@ public class ZuckerIstDruebenRestController {
                 .orElseThrow(() -> new ResourceNotFoundException(
                     "Sample not found: sId=" + sId + ", sStamp=" + sStamp));
 
-            updatedSample.setS_id(existing.getS_id());
-            updatedSample.setS_stamp(existing.getS_stamp());
+            updatedSample.setSId(existing.getSId());
+            updatedSample.setSStamp(existing.getSStamp());
 
             Sample saved = sampleRepo.save(updatedSample);
             return ResponseEntity.ok(saved);
@@ -231,6 +284,13 @@ public class ZuckerIstDruebenRestController {
         return boxRepo.findAll();
     }
 
+    @GetMapping("/boxes/filter")
+    public ResponseEntity<Page<Box>> getAllBoxes(@PageableDefault(size = 20, sort = "bId", direction = Sort.Direction.DESC) Pageable pageable) {
+        Page<Box> response = boxRepo.findAll(pageable);
+        return ResponseEntity.ok(response);
+    }
+    
+
     @GetMapping("/boxes/{bId}")
     public ResponseEntity<Box> getBoxById(@PathVariable String bId) {
         Box box = boxRepo.findById(bId)
@@ -248,7 +308,7 @@ public class ZuckerIstDruebenRestController {
     public ResponseEntity<Box> updateBox(@PathVariable String bId, @RequestBody Box updated) {
         Box existing = boxRepo.findById(bId)
                 .orElseThrow(() -> new ResourceNotFoundException("Box not found with id=" + bId));
-        updated.setB_id(existing.getB_id());
+        updated.setBId(existing.getBId());
         Box saved = boxRepo.save(updated);
         return ResponseEntity.ok(saved);
     }
@@ -269,6 +329,12 @@ public class ZuckerIstDruebenRestController {
         return boxPosRepo.findAll();
     }
 
+    @GetMapping("/boxpos/filter")
+    public ResponseEntity<Page<BoxPos>> getAllBoxPos(@PageableDefault(size = 20, sort = "bId", direction = Sort.Direction.DESC) Pageable pageable) {
+        Page<BoxPos> response = boxPosRepo.findAll(pageable);
+        return ResponseEntity.ok(response);
+    }
+
     @GetMapping("/boxpos/{bId}/{bposId}")
     public ResponseEntity<BoxPos> getBoxPosById(@PathVariable String bId, @PathVariable Integer bposId) {
         BoxPosId id = new BoxPosId(bId, bposId);
@@ -280,15 +346,15 @@ public class ZuckerIstDruebenRestController {
     @PostMapping("/boxpos")
     public ResponseEntity<BoxPos> createBoxPos(@RequestBody BoxPos boxPos) {
          Sample sample = em.createQuery(
-                        "SELECT s FROM Sample s WHERE s.s_id = :sid ORDER BY s.s_stamp DESC",
+                        "SELECT s FROM Sample s WHERE s.sId = :sId ORDER BY s.sStamp DESC",
                         Sample.class
                 )
-                .setParameter("sid", boxPos.getS_id())
+                .setParameter("sId", boxPos.getSId())
                 .setMaxResults(1)
                 .getResultStream()
                 .findFirst()
-                .orElseThrow(() -> new BadRequestException("Kein Sample gefunden für s_id=" + boxPos.getS_id()));
-                boxPos.setS_stamp(sample.getS_stamp());
+                .orElseThrow(() -> new BadRequestException("Kein Sample gefunden für sId=" + boxPos.getSId()));
+                boxPos.setSStamp(sample.getSStamp());
         BoxPos saved = boxPosRepo.save(boxPos);
         return ResponseEntity.ok(saved);
     }
@@ -305,22 +371,22 @@ public class ZuckerIstDruebenRestController {
             .orElseThrow(() -> new ResourceNotFoundException(
                     "BoxPos not found: bId=" + bId + ", bposId=" + bposId));
 
-    updated.setB_id(existing.getB_id());
-    updated.setBpos_id(existing.getBpos_id());
+    updated.setBId(existing.getBId());
+    updated.setBposId(existing.getBposId());
 
     Sample sample = em.createQuery(
-            "SELECT s FROM Sample s WHERE s.s_id = :sid ORDER BY s.s_stamp DESC",
+            "SELECT s FROM Sample s WHERE s.sId = :sId ORDER BY s.sStamp DESC",
             Sample.class
     )
-    .setParameter("sid", updated.getS_id())
+    .setParameter("sId", updated.getSId())
     .setMaxResults(1)
     .getResultStream()
     .findFirst()
     .orElseThrow(() ->
-            new BadRequestException("Kein Sample gefunden für s_id=" + updated.getS_id())
+            new BadRequestException("Kein Sample gefunden für sId=" + updated.getSId())
     );
 
-    updated.setS_stamp(sample.getS_stamp());
+    updated.setSStamp(sample.getSStamp());
 
     BoxPos saved = boxPosRepo.save(updated);
     return ResponseEntity.ok(saved);
@@ -346,6 +412,11 @@ public class ZuckerIstDruebenRestController {
     public List<Log> getAllLogs() {
         return logRepo.findAll();
     }
+    @GetMapping("/logs/filter")
+    public ResponseEntity<Page<Log>> getAllLogs(@PageableDefault(size = 20, sort = "logId", direction = Sort.Direction.DESC) Pageable pageable) {
+        Page<Log> response = logRepo.findAll(pageable);
+        return ResponseEntity.ok(response);
+    }
 
     @GetMapping("/logs/{logId}")
     public ResponseEntity<Log> getLogById(@PathVariable Long logId) {
@@ -359,6 +430,11 @@ public class ZuckerIstDruebenRestController {
     @GetMapping("/thresholds")
     public List<Threshold> getAllThresholds() {
         return thresholdRepo.findAll();
+    }
+    @GetMapping("/thresholds/filter")
+    public ResponseEntity<Page<Threshold>> getAllThresholds(@PageableDefault(size = 20, sort = "thId", direction = Sort.Direction.DESC) Pageable pageable) {
+        Page<Threshold> response = thresholdRepo.findAll(pageable);
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/thresholds/{thId}")

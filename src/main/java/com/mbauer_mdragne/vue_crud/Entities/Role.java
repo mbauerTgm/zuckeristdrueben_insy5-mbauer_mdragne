@@ -1,9 +1,17 @@
 package com.mbauer_mdragne.vue_crud.Entities;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
 
 @Entity
 @Table(name = "role", schema = "venlab")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class Role {
 
     @Id
@@ -14,15 +22,5 @@ public class Role {
     @Column(name = "role_name", unique = true, nullable = false)
     private String name;
 
-    @Column(name = "description")
     private String description;
-
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
-
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
-
-    public String getDescription() { return description; }
-    public void setDescription(String description) { this.description = description; }
 }
