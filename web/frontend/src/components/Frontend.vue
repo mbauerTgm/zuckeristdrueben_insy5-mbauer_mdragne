@@ -39,22 +39,21 @@
 
           <div class="control-group">
             <label>Limit:</label>
-            <select v-model.number="displayLimit" style="width: auto;">
+            <select v-model.number="displayLimit" @change="fetchTableData" style="width: auto;">
               <option :value="10">10</option>
               <option :value="25">25</option>
               <option :value="50">50</option>
               <option :value="100">100</option>
-              <option :value="tableData.length">Alle</option>
             </select>
           </div>
 
           <div class="control-group">
-            <label>Spalten: </label>
+            <label>Ansicht: </label>
             <div class="column-selector">
               <button 
                 type="button" 
                 class="btn btn-columns" 
-                @click="showColumnSelector = ! showColumnSelector"
+                @click="showColumnSelector = !showColumnSelector"
               >
                 <svg viewBox="0 0 24 24" class="mdi-icon">
                   <path fill="currentColor" d="M3,3H11V11H3V3M3,13H11V21H3V13M13,3H21V11H13V3M13,13H21V21H13V13M5,5V9H9V5H5M5,15V19H9V15H5M15,5V9H19V5H15M15,15V19H19V15H15Z" />
@@ -81,6 +80,67 @@
                     />
                     {{ formatHeader(col) }}
                   </label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="control-group" v-if="selectedTable === 'analysis'">
+            <label>Filter: </label>
+            <div class="column-selector">
+              <button 
+                type="button" 
+                class="btn btn-columns" 
+                @click="showFilterSelector = !showFilterSelector"
+              >
+                <svg viewBox="0 0 24 24" class="mdi-icon">
+                  <path fill="currentColor" d="M14,12V19.88C14.04,20.18 13.94,20.5 13.71,20.71C13.32,21.1 12.69,21.1 12.3,20.71L10.29,18.7C10.06,18.47 9.96,18.16 10,17.87V12H9.97L4.21,4.62C3.87,4.19 3.95,3.56 4.38,3.22C4.57,3.08 4.78,3 5,3V3H19V3C19.22,3 19.43,3.08 19.62,3.22C20.05,3.56 20.13,4.19 19.79,4.62L14.03,12H14Z" />
+                </svg>
+                Filter
+              </button>
+              
+              <div v-if="showFilterSelector" class="column-dropdown filter-dropdown">
+                <div class="column-dropdown-header">
+                  <span>Bereichs-Filter</span>
+                  <button @click="resetFilters" class="btn-link">Reset</button>
+                </div>
+                <div class="filter-content">
+                    <div class="filter-group">
+                        <label>ID (a_id)</label>
+                        <div class="range-inputs">
+                            <input type="number" v-model="searchParams.idFrom" placeholder="Von" />
+                            <input type="number" v-model="searchParams.idTo" placeholder="Bis" />
+                        </div>
+                    </div>
+                    <div class="filter-group">
+                        <label>Sample ID (s_id)</label>
+                        <div class="range-inputs">
+                            <input type="text" v-model="searchParams.sIdFrom" placeholder="Von" />
+                            <input type="text" v-model="searchParams.sIdTo" placeholder="Bis" />
+                        </div>
+                    </div>
+                    <div class="filter-group">
+                        <label>Date In</label>
+                        <div class="range-inputs">
+                            <input type="date" v-model="searchParams.dateInFrom" />
+                            <input type="date" v-model="searchParams.dateInTo" />
+                        </div>
+                    </div>
+                    <div class="filter-group">
+                        <label>Date Out</label>
+                        <div class="range-inputs">
+                            <input type="date" v-model="searchParams.dateOutFrom" />
+                            <input type="date" v-model="searchParams.dateOutTo" />
+                        </div>
+                    </div>
+                    <div class="filter-group">
+                        <label>A Flags</label>
+                        <div class="range-inputs">
+                            <input type="text" v-model="searchParams.aFlagsFrom" placeholder="Von" />
+                            <input type="text" v-model="searchParams.aFlagsTo" placeholder="Bis" />
+                        </div>
+                    </div>
+                    <button class="btn btn-save" style="width: 100%; margin-top: 10px;" @click="applyBackendFilter">Anwenden</button>
                 </div>
               </div>
             </div>
@@ -192,9 +252,19 @@
             </tbody>
           </table>
           
-          <p class="info-text">
-            Zeige {{ sortedData.length }} von {{ filteredCount }} Einträgen
-          </p>
+          <div class="table-footer">
+            <p class="info-text">
+                Zeige {{ sortedData.length }} von {{ filteredCount }} Einträgen
+            </p>
+            
+            <div class="pagination-controls" v-if="totalPages > 1">
+                <button @click="changePage(0)" :disabled="currentPage === 0" class="btn btn-page">«</button>
+                <button @click="changePage(currentPage - 1)" :disabled="currentPage === 0" class="btn btn-page">‹</button>
+                <span class="page-info">Seite {{ currentPage + 1 }} von {{ totalPages }}</span>
+                <button @click="changePage(currentPage + 1)" :disabled="currentPage >= totalPages - 1" class="btn btn-page">›</button>
+                <button @click="changePage(totalPages - 1)" :disabled="currentPage >= totalPages - 1" class="btn btn-page">»</button>
+            </div>
+          </div>
         </div>
 
         <div v-if="showDetailModal" class="modal-overlay" id="detail-modal" @click.self="closeDetailModal">
@@ -287,7 +357,7 @@
 
         <div v-if="showDeleteModal" class="modal-overlay">
           <div class="modal-content">
-            <h3>Eintrag löschen?</h3>
+             <h3>Eintrag löschen?</h3>
             <p>Sind Sie sicher, dass Sie diesen Eintrag löschen möchten?</p>
             <div class="modal-actions">
               <button @click="closeDeleteModal" class="btn btn-cancel">Abbrechen</button>
@@ -305,6 +375,7 @@
 import LoadingBar from '@/components/Loadingbar.vue'
 import Create_Loader from './Create_Loader.vue';
 const API_BASE_URL = '/api';
+
 
 const SCHEMAS = {
   analysis: {
@@ -415,13 +486,26 @@ export default {
   data() {
     return {
       selectedTable: 'analysis',
-      tableData: [],
+      tableData: [],      
+      currentPage: 0,
+      totalPages: 0,   
+      totalItems: 0,
       displayLimit: 25,
       loading: false,
       error: null,
+      isSaving: false,
       
       searchQuery: '',
       activeSearchQuery: '',
+      
+      searchParams: {
+        idFrom: '', idTo: '',
+        sIdFrom: '', sIdTo: '',
+        dateInFrom: '', dateInTo: '',
+        dateOutFrom: '', dateOutTo: '',
+        aFlagsFrom: '', aFlagsTo: ''
+      },
+
       sortKey: '',
       sortAsc: true,
 
@@ -439,6 +523,7 @@ export default {
       currentUserRole: '',
 
       showColumnSelector: false,
+      showFilterSelector: false, 
       selectedColumns: [],
     };
   },
@@ -448,24 +533,21 @@ export default {
       return SCHEMAS[this.selectedTable] || SCHEMAS.analysis;
     },
     availableColumns() {
-    // Alle möglichen Spalten für die aktuelle Tabelle
-    if (this.currentSchema. displayColumns) {
-      return this.currentSchema.displayColumns;
-    }
-    if (this.tableData. length > 0) {
-      return Object.keys(this. tableData[0]);
-    }
-    return [];
-  },
+      if (this.currentSchema.displayColumns) {
+        return this.currentSchema.displayColumns;
+      }
+      if (this.tableData.length > 0) {
+        return Object.keys(this.tableData[0]);
+      }
+      return [];
+    },
 
-  visibleColumns() {
-    // Nur die vom User ausgewählten Spalten anzeigen
-    if (this.selectedColumns.length === 0) {
-      return this.availableColumns;
-    }
-    // Reihenfolge beibehalten wie in availableColumns definiert
-    return this.availableColumns. filter(col => this.selectedColumns.includes(col));
-  },
+    visibleColumns() {
+      if (this.selectedColumns.length === 0) {
+        return this.availableColumns;
+      }
+      return this.availableColumns.filter(col => this.selectedColumns.includes(col));
+    },
     formColumns() {
       return this.currentSchema.formColumns || [];
     },
@@ -510,10 +592,9 @@ export default {
           return 0;
         });
       }
-      return data.slice(0, this.displayLimit);
+      return data; 
     },
     
-    // RBAC: Computed Properties für Rechte
     canEdit() {
       return ['Admin', 'Researcher'].includes(this.currentUserRole);
     },
@@ -526,15 +607,14 @@ export default {
     this.updateUserRole();
     this.fetchTableData();
     this.applyDarkMode();
-    document.addEventListener('click', this.closeColumnSelector); 
+    document.addEventListener('click', this.closeSelectors);
   },
 
   beforeUnmount() {
-    document.removeEventListener('click', this.closeColumnSelector); // NEU
+    document.removeEventListener('click', this.closeSelectors);
   },
 
   methods: {
-    // Helper zum Auslesen von Cookies
     getCookie(name) {
       const value = `; ${document.cookie}`;
       const parts = value.split(`; ${name}=`);
@@ -543,7 +623,6 @@ export default {
     },
 
     updateUserRole() {
-      // Holt die Rolle aus dem Cookie. Falls das nicht geht, Fallback auf LocalStorage
       this.currentUserRole = this.getCookie('role') || localStorage.getItem('role') || '';
     },
 
@@ -554,24 +633,76 @@ export default {
       this.sortKey = '';
       this.searchQuery = '';
       this.activeSearchQuery = '';
-      this.fetchTableData();
+      
+      this.currentPage = 0;
+      
+      this.resetFilters(false);
+
       this.selectedColumns = []; 
+      
       this.showColumnSelector = false;
+      this.showFilterSelector = false;
+      
+      this.fetchTableData();
     },
 
     applySearch() {
         this.activeSearchQuery = this.searchQuery;
+    },
+    
+    applyBackendFilter() {
+        this.currentPage = 0;
+        this.showFilterSelector = false;
+        this.fetchTableData();
+    },
+
+    resetFilters(doFetch = true) {
+        this.searchParams = {
+            idFrom: '', idTo: '',
+            sIdFrom: '', sIdTo: '',
+            dateInFrom: '', dateInTo: '',
+            dateOutFrom: '', dateOutTo: '',
+            aFlagsFrom: '', aFlagsTo: ''
+        };
+        if(doFetch) this.fetchTableData();
+    },
+    
+    changePage(newPage) {
+        if (newPage >= 0 && newPage < this.totalPages) {
+            this.currentPage = newPage;
+            this.fetchTableData();
+        }
     },
 
     async fetchTableData() {
       this.loading = true;
       this.error = null;
       this.itemToEdit = null;
-      this.updateUserRole(); // Sicherstellen, dass die Rolle aktuell ist
+      this.updateUserRole();
+
+      const params = new URLSearchParams();
+      params.append('page', this.currentPage);
+      params.append('size', this.displayLimit);
+      
+      if (this.selectedTable === 'analysis') {
+          if (this.searchParams.idFrom) params.append('id.from', this.searchParams.idFrom);
+          if (this.searchParams.idTo) params.append('id.to', this.searchParams.idTo);
+          
+          if (this.searchParams.sIdFrom) params.append('sId.from', this.searchParams.sIdFrom);
+          if (this.searchParams.sIdTo) params.append('sId.to', this.searchParams.sIdTo);
+          
+          if (this.searchParams.dateInFrom) params.append('dateIn.from', this.searchParams.dateInFrom);
+          if (this.searchParams.dateInTo) params.append('dateIn.to', this.searchParams.dateInTo);
+          
+          if (this.searchParams.dateOutFrom) params.append('dateOut.from', this.searchParams.dateOutFrom);
+          if (this.searchParams.dateOutTo) params.append('dateOut.to', this.searchParams.dateOutTo);
+          
+          if (this.searchParams.aFlagsFrom) params.append('aFlags.from', this.searchParams.aFlagsFrom);
+          if (this.searchParams.aFlagsTo) params.append('aFlags.to', this.searchParams.aFlagsTo);
+      }
       
       try {
-        // credentials: 'include' sorgt dafür, dass das HttpOnly Cookie mitgesendet wird
-        const response = await fetch(`${API_BASE_URL}/${this.currentSchema.endpoint}`, {
+        const response = await fetch(`${API_BASE_URL}/${this.currentSchema.endpoint}/filter?${params.toString()}`, {
           method: 'GET',
           credentials: 'include' 
         });
@@ -585,7 +716,15 @@ export default {
         if (!response.ok) {
           throw new Error(data.message || `Fehler beim Laden von ${this.selectedTable}`);
         }
-        this.tableData = data;
+        this.tableData = data.content;
+        this.totalPages = data.totalPages;
+        this.totalItems = data.totalItems;
+        this.currentPage = data.number;
+        
+        if (this.selectedColumns.length === 0) {
+            this.selectAllColumns();
+        }
+
       } catch (error) {
         console.error('Fetch error:', error);
         this.error = error;
@@ -722,7 +861,7 @@ export default {
         
         const response = await fetch(url, { 
           method: 'DELETE',
-          credentials: 'include' // WICHTIG für Cookies
+          credentials: 'include' 
         });
         
         if (response.status === 401 || response.status === 403) {
@@ -834,17 +973,17 @@ export default {
       }
     },
     selectAllColumns() {
-      this.selectedColumns = [... this.availableColumns];
+      this.selectedColumns = [...this.availableColumns];
     },
 
     deselectAllColumns() {
       this.selectedColumns = [];
     },
 
-    closeColumnSelector(event) {
-      // Schließen wenn außerhalb geklickt wird
-      if (! event.target.closest('.column-selector')) {
-        this. showColumnSelector = false;
+    closeSelectors(event) {
+      if (!event.target.closest('.column-selector')) {
+        this.showColumnSelector = false;
+        this.showFilterSelector = false;
       }
     },
   }
@@ -852,6 +991,7 @@ export default {
 </script>
 
 <style scoped>
+/* Grundstyles bleiben gleich */
 .container { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 1400px; margin: 0 auto; padding: 20px; min-height: 100vh; color: #333; transition: background-color 0.3s; }
 header h1 { margin-bottom: 20px; color: #2c3e50; }
 .table-selector { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 15px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 20px; }
@@ -869,11 +1009,21 @@ input, select, .search-input { padding: 8px 12px; border: 1px solid #ced4da; bor
 .btn-cancel { background: #f8f9fa; color: #333; border: 1px solid #ddd; }
 .action-buttons { display: flex; gap: 5px; }
 .action-buttons .btn { padding: 6px; }
-.btn-edit { background: #ffea06; color: white; }
-.btn-edit:hover { background: #ffb006; }
-.btn-delete { background: #980615; color: white; }
+
+/* NEUE BUTTON FARBEN */
+.btn-edit { 
+    background: #f59e0b; /* Angenehmes Orange */
+    color: white; 
+}
+.btn-edit:hover { background: #d97706; }
+
+.btn-delete { 
+    background: #ef4444; /* Weiches Rot */
+    color: white; 
+}
+.btn-delete:hover { background: #dc2626; }
+
 .btn-logout { background: #dc3545; color: white; }
-.btn-delete:hover { background: #75030e; }
 .btn:hover { opacity: 0.9; }
 .mdi-icon { width: 20px; height: 20px; }
 .action-buttons .mdi-icon { width: 18px; height: 18px; }
@@ -920,6 +1070,46 @@ tr:hover .td-sticky { background: #f8f9fa; }
 .detail-value { color: #212529; padding: 8px 0; border-bottom: 1px solid #f1f3f5; word-break: break-all; }
 .btn-dark-mode { background: #495057; color: white; }
 .btn-dark-mode:hover { background: #343a40; }
+
+/* TABLE FOOTER & PAGINATION */
+.table-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 15px;
+    border-top: 1px solid #e9ecef;
+}
+
+.pagination-controls {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.btn-page {
+    padding: 5px 10px;
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    color: #333;
+    font-size: 0.9rem;
+}
+
+.btn-page:disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+
+.btn-page:hover:not(:disabled) {
+    background: #e2e6ea;
+}
+
+.page-info {
+    font-size: 0.9rem;
+    margin: 0 10px;
+    color: #6c757d;
+}
+
+/* Dark Mode Overrides */
 :global(body.dark-theme) { background-color: #0f172a !important; }
 :global(body.dark-theme h1) { color: #ffffff !important; }
 :global(body.dark-theme .table-selector) { background-color: #1e293b !important; border-radius: 8px !important; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5) !important; }
@@ -935,11 +1125,15 @@ tr:hover .td-sticky { background: #f8f9fa; }
 :global(body.dark-theme tr:hover td), :global(body.dark-theme tr:hover .td-sticky) { background-color: #1e293b !important; }
 :global(body.dark-theme .sortable-header:hover) { background-color: #334155 !important; }
 :global(body.dark-theme .info-text) { color: #94a3b8 !important; }
+:global(body.dark-theme .page-info) { color: #94a3b8 !important; }
 :global(body.dark-theme .btn-load) { background-color: #475569 !important; color: white !important; }
 :global(body.dark-theme .btn-load:hover) { background-color: #64748b !important; }
 :global(body.dark-theme .btn-search) { background-color: #910dfd !important; color: white !important; }
 :global(body.dark-theme .btn-dark-mode) { background-color: #334155 !important; color: white !important; }
 :global(body.dark-theme .btn-dark-mode:hover) { background-color: #475569 !important; }
+:global(body.dark-theme .btn-page) { background-color: #334155 !important; border-color: #475569 !important; color: #fff !important; }
+:global(body.dark-theme .btn-page:hover:not(:disabled)) { background-color: #475569 !important; }
+:global(body.dark-theme .table-footer) { border-top-color: #334155 !important; }
 :global(body.dark-theme .form-container) { background-color: #1e293b !important; border-top: 4px solid #22c55e !important; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5) !important; }
 :global(body.dark-theme .form-container h3) { color: #ffffff !important; }
 :global(body.dark-theme .form-group label) { color: #cbd5e1 !important; }
@@ -958,7 +1152,8 @@ tr:hover .td-sticky { background: #f8f9fa; }
 :global(body.dark-theme .detail-value) { color: #ffffff !important; border-bottom: 1px solid #334155 !important; }
 :global(body.dark-theme .status-text) { color: #94a3b8 !important; }
 :global(body.dark-theme .error-text) { background-color: #7f1d1d !important; color: #fecaca !important; }
-/* Column Selector */
+
+/* Column & Filter Selector Styles */
 .column-selector {
   position:  relative;
 }
@@ -992,6 +1187,11 @@ tr:hover .td-sticky { background: #f8f9fa; }
   max-height: 300px;
   overflow-y: auto;
   z-index: 1000;
+}
+
+.filter-dropdown {
+    width: 300px; /* Breiter für Filter inputs */
+    max-height: 500px;
 }
 
 .column-dropdown-header {
@@ -1045,7 +1245,35 @@ tr:hover .td-sticky { background: #f8f9fa; }
   cursor: pointer;
 }
 
-/* Dark Mode für Column Selector */
+/* Filter Specifics */
+.filter-content {
+    padding: 10px;
+}
+
+.filter-group {
+    margin-bottom: 10px;
+}
+
+.filter-group label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #6c757d;
+    display: block;
+    margin-bottom: 4px;
+}
+
+.range-inputs {
+    display: flex;
+    gap: 5px;
+}
+
+.range-inputs input {
+    width: 50%;
+    font-size: 0.85rem;
+    padding: 4px 8px;
+}
+
+/* Dark Mode für Selector */
 :global(body.dark-theme .column-dropdown) {
   background: #1e293b;
   border-color: #334155;
@@ -1063,5 +1291,9 @@ tr:hover .td-sticky { background: #f8f9fa; }
 
 :global(body.dark-theme .column-option label) {
   color: #e2e8f0;
+}
+
+:global(body.dark-theme .filter-group label) {
+    color: #cbd5e1;
 }
 </style>
