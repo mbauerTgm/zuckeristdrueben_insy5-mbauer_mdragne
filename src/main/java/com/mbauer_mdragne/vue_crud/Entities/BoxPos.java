@@ -1,5 +1,6 @@
 package com.mbauer_mdragne.vue_crud.Entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.sql.Timestamp;
 import com.fasterxml.jackson.annotation.JsonProperty; // Import hinzugefügt
@@ -41,6 +42,7 @@ public class BoxPos {
 
     @ManyToOne
     @JoinColumn(name = "b_id", insertable = false, updatable = false)
+    @JsonIgnore
     private Box box;
 
     @ManyToOne
