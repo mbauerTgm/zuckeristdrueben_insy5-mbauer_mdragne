@@ -85,8 +85,8 @@
             </div>
           </div>
 
-          <div class="control-group" v-if="selectedTable === 'analysis'">
-            <label>Filter: </label>
+          <div class="control-group" v-if="selectedTable === 'analysis' || selectedTable === 'sample'">
+            <label>Filter & Export: </label>
             <div class="column-selector">
               <button 
                 type="button" 
@@ -105,42 +105,51 @@
                   <button @click="resetFilters" class="btn-link">Reset</button>
                 </div>
                 <div class="filter-content">
+                  <template v-if="selectedTable === 'analysis'">
                     <div class="filter-group">
-                        <label>ID (a_id)</label>
+                          <label>ID (a_id)</label>
+                          <div class="range-inputs">
+                              <input type="number" v-model="searchParams.idFrom" placeholder="Von" />
+                              <input type="number" v-model="searchParams.idTo" placeholder="Bis" />
+                          </div>
+                      </div>
+                      <div class="filter-group">
+                          <label>Sample ID (s_id)</label>
+                          <div class="range-inputs">
+                              <input type="text" v-model="searchParams.sIdFrom" placeholder="Von" />
+                              <input type="text" v-model="searchParams.sIdTo" placeholder="Bis" />
+                          </div>
+                      </div>
+                      <div class="filter-group">
+                        <label>Date In</label>
                         <div class="range-inputs">
-                            <input type="number" v-model="searchParams.idFrom" placeholder="Von" />
-                            <input type="number" v-model="searchParams.idTo" placeholder="Bis" />
+                            <input type="datetime-local" step="1" v-model="searchParams.dateInFrom" />
+                            <input type="datetime-local" step="1" v-model="searchParams.dateInTo" />
                         </div>
                     </div>
                     <div class="filter-group">
-                        <label>Sample ID (s_id)</label>
+                        <label>Date Out</label>
                         <div class="range-inputs">
-                            <input type="text" v-model="searchParams.sIdFrom" placeholder="Von" />
-                            <input type="text" v-model="searchParams.sIdTo" placeholder="Bis" />
+                            <input type="datetime-local" step="1" v-model="searchParams.dateOutFrom" />
+                            <input type="datetime-local" step="1" v-model="searchParams.dateOutTo" />
                         </div>
                     </div>
                     <div class="filter-group">
-                      <label>Date In</label>
-                      <div class="range-inputs">
-                          <input type="datetime-local" step="1" v-model="searchParams.dateInFrom" />
-                          <input type="datetime-local" step="1" v-model="searchParams.dateInTo" />
-                      </div>
-                  </div>
-                  <div class="filter-group">
-                      <label>Date Out</label>
-                      <div class="range-inputs">
-                          <input type="datetime-local" step="1" v-model="searchParams.dateOutFrom" />
-                          <input type="datetime-local" step="1" v-model="searchParams.dateOutTo" />
-                      </div>
-                  </div>
-                  <div class="filter-group">
-                      <label>A Flags</label>
-                      <div class="range-inputs">
-                          <input type="text" v-model="searchParams.aFlagsFrom" placeholder="Von" />
-                          <input type="text" v-model="searchParams.aFlagsTo" placeholder="Bis" />
-                      </div>
-                  </div>
-                  <button class="btn btn-save" style="width: 100%; margin-top: 10px;" @click="applyBackendFilter">Anwenden</button>
+                        <label>A Flags</label>
+                        <div class="range-inputs">
+                            <input type="text" v-model="searchParams.aFlagsFrom" placeholder="Von" />
+                            <input type="text" v-model="searchParams.aFlagsTo" placeholder="Bis" />
+                        </div>
+                    </div>
+                    <button class="btn btn-save" style="width: 100%; margin-top: 10px;" @click="applyBackendFilter">Anwenden</button>
+                  </template>
+                    
+                  <template v-if="!loadingCSV">
+                    <button class="btn btn-load" style="width: 100%; margin-top: 10px;" @click="exportFilteredCSV">Export filtered table as CSV</button>
+                  </template>
+                  <template v-else>
+                    <Create_Loader />
+                  </template>
                 </div>
               </div>
             </div>
@@ -526,6 +535,8 @@ export default {
       showColumnSelector: false,
       showFilterSelector: false, 
       selectedColumns: [],
+
+      loadingCSV: false,
     };
   },
 
@@ -609,6 +620,7 @@ export default {
     this.fetchTableData();
     this.applyDarkMode();
     document.addEventListener('click', this.closeSelectors);
+    this.loadingCSV = false
   },
 
   beforeUnmount() {
@@ -731,6 +743,80 @@ export default {
         this.error = error;
       } finally {
         this.loading = false;
+      }
+    },
+
+    async exportFilteredCSV() {
+      this.loadingCSV = true;
+      this.error = null;
+
+      if(this.selectedTable === 'analysis' || this.selectedTable === 'sample') {
+        
+        this.updateUserRole();
+
+        const params = new URLSearchParams();
+        
+        if (this.selectedTable === 'analysis') {
+            if (this.searchParams.idFrom) params.append('aId.from', this.searchParams.idFrom);
+            if (this.searchParams.idTo) params.append('aId.to', this.searchParams.idTo);
+            
+            if (this.searchParams.sIdFrom) params.append('sId.from', this.searchParams.sIdFrom);
+            if (this.searchParams.sIdTo) params.append('sId.to', this.searchParams.sIdTo);
+            
+            if (this.searchParams.dateInFrom) params.append('dateIn.from', this.searchParams.dateInFrom);
+            if (this.searchParams.dateInTo) params.append('dateIn.to', this.searchParams.dateInTo);
+            
+            if (this.searchParams.dateOutFrom) params.append('dateOut.from', this.searchParams.dateOutFrom);
+            if (this.searchParams.dateOutTo) params.append('dateOut.to', this.searchParams.dateOutTo);
+            
+            if (this.searchParams.aFlagsFrom) params.append('aFlags.from', this.searchParams.aFlagsFrom);
+            if (this.searchParams.aFlagsTo) params.append('aFlags.to', this.searchParams.aFlagsTo);
+        }
+        
+        try {
+          const url = `${API_BASE_URL}/${this.currentSchema.endpoint}/export?${params.toString()}`;
+          const response = await fetch(url, {
+            method: 'GET',
+            credentials: 'include' 
+          });
+
+          if (response.status === 401 || response.status === 403) {
+            this.$emit('logout');
+            return;
+          }
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(errorText || `Fehler beim Export von ${this.selectedTable}`);
+          }
+          
+          const blob = await response.blob();
+          
+          const downloadUrl = window.URL.createObjectURL(blob);
+          
+          const link = document.createElement('a');
+          link.href = downloadUrl;
+          
+          const timestamp = new Date().toISOString().split('T')[0];
+          link.setAttribute('download', `${this.selectedTable}_export_${timestamp}.csv`);
+          
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          
+          window.URL.revokeObjectURL(downloadUrl);
+
+        } catch (error) {
+          console.error('Export error:', error);
+          this.error = error.message;
+        } finally {
+          this.loadingCSV = false;
+        }
+      } else {
+        this.showColumnSelector = false,
+        this.showFilterSelector = false,
+        this.loadingCSV = false;
+        this.error = "Export nur verfügbar in Analysis & Sample";
       }
     },
 
