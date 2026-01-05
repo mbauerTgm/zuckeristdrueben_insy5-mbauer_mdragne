@@ -11,6 +11,6 @@ import com.mbauer_mdragne.vue_crud.Entities.Analysis;
 
 public interface AnalysisRepository extends JpaRepository<Analysis, Long>, JpaSpecificationExecutor<Analysis>{
 
-    @Query("SELECT a FROM Analysis a WHERE a.a_flags LIKE 'F%' OR a.a_flags LIKE 'V%'")
+    @Query("SELECT a FROM Analysis a WHERE a.aFlags LIKE 'F%' OR a.aFlags LIKE 'V%'")
     List<Analysis> findAllForResearcher();
 }

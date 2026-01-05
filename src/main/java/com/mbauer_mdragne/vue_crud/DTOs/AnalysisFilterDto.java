@@ -5,7 +5,7 @@ import java.time.LocalDate;
 
 @Data
 public class AnalysisFilterDto {
-    private Range<Long> id;
+    private Range<Long> aId;
 
     private Range<String> sId;
 

@@ -16,17 +16,17 @@ public class AnalysisSpecifications {
             List<Predicate> predicates = new ArrayList<>();
 
             // ID Filter
-            addRangePredicate(predicates, cb, root.get("id"), dto.getId());
+            addRangePredicate(predicates, cb, root.get("aId"), dto.getAId());
 
             // Sample ID Filter (s_id)
-            addRangePredicate(predicates, cb, root.get("s_id"), dto.getSId());
+            addRangePredicate(predicates, cb, root.get("sId"), dto.getSId());
 
             // Datum Filter (date_in / date_out)
-            addRangePredicate(predicates, cb, root.get("date_in"), dto.getDateIn());
-            addRangePredicate(predicates, cb, root.get("date_out"), dto.getDateOut());
+            addRangePredicate(predicates, cb, root.get("dateIn"), dto.getDateIn());
+            addRangePredicate(predicates, cb, root.get("dateOut"), dto.getDateOut());
 
             // Flags
-            addRangePredicate(predicates, cb, root.get("a_flags"), dto.getAFlags());
+            addRangePredicate(predicates, cb, root.get("aFlags"), dto.getAFlags());
 
             return cb.and(predicates.toArray(new Predicate[0]));
         };
@@ -52,10 +52,10 @@ public class AnalysisSpecifications {
     public static Specification<Analysis> forResearcher() {
         return (root, query, cb) -> {
             // WHERE a.a_flags LIKE 'F%'
-            jakarta.persistence.criteria.Predicate likeF = cb.like(root.get("a_flags"), "F%");
+            jakarta.persistence.criteria.Predicate likeF = cb.like(root.get("aFlags"), "F%");
             
             // WHERE a.a_flags LIKE 'V%'
-            jakarta.persistence.criteria.Predicate likeV = cb.like(root.get("a_flags"), "V%");
+            jakarta.persistence.criteria.Predicate likeV = cb.like(root.get("aFlags"), "V%");
             
             // Kombinieren mit OR
             return cb.or(likeF, likeV);
