@@ -2,8 +2,8 @@ import { erstelleDatum } from '../support/utils';
 
 describe('Box Test:', () => {
   it('Create entry, check, edit and delete', () => {
-
     cy.visit('http://localhost:8082/')
+    cy.login('TestAdmin','Sehr_Schwieriges_Test_Passwort!!_Sehr_Geheim_12253')
 
     //---------- Create
     cy.get(':nth-child(1) > select').select('Box')

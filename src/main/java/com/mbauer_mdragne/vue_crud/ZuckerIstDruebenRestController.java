@@ -1,5 +1,6 @@
 package com.mbauer_mdragne.vue_crud;
 
+import org.springframework.security.core.Authentication;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -29,11 +30,13 @@ import java.time.format.DateTimeParseException;
 import java.sql.Timestamp;
 import java.util.List;
 
+import org.springframework.security.core.context.SecurityContextHolder;
+
 @RestController
 @RequestMapping("/api")
 public class ZuckerIstDruebenRestController {
 
-    @Autowired private AnalysisRepository repo;
+    @Autowired private AnalysisRepository analysisRepo;
     @Autowired private SampleRepository sampleRepo;
     @Autowired private BoxRepository boxRepo;
     @Autowired private BoxPosRepository boxPosRepo;
@@ -47,12 +50,15 @@ public class ZuckerIstDruebenRestController {
 
     @GetMapping("/analysis")
     public List<Analysis> getAllAnalysis() {
-        return repo.findAll();
+        if (isResearcher()) {
+            return analysisRepo.findAllForResearcher();
+        }
+        return analysisRepo.findAll();
     }
 
     @GetMapping("/analysis/{id}")
     public ResponseEntity<Analysis> getAnalysisById(@PathVariable Long id) {
-        Analysis analysis = repo.findById(id)
+        Analysis analysis = analysisRepo.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Analysis not found with id=" + id));
         return ResponseEntity.ok(analysis);
     }
@@ -79,7 +85,7 @@ public class ZuckerIstDruebenRestController {
 
         analysis.setS_stamp(sample.getS_stamp());
 
-        Analysis saved = repo.save(analysis);
+        Analysis saved = analysisRepo.save(analysis);
         System.out.println("NatPost: " + analysis.getNat());
         return ResponseEntity.ok(saved);
     }
@@ -87,7 +93,7 @@ public class ZuckerIstDruebenRestController {
 
     @PutMapping("/analysis/{id}")
     public ResponseEntity<Analysis> updateAnalysis(@PathVariable Long id, @RequestBody Analysis updatedAnalysis) {
-        Analysis existing = repo.findById(id)
+        Analysis existing = analysisRepo.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Analysis not found with id=" + id));
 
         Sample sample = em.createQuery(
@@ -119,17 +125,17 @@ public class ZuckerIstDruebenRestController {
         existing.setComment(updatedAnalysis.getComment());
         existing.setDate_exported(updatedAnalysis.getDate_exported());
 
-        Analysis saved = repo.save(existing);
+        Analysis saved = analysisRepo.save(existing);
         return ResponseEntity.ok(saved);
     }
 
 
     @DeleteMapping("/analysis/{id}")
     public ResponseEntity<Void> deleteAnalysis(@PathVariable Long id) {
-        if (!repo.existsById(id)) {
+        if (!analysisRepo.existsById(id)) {
             throw new ResourceNotFoundException("Analysis not found with id=" + id);
         }
-        repo.deleteById(id);
+        analysisRepo.deleteById(id);
         return ResponseEntity.noContent().build();
     }
 
@@ -137,6 +143,9 @@ public class ZuckerIstDruebenRestController {
 
     @GetMapping("/samples")
     public List<Sample> getAllSamples() {
+        if (isResearcher()) {
+            return sampleRepo.findAllForResearcher();
+        }
         return sampleRepo.findAll();
     }
 
@@ -357,5 +366,15 @@ public class ZuckerIstDruebenRestController {
         Threshold threshold = thresholdRepo.findById(thId)
                 .orElseThrow(() -> new ResourceNotFoundException("Threshold not found with id=" + thId));
         return ResponseEntity.ok(threshold);
+    }
+
+    // ------------------ Util Methods ------------------
+
+    private boolean isResearcher() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null) return false;
+        
+        return auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_Researcher"));
     }
 }

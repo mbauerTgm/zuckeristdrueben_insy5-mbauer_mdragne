@@ -6,7 +6,6 @@
 
     <main>
       <section>
-
         <div class="table-selector">
           <div class="control-group">
             <label>Tabelle:</label>
@@ -114,7 +113,7 @@
               </svg>
             </button>
 
-            <button @click="$emit('logout')" class="btn btn-delete" title="Abmelden">
+            <button @click="$emit('logout')" class="btn btn-logout" title="Abmelden">
               <svg viewBox="0 0 24 24" class="mdi-icon">
                 <path fill="currentColor" d="M17,17.25V14H10V10H17V6.75L22.25,12L17,17.25M13,2A2,2 0 0,1 15,4V8H13V4H4V20H13V16H15V20A2,2 0 0,1 13,22H4A2,2 0 0,1 2,20V4A2,2 0 0,1 4,2Z" />
               </svg>
@@ -207,13 +206,14 @@
             <div class="detail-grid">
               <div v-for="(value, key) in itemToView" :key="key" class="detail-row">
                 <div class="detail-label">{{ formatHeader(key) }}</div>
-                <div class="detail-value">{{ formatCell(key, value) }}</div>
+                <div class="detail-value" :id="'detail-' + key">{{ formatCell(key, value) }}</div>
               </div>
             </div>
             <div class="modal-actions">
-              <button @click="closeDetailModal" class="btn btn-cancel">Schließen</button>
+              <button id="btn-close-detail" @click="closeDetailModal" class="btn btn-cancel">Schließen</button>
               <button 
                 v-if="canEdit && !currentSchema.readOnly" 
+                id="btn-edit-from-detail"
                 @click="editFromDetail(itemToView)" 
                 class="btn btn-edit"
               >
@@ -231,15 +231,57 @@
                 {{ formatHeader(col) }} <span v-if="isFieldRequired(col)" class="required-mark">*</span>
               </label>
               
-              <input v-if="isFieldImmutable(col) && !isNewItem" :value="itemToEdit[col]" disabled class="input-disabled" />
-              <input v-else-if="getFieldConfig(col).type === 'datetime'" type="datetime-local" v-model="itemToEdit[col]" :step="1" />
-              <input v-else-if="getFieldConfig(col).type === 'number'" type="number" v-model.number="itemToEdit[col]" :step="getFieldConfig(col).step" />
-              <input v-else type="text" v-model="itemToEdit[col]" :required="isFieldRequired(col)" />
+              <input 
+                v-if="isFieldImmutable(col) && !isNewItem" 
+                :id="'field-'+col"
+                :value="itemToEdit[col]" 
+                disabled 
+                class="input-disabled" 
+              />
+              
+              <select 
+                v-else-if="selectedTable === 'box' && (col === 'type' || col === 'typ')"
+                :id="'field-'+col"
+                v-model.number="itemToEdit[col]"
+              >
+                  <option v-for="n in 9" :key="n" :value="n">Typ {{ n }}</option>
+              </select>
+
+              <input 
+                v-else-if="getFieldConfig(col).type === 'datetime'" 
+                :id="'field-'+col"
+                type="datetime-local" 
+                v-model="itemToEdit[col]" 
+                :step="1" 
+              />
+              
+              <input 
+                v-else-if="getFieldConfig(col).type === 'number'" 
+                :id="'field-'+col"
+                type="number" 
+                v-model.number="itemToEdit[col]" 
+                :step="getFieldConfig(col).step" 
+              />
+              
+              <input 
+                v-else 
+                :id="'field-'+col"
+                type="text" 
+                v-model="itemToEdit[col]" 
+                :required="isFieldRequired(col)" 
+              />
             </div>
           </div>
           <div class="form-actions">
-            <button @click="cancelEdit" class="btn btn-cancel">Abbrechen</button>
-            <button @click="saveItem" class="btn btn-save">Speichern</button>
+            <button @click="cancelEdit" class="btn btn-cancel" :disabled="isSaving">Abbrechen</button>
+            <button @click="saveItem" class="btn btn-save" :disabled="isSaving">
+              <template v-if="!isSaving">
+                Speichern
+              </template>
+              <template v-else>
+                <Create_Loader />
+              </template>
+            </button>
           </div>
         </div>
 
@@ -261,6 +303,7 @@
 
 <script>
 import LoadingBar from '@/components/Loadingbar.vue'
+import Create_Loader from './Create_Loader.vue';
 const API_BASE_URL = '/api';
 
 const SCHEMAS = {
@@ -364,7 +407,10 @@ const SCHEMAS = {
 
 export default {
   name: 'VenlabFrontend',
-  components: { LoadingBar },
+  components: { 
+    LoadingBar,
+    Create_Loader
+   },
 
   data() {
     return {
@@ -563,7 +609,7 @@ export default {
       });
       if (this.selectedTable === 'box') {
         emptyItem['num_max'] = 40;
-        emptyItem['type'] = 1;
+        emptyItem['type'] = 1; 
       }
       this.itemToEdit = emptyItem;
       this.scrollToForm();
@@ -573,10 +619,14 @@ export default {
       this.isNewItem = false;
       const copy = JSON.parse(JSON.stringify(item));
 
-      copy.__pk = {
-        s_id: item.s_id,
-        s_stamp: item.s_stamp
-      };
+      copy.__pk = {};
+      if (Array.isArray(this.currentSchema.pk)) {
+        this.currentSchema.pk.forEach(key => {
+          copy.__pk[key] = item[key];
+        });
+      } else {
+        copy.__pk[this.currentSchema.pk] = item[this.currentSchema.pk];
+      }
 
       const config = this.currentSchema.fieldConfigs || {};
       for (const [key, value] of Object.entries(copy)) {
@@ -593,13 +643,19 @@ export default {
     },
 
     async saveItem() {
+      this.isSaving = true;
+
       const schema = this.currentSchema;
       const dataToSend = { ...this.itemToEdit };
       const config = schema.fieldConfigs || {};
 
       for (const key in dataToSend) {
-        if (config[key]?.type === 'number' && dataToSend[key] === '') {
-           dataToSend[key] = null;
+        if (config[key]?.type === 'number') {
+           if (dataToSend[key] === '' || dataToSend[key] === null) {
+              dataToSend[key] = null;
+           } else {
+              dataToSend[key] = Number(dataToSend[key]);
+           }
         }
         if (config[key]?.type === 'datetime' && dataToSend[key]) {
            try {
@@ -639,6 +695,8 @@ export default {
       } catch (error) {
         console.log(`Fehler beim Speichern:\n${error.message}`);
         this.error = error;
+      } finally {
+        this.isSaving = false;
       }
     },
 
@@ -794,7 +852,6 @@ export default {
 </script>
 
 <style scoped>
-/* Dein CSS-Styling bleibt erhalten */
 .container { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 1400px; margin: 0 auto; padding: 20px; min-height: 100vh; color: #333; transition: background-color 0.3s; }
 header h1 { margin-bottom: 20px; color: #2c3e50; }
 .table-selector { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 15px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 20px; }
@@ -806,16 +863,17 @@ input, select, .search-input { padding: 8px 12px; border: 1px solid #ced4da; bor
 .search-input { border-top-right-radius: 0; border-bottom-right-radius: 0; flex: 1; }
 .button-group { margin-left: auto; display: flex; gap: 10px; }
 .btn { border: none; border-radius: 4px; padding: 8px 16px; cursor: pointer; font-weight: 600; transition: background 0.2s, color 0.2s; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
-.btn-search { background: #910dfd; color: white; border-radius: 0 4px 4px 0; padding: 0 12px; }
-.btn-load { background: #6c757d; color: white; }
-.btn-save { background: #198754; color: white; }
+.btn-search { background: #7108c7; color: white; border-radius: 0 4px 4px 0; padding: 0 12px; }
+.btn-load { background: #7ca7cd; color: white; }
+.btn-save { background: #18ad68; color: white; }
 .btn-cancel { background: #f8f9fa; color: #333; border: 1px solid #ddd; }
 .action-buttons { display: flex; gap: 5px; }
 .action-buttons .btn { padding: 6px; }
-.btn-edit { background: #adfd0d; color: white; }
-.btn-edit:hover { background: #0bd752; }
-.btn-delete { background: #dc3545; color: white; }
-.btn-delete:hover { background: #bb2d3b; }
+.btn-edit { background: #ffea06; color: white; }
+.btn-edit:hover { background: #ffb006; }
+.btn-delete { background: #980615; color: white; }
+.btn-logout { background: #dc3545; color: white; }
+.btn-delete:hover { background: #75030e; }
 .btn:hover { opacity: 0.9; }
 .mdi-icon { width: 20px; height: 20px; }
 .action-buttons .mdi-icon { width: 18px; height: 18px; }
