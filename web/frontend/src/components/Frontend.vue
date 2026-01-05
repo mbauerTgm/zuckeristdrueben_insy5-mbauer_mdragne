@@ -49,6 +49,44 @@
             </select>
           </div>
 
+          <div class="control-group">
+            <label>Spalten: </label>
+            <div class="column-selector">
+              <button 
+                type="button" 
+                class="btn btn-columns" 
+                @click="showColumnSelector = ! showColumnSelector"
+              >
+                <svg viewBox="0 0 24 24" class="mdi-icon">
+                  <path fill="currentColor" d="M3,3H11V11H3V3M3,13H11V21H3V13M13,3H21V11H13V3M13,13H21V21H13V13M5,5V9H9V5H5M5,15V19H9V15H5M15,5V9H19V5H15M15,15V19H19V15H15Z" />
+                </svg>
+                Spalten
+              </button>
+              
+              <div v-if="showColumnSelector" class="column-dropdown">
+                <div class="column-dropdown-header">
+                  <span>Sichtbare Spalten</span>
+                  <button @click="selectAllColumns" class="btn-link">Alle</button>
+                  <button @click="deselectAllColumns" class="btn-link">Keine</button>
+                </div>
+                <div 
+                  v-for="col in availableColumns" 
+                  :key="col" 
+                  class="column-option"
+                >
+                  <label>
+                    <input 
+                      type="checkbox" 
+                      :value="col" 
+                      v-model="selectedColumns"
+                    />
+                    {{ formatHeader(col) }}
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <div class="button-group">
             <button @click="fetchTableData" class="btn btn-load" title="Daten neu laden">
               <svg viewBox="0 0 24 24" class="mdi-icon">
@@ -352,8 +390,10 @@ export default {
 
       darkMode: localStorage.getItem('darkMode') === 'true',
       
-      // NEU: Speichert die aktuelle Rolle
       currentUserRole: '',
+
+      showColumnSelector: false,
+      selectedColumns: [],
     };
   },
 
@@ -361,15 +401,25 @@ export default {
     currentSchema() {
       return SCHEMAS[this.selectedTable] || SCHEMAS.analysis;
     },
-    visibleColumns() {
-      if (this.currentSchema.displayColumns) {
-        return this.currentSchema.displayColumns;
-      }
-      if (this.tableData.length > 0) {
-        return Object.keys(this.tableData[0]);
-      }
-      return [];
-    },
+    availableColumns() {
+    // Alle möglichen Spalten für die aktuelle Tabelle
+    if (this.currentSchema. displayColumns) {
+      return this.currentSchema.displayColumns;
+    }
+    if (this.tableData. length > 0) {
+      return Object.keys(this. tableData[0]);
+    }
+    return [];
+  },
+
+  visibleColumns() {
+    // Nur die vom User ausgewählten Spalten anzeigen
+    if (this.selectedColumns.length === 0) {
+      return this.availableColumns;
+    }
+    // Reihenfolge beibehalten wie in availableColumns definiert
+    return this.availableColumns. filter(col => this.selectedColumns.includes(col));
+  },
     formColumns() {
       return this.currentSchema.formColumns || [];
     },
@@ -430,6 +480,11 @@ export default {
     this.updateUserRole();
     this.fetchTableData();
     this.applyDarkMode();
+    document.addEventListener('click', this.closeColumnSelector); 
+  },
+
+  beforeUnmount() {
+    document.removeEventListener('click', this.closeColumnSelector); // NEU
   },
 
   methods: {
@@ -454,6 +509,8 @@ export default {
       this.searchQuery = '';
       this.activeSearchQuery = '';
       this.fetchTableData();
+      this.selectedColumns = []; 
+      this.showColumnSelector = false;
     },
 
     applySearch() {
@@ -563,7 +620,7 @@ export default {
         const response = await fetch(url, {
           method,
           headers: { 'Content-Type': 'application/json' },
-          credentials: 'include', // WICHTIG für Cookies
+          credentials: 'include', 
           body: JSON.stringify(dataToSend),
         });
 
@@ -718,6 +775,20 @@ export default {
         document.body.classList.remove('dark-theme');
       }
     },
+    selectAllColumns() {
+      this.selectedColumns = [... this.availableColumns];
+    },
+
+    deselectAllColumns() {
+      this.selectedColumns = [];
+    },
+
+    closeColumnSelector(event) {
+      // Schließen wenn außerhalb geklickt wird
+      if (! event.target.closest('.column-selector')) {
+        this. showColumnSelector = false;
+      }
+    },
   }
 };
 </script>
@@ -829,4 +900,110 @@ tr:hover .td-sticky { background: #f8f9fa; }
 :global(body.dark-theme .detail-value) { color: #ffffff !important; border-bottom: 1px solid #334155 !important; }
 :global(body.dark-theme .status-text) { color: #94a3b8 !important; }
 :global(body.dark-theme .error-text) { background-color: #7f1d1d !important; color: #fecaca !important; }
+/* Column Selector */
+.column-selector {
+  position:  relative;
+}
+
+.btn-columns {
+  display: flex;
+  align-items: center;
+  gap:  6px;
+  background: #6c757d;
+  color: white;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.btn-columns:hover {
+  background: #5a6268;
+}
+
+.column-dropdown {
+  position:  absolute;
+  top:  100%;
+  left: 0;
+  margin-top: 4px;
+  background: white;
+  border: 1px solid #dee2e6;
+  border-radius:  8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  min-width: 200px;
+  max-height: 300px;
+  overflow-y: auto;
+  z-index: 1000;
+}
+
+.column-dropdown-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-bottom: 1px solid #dee2e6;
+  background: #f8f9fa;
+  border-radius: 8px 8px 0 0;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.column-dropdown-header span {
+  flex: 1;
+}
+
+.btn-link {
+  background: none;
+  border:  none;
+  color: #007bff;
+  cursor: pointer;
+  font-size:  0.8rem;
+  padding: 2px 6px;
+}
+
+.btn-link:hover {
+  text-decoration: underline;
+}
+
+.column-option {
+  padding: 8px 12px;
+}
+
+.column-option:hover {
+  background: #f1f3f5;
+}
+
+.column-option label {
+  display:  flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.column-option input[type="checkbox"] {
+  width:  16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+/* Dark Mode für Column Selector */
+:global(body.dark-theme .column-dropdown) {
+  background: #1e293b;
+  border-color: #334155;
+}
+
+:global(body.dark-theme .column-dropdown-header) {
+  background:  #0f172a;
+  border-color: #334155;
+  color: #fff;
+}
+
+:global(body.dark-theme .column-option:hover) {
+  background: #334155;
+}
+
+:global(body.dark-theme .column-option label) {
+  color: #e2e8f0;
+}
 </style>
