@@ -5,10 +5,9 @@ import org.springframework.format.annotation.DateTimeFormat;
 
 @Data
 public class Range<T> {
-    // T kann später String, Integer oder LocalDate sein
-    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) // Wirkt nur, wenn T ein Datum ist
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) 
     private T from;
     
-    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
     private T to;
 }

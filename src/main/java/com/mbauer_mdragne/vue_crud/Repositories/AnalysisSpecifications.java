@@ -8,6 +8,8 @@ import jakarta.persistence.criteria.Path;
 import jakarta.persistence.criteria.Predicate;
 import java.util.ArrayList;
 import java.util.List;
+import java.sql.Timestamp;
+import java.time.LocalDateTime; // Wichtig
 
 public class AnalysisSpecifications {
 
@@ -15,24 +17,38 @@ public class AnalysisSpecifications {
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
 
-            // ID Filter
             addRangePredicate(predicates, cb, root.get("aId"), dto.getAId());
-
-            // Sample ID Filter (s_id)
             addRangePredicate(predicates, cb, root.get("sId"), dto.getSId());
 
-            // Datum Filter (date_in / date_out)
-            addRangePredicate(predicates, cb, root.get("dateIn"), dto.getDateIn());
-            addRangePredicate(predicates, cb, root.get("dateOut"), dto.getDateOut());
+            // Nutzt jetzt die LocalDateTime Methode
+            addDateTimeRangePredicate(predicates, cb, root.get("dateIn"), dto.getDateIn());
+            addDateTimeRangePredicate(predicates, cb, root.get("dateOut"), dto.getDateOut());
 
-            // Flags
             addRangePredicate(predicates, cb, root.get("aFlags"), dto.getAFlags());
 
             return cb.and(predicates.toArray(new Predicate[0]));
         };
     }
 
-    // Generische Methode für ALLE Typen (Long, String, Date)
+    // NEU: Konvertiert LocalDateTime (vom Filter) zu Timestamp (für DB)
+    private static void addDateTimeRangePredicate(
+            List<Predicate> predicates,
+            jakarta.persistence.criteria.CriteriaBuilder cb,
+            Path<Timestamp> path,
+            Range<LocalDateTime> range
+    ) {
+        if (range == null) return;
+
+        if (range.getFrom() != null) {
+            // valueOf konvertiert LocalDateTime -> SQL Timestamp
+            predicates.add(cb.greaterThanOrEqualTo(path, Timestamp.valueOf(range.getFrom())));
+        }
+        if (range.getTo() != null) {
+            predicates.add(cb.lessThanOrEqualTo(path, Timestamp.valueOf(range.getTo())));
+        }
+    }
+
+    // Generische Methode für einfache Typen (Long, String)
     private static <T extends Comparable<? super T>> void addRangePredicate(
             List<Predicate> predicates,
             jakarta.persistence.criteria.CriteriaBuilder cb,
