@@ -83,10 +83,10 @@ public class ZuckerIstDruebenRestController {
         }
 
         Sample sample = em.createQuery(
-                        "SELECT s FROM Sample s WHERE s.sId = :sid ORDER BY s.sStamp DESC",
+                        "SELECT s FROM Sample s WHERE s.sId = :sId ORDER BY s.sStamp DESC",
                         Sample.class
                 )
-                .setParameter("sid", analysis.getSId())
+                .setParameter("sId", analysis.getSId())
                 .setMaxResults(1)
                 .getResultStream()
                 .findFirst()
@@ -108,10 +108,10 @@ public class ZuckerIstDruebenRestController {
                 .orElseThrow(() -> new ResourceNotFoundException("Analysis not found with id=" + id));
 
         Sample sample = em.createQuery(
-                        "SELECT s FROM Sample s WHERE s.sId = :sid ORDER BY s.sStamp DESC",
+                        "SELECT s FROM Sample s WHERE s.sId = :sId ORDER BY s.sStamp DESC",
                         Sample.class
                 )
-                .setParameter("sid", updatedAnalysis.getSId())
+                .setParameter("sId", updatedAnalysis.getSId())
                 .setMaxResults(1)
                 .getResultStream()
                 .findFirst()
@@ -285,7 +285,7 @@ public class ZuckerIstDruebenRestController {
     }
 
     @GetMapping("/boxes/filter")
-    public ResponseEntity<Page<Box>> getAllBoxes(@PageableDefault(size = 20, sort = "Bid", direction = Sort.Direction.DESC) Pageable pageable) {
+    public ResponseEntity<Page<Box>> getAllBoxes(@PageableDefault(size = 20, sort = "bId", direction = Sort.Direction.DESC) Pageable pageable) {
         Page<Box> response = boxRepo.findAll(pageable);
         return ResponseEntity.ok(response);
     }
@@ -330,7 +330,7 @@ public class ZuckerIstDruebenRestController {
     }
 
     @GetMapping("/boxpos/filter")
-    public ResponseEntity<Page<BoxPos>> getAllBoxPos(@PageableDefault(size = 20, sort = "BId", direction = Sort.Direction.DESC) Pageable pageable) {
+    public ResponseEntity<Page<BoxPos>> getAllBoxPos(@PageableDefault(size = 20, sort = "bId", direction = Sort.Direction.DESC) Pageable pageable) {
         Page<BoxPos> response = boxPosRepo.findAll(pageable);
         return ResponseEntity.ok(response);
     }
@@ -346,10 +346,10 @@ public class ZuckerIstDruebenRestController {
     @PostMapping("/boxpos")
     public ResponseEntity<BoxPos> createBoxPos(@RequestBody BoxPos boxPos) {
          Sample sample = em.createQuery(
-                        "SELECT s FROM Sample s WHERE s.sId = :sid ORDER BY s.sStamp DESC",
+                        "SELECT s FROM Sample s WHERE s.sId = :sId ORDER BY s.sStamp DESC",
                         Sample.class
                 )
-                .setParameter("sid", boxPos.getSId())
+                .setParameter("sId", boxPos.getSId())
                 .setMaxResults(1)
                 .getResultStream()
                 .findFirst()
@@ -375,10 +375,10 @@ public class ZuckerIstDruebenRestController {
     updated.setBposId(existing.getBposId());
 
     Sample sample = em.createQuery(
-            "SELECT s FROM Sample s WHERE s.sId = :sid ORDER BY s.sStamp DESC",
+            "SELECT s FROM Sample s WHERE s.sId = :sId ORDER BY s.sStamp DESC",
             Sample.class
     )
-    .setParameter("sid", updated.getSId())
+    .setParameter("sId", updated.getSId())
     .setMaxResults(1)
     .getResultStream()
     .findFirst()

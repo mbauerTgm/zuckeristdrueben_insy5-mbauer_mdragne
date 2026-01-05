@@ -3,6 +3,7 @@ package com.mbauer_mdragne.vue_crud.Entities;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.NoArgsConstructor;
@@ -18,14 +19,18 @@ public class Threshold {
 
     @Id
     @Column(name = "th_id")
+    @JsonProperty("th_id")
     private String thId;
 
     @Column(name = "value_min")
+    @JsonProperty("value_min")
     private BigDecimal valueMin;
 
     @Column(name = "value_max")
+    @JsonProperty("value_max")
     private BigDecimal valueMax;
 
     @Column(name = "date_changed")
+    @JsonProperty("date_changed")
     private Timestamp dateChanged;
 }

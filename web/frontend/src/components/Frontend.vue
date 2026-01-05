@@ -254,7 +254,7 @@
           
           <div class="table-footer">
             <p class="info-text">
-                Zeige {{ sortedData.length }} von {{ filteredCount }} Einträgen
+                Zeige {{ sortedData.length }} von {{ totalItems }} Einträgen
             </p>
             
             <div class="pagination-controls" v-if="totalPages > 1">
@@ -425,6 +425,7 @@ const SCHEMAS = {
       distance: { type: 'number', step: '0.01' },
       date_crumbled: { type: 'datetime' },
       s_flags: { maxLength: 10 },
+      lane: { type: 'number', step: 1 },
       comment: { maxLength: 255 }
     }
   },

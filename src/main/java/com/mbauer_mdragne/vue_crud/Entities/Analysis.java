@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonProperty; // Wichtig: Import hinzugefügt
 import lombok.Getter;
 import lombok.Setter;
 import lombok.NoArgsConstructor;
@@ -20,12 +21,15 @@ public class Analysis {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "a_id")
+    @JsonProperty("a_id")
     private Long aId;
 
     @Column(name = "s_id")
+    @JsonProperty("s_id")
     private String sId;
 
     @Column(name = "s_stamp")
+    @JsonProperty("s_stamp")
     private Timestamp sStamp;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING)
@@ -47,31 +51,38 @@ public class Analysis {
     private BigDecimal dry;
 
     @Column(name = "date_in")
+    @JsonProperty("date_in")
     private Timestamp dateIn;
 
     @Column(name = "date_out")
+    @JsonProperty("date_out")
     private Timestamp dateOut;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING)
     @Column(name = "weight_mea")
+    @JsonProperty("weight_mea")
     private BigDecimal weightMea;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING)
     @Column(name = "weight_nrm")
+    @JsonProperty("weight_nrm")
     private BigDecimal weightNrm;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING)
     @Column(name = "weight_cur")
+    @JsonProperty("weight_cur")
     private BigDecimal weightCur;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING)
     @Column(name = "weight_dif")
+    @JsonProperty("weight_dif")
     private BigDecimal weightDif;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING)
     private BigDecimal density;
 
     @Column(name = "a_flags")
+    @JsonProperty("a_flags")
     private String aFlags;
 
     private Integer lane;
@@ -79,5 +90,6 @@ public class Analysis {
     private String comment;
 
     @Column(name = "date_exported")
+    @JsonProperty("date_exported")
     private Timestamp dateExported;
 }
