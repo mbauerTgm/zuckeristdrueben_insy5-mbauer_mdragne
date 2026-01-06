@@ -2,6 +2,7 @@ package com.mbauer_mdragne.vue_crud.Repositories;
 
 import java.sql.Timestamp;
 import java.util.List;
+
 import com.mbauer_mdragne.vue_crud.DTOs.*;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -21,13 +22,13 @@ public interface SampleRepository extends JpaRepository<Sample, SampleId> {
 
     //Proben haben mehr als 1 Analyse (Gruppierung)
     @Query("SELECT a.sId as sId, COUNT(a) as count FROM Analysis a GROUP BY a.sId HAVING COUNT(a) > 1")
-    List<SampleAnalysisCount> findSamplesWithMultipleAnalyses();
+    Page<SampleAnalysisCount> findSamplesWithMultipleAnalyses(Pageable pageable);
 
     //Verdächtige Probenummern (Falsche Länge oder keine Zahl) im Zeitraum
     @Query(value = "SELECT * FROM venlab.sample s WHERE (length(s.s_id) != 13 OR s.s_id !~ '^[0-9]+$') AND s.s_stamp BETWEEN :start AND :end", nativeQuery = true)
-    List<Sample> findSuspiciousSampleIdsInTimeRange(@Param("start") Timestamp start, @Param("end") Timestamp end);
+    Page<Sample> findSuspiciousSampleIdsInTimeRange(@Param("start") Timestamp start, @Param("end") Timestamp end,Pageable pageable);
 
     //Verdächtige Probenummern (Generell)
     @Query(value = "SELECT * FROM venlab.sample s WHERE length(s.s_id) != 13 OR s.s_id !~ '^[0-9]+$'", nativeQuery = true)
-    List<Sample> findSuspiciousSampleIds();
+    Page<Sample> findSuspiciousSampleIds(Pageable pageable);
 }
