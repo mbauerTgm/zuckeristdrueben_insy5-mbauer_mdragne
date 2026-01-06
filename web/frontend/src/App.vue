@@ -29,15 +29,16 @@
       </nav>
 
       <div class="header-right">
+        
         <div class="column-selector">
           <button 
             type="button" 
             class="header-btn" 
             @click="toggleSettings"
-            title="Einstellungen & Filter"
+            title="Einstellungen"
           >
             <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
-              <path d="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.34 19.43,11L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.96 19.05,5.05L16.56,6.05C16.04,5.66 15.5,5.32 14.87,5.07L14.5,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.5,2.42L9.13,5.07C8.5,5.32 7.96,5.66 7.44,6.05L4.95,5.05C4.73,4.96 4.46,5.05 4.34,5.27L2.34,8.73C2.21,8.95 2.27,9.22 2.46,9.37L4.57,11C4.53,11.34 4.5,11.67 4.5,12C4.5,12.33 4.53,12.65 4.57,12.97L2.46,14.63C2.27,14.78 2.21,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.03 4.95,18.95L7.44,17.94C7.96,18.34 8.5,18.68 9.13,18.93L9.5,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.5,21.58L14.87,18.93C15.5,18.67 16.04,18.34 16.56,17.94L19.05,18.95C19.27,19.03 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z" />
+              <path d="M19.14,12.94C19.16,12.64 19.17,12.33 19.17,12C19.17,11.68 19.16,11.37 19.14,11.07L21.5,9.23C21.71,9.07 21.77,8.78 21.64,8.55L19.64,5.09C19.5,4.86 19.22,4.77 19,4.86L16.23,5.97C15.65,5.53 15.01,5.16 14.33,4.88L13.9,1.94C13.86,1.69 13.65,1.5 13.39,1.5H9.39C9.13,1.5 8.92,1.69 8.88,1.94L8.45,4.88C7.77,5.16 7.13,5.53 6.55,5.97L3.78,4.86C3.56,4.77 3.28,4.86 3.14,5.09L1.14,8.55C1,8.78 1.06,9.07 1.28,9.23L3.64,11.07C3.62,11.37 3.61,11.68 3.61,12C3.61,12.33 3.62,12.64 3.64,12.94L1.28,14.78C1.06,14.94 1,15.23 1.14,15.46L3.14,18.92C3.28,19.15 3.56,19.24 3.78,19.15L6.55,18.04C7.13,18.48 7.77,18.85 8.45,19.13L8.88,22.07C8.92,22.32 9.13,22.5 9.39,22.5H13.39C13.65,22.5 13.86,22.32 13.9,22.07L14.33,19.13C15.01,18.85 15.65,18.48 16.23,18.04L19,19.15C19.22,19.24 19.5,19.15 19.64,18.92L21.64,15.46C21.77,15.23 21.71,14.94 21.5,14.78L19.14,12.94M11.39,12C11.39,12.33 11.12,12.61 10.79,12.61C10.45,12.61 10.18,12.33 10.18,12C10.18,11.67 10.45,11.39 10.79,11.39C11.12,11.39 11.39,11.67 11.39,12Z" />
             </svg>
           </button>
             
@@ -49,7 +50,7 @@
             <div class="filter-content">
               
               <div class="filter-section">
-                <label class="section-label">Globaler Zeitfilter</label>
+                <label class="section-label">Globaler Zeitraum</label>
                 <div class="filter-group">
                     <label>Von</label>
                     <input type="datetime-local" step="1" v-model="settingsStart" class="full-width" />
@@ -68,10 +69,12 @@
               <div class="filter-section">
                 <label class="section-label">Darstellung</label>
                 <button @click="toggleDarkMode" class="btn btn-dark-toggle full-width">
-                  <span v-if="darkMode">Light-Modus aktivieren</span>
+                  <span v-if="darkMode">Licht-Modus aktivieren</span>
                   <span v-else>Dark-Modus aktivieren</span>
-                  <svg v-if="darkMode" viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,2L14.39,4.39L12,6.78L9.61,4.39L12,2M5.61,5.61L8,8L5.61,10.39L3.22,8L5.61,5.61M2,12L4.39,9.61L6.78,12L4.39,14.39L2,12M5.61,18.39L8,16L10.39,18.39L8,20.78L5.61,18.39M12,22L9.61,19.61L12,17.22L14.39,19.61L12,22M18.39,18.39L16,16L18.39,13.61L20.78,16L18.39,18.39M22,12L19.61,14.39L17.22,12L19.61,9.61L22,12M18.39,5.61L16,8L13.61,5.61L16,3.22L18.39,5.61Z" /></svg>
-                  <svg v-else viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M17.75,4.09L15.22,6.03L16.13,9.09L13.5,7.28L10.87,9.09L11.78,6.03L9.25,4.09L12.44,4L13.5,1L14.56,4L17.75,4.09M21.25,11L19.61,12.25L20.2,14.23L18.5,13.06L16.8,14.23L17.39,12.25L15.75,11L17.81,10.95L18.5,9L19.19,10.95L21.25,11M18.97,15.95C19.8,15.87 20.69,15.89 21.44,16.05C19.38,18.2 16.3,19.5 13,19.5C6.92,19.5 2,14.58 2,8.5C2,5.2 3.3,2.12 5.45,0.06C5.61,0.81 5.63,1.7 5.55,2.53C5.55,7.58 9.63,11.66 14.68,11.66C15.8,11.66 16.89,11.46 17.9,11.09C18.27,13.11 18.63,14.79 18.97,15.95Z" /></svg>
+                  <div class="toggle-icon">
+                    <svg v-if="darkMode" viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,2L14.39,4.39L12,6.78L9.61,4.39L12,2M5.61,5.61L8,8L5.61,10.39L3.22,8L5.61,5.61M2,12L4.39,9.61L6.78,12L4.39,14.39L2,12M5.61,18.39L8,16L10.39,18.39L8,20.78L5.61,18.39M12,22L9.61,19.61L12,17.22L14.39,19.61L12,22M18.39,18.39L16,16L18.39,13.61L20.78,16L18.39,18.39M22,12L19.61,14.39L17.22,12L19.61,9.61L22,12M18.39,5.61L16,8L13.61,5.61L16,3.22L18.39,5.61Z" /></svg>
+                    <svg v-else viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M17.75,4.09L15.22,6.03L16.13,9.09L13.5,7.28L10.87,9.09L11.78,6.03L9.25,4.09L12.44,4L13.5,1L14.56,4L17.75,4.09M21.25,11L19.61,12.25L20.2,14.23L18.5,13.06L16.8,14.23L17.39,12.25L15.75,11L17.81,10.95L18.5,9L19.19,10.95L21.25,11M18.97,15.95C19.8,15.87 20.69,15.89 21.44,16.05C19.38,18.2 16.3,19.5 13,19.5C6.92,19.5 2,14.58 2,8.5C2,5.2 3.3,2.12 5.45,0.06C5.61,0.81 5.63,1.7 5.55,2.53C5.55,7.58 9.63,11.66 14.68,11.66C15.8,11.66 16.89,11.46 17.9,11.09C18.27,13.11 18.63,14.79 18.97,15.95Z" /></svg>
+                  </div>
                 </button>
               </div>
 
@@ -94,12 +97,14 @@
       v-if="currentView === 'login'" 
       @login-success="onLoginSuccess" 
     />
+    
     <Comp_Frontend 
       v-else-if="currentView === 'table'" 
       @logout="onLogout" 
       :global-date-start="appliedStart"
       :global-date-end="appliedEnd"
     />
+    
     <Report_Component 
       v-else-if="currentView === 'report'" 
       :global-date-start="appliedStart"
@@ -125,11 +130,13 @@ export default {
     return {
       currentView: 'login',
       darkMode: localStorage.getItem('darkMode') === 'true',
-
+      
+      // Einstellungen Menü
       showSettings: false,
       settingsStart: '',
       settingsEnd: '',
       
+      // Diese Werte werden an Kind-Komponenten weitergegeben
       appliedStart: '',
       appliedEnd: ''
     }
@@ -152,7 +159,6 @@ export default {
       localStorage.setItem('darkMode', this.darkMode);
       this.applyDarkMode();
       try {
-        // Backend den HttpOnly Cookie löschen lassen
         await axios.post("/api/auth/logout", {}, { withCredentials: true });
       } catch (e) {
         console.log("Logout Warning:", e);
@@ -177,7 +183,7 @@ export default {
       }
     },
 
-    // --- Settings Menu Methods ---
+    // --- Settings Logic ---
     toggleSettings() {
       this.showSettings = !this.showSettings;
     },
@@ -186,10 +192,11 @@ export default {
       this.appliedStart = this.settingsStart;
       this.appliedEnd = this.settingsEnd;
       
+      // Speichern
       localStorage.setItem('globalStart', this.settingsStart);
       localStorage.setItem('globalEnd', this.settingsEnd);
       
-      this.showSettings = false;
+      this.showSettings = false; 
     },
 
     resetSettings() {
@@ -199,18 +206,16 @@ export default {
     },
     
     closeSelectors(event) {
-      // Schließt Menü bei Klick außerhalb
       if (!event.target.closest('.column-selector')) {
         this.showSettings = false;
       }
     }
   },
   mounted() {
-    // Initialer Dark Mode Check
     this.applyDarkMode();
     document.addEventListener('click', this.closeSelectors);
 
-    // Gespeicherte Einstellungen laden
+    // Gespeicherte Zeit-Einstellungen laden
     const savedStart = localStorage.getItem('globalStart');
     const savedEnd = localStorage.getItem('globalEnd');
     if (savedStart) {
@@ -222,9 +227,7 @@ export default {
         this.appliedEnd = savedEnd;
     }
 
-    // Browser Zurück-Button Logik
     window.addEventListener('popstate', () => {
-      // Check ob das JWT Cookie noch da ist
       const isLoggedIn = !!this.getCookie('jwt');
       if (!isLoggedIn) {
         this.currentView = 'login';
@@ -233,7 +236,6 @@ export default {
       }
     });
     
-    // Initialer Check beim Laden der Seite
     if (this.getCookie('jwt')) {
       this.currentView = 'table';
     } else {
@@ -375,6 +377,7 @@ body.dark-theme {
   background: rgba(239, 68, 68, 0.1);
 }
 
+/* Settings Dropdown Styles */
 .column-selector {
   position: relative;
 }
@@ -412,7 +415,7 @@ body.dark-theme {
 .btn-link:hover { text-decoration: underline; }
 
 .filter-content { padding: 15px; }
-.filter-section { margin-bottom: 10px; }
+.filter-section { margin-bottom: 15px; }
 .separator { margin: 15px 0; border: 0; border-top: 1px solid #e9ecef; }
 
 .section-label {
@@ -436,10 +439,11 @@ body.dark-theme {
 
 .btn-dark-toggle {
   background: #343a40; color: white; border: none; padding: 10px; border-radius: 4px; cursor: pointer;
-  display: flex; justify-content: space-between; align-items: center;
+  display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem;
 }
 .btn-dark-toggle:hover { background: #23272b; }
 
+/* Dark Mode für Dropdown */
 body.dark-theme .settings-dropdown { background: #1e293b; border-color: #334155; color: white; }
 body.dark-theme .column-dropdown-header { background: #0f172a; border-color: #334155; color: white; }
 body.dark-theme .separator { border-color: #334155; }

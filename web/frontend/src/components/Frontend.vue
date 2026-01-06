@@ -86,7 +86,6 @@
           </div>
 
           <div class="control-group" v-if="selectedTable === 'analysis' || selectedTable === 'sample'">
-            <!--<label>Filter: </label>-->
             <div style="display: flex; gap: 5px;">
               <div class="column-selector">
                 <button 
@@ -185,8 +184,7 @@
               </svg>
               Neu
             </button>
-            
-            </div>
+          </div>
         </div>
 
         <p v-if="loading" class="status-text"> <LoadingBar /> Lade Daten... </p>
@@ -382,9 +380,9 @@
 <script>
 import LoadingBar from '@/components/Loadingbar.vue'
 import Create_Loader from './Create_Loader.vue';
-const API_BASE_URL = '/api';
+import api from '@/services/api'; // AXIOS API IMPORT
 
-// SCHEMAS object remains unchanged
+// SCHEMAS object remains unchanged (removed for brevity, keeping structure)
 const SCHEMAS = {
   analysis: {
     endpoint: 'analysis',
@@ -632,8 +630,13 @@ export default {
 
   mounted() {
     this.updateUserRole();
+    
+    // Props Initialisierung falls bereits gesetzt
+    if(this.globalDateStart) this.searchParams.globalDateInFrom = this.globalDateStart;
+    if(this.globalDateEnd) this.searchParams.globalDateInTo = this.globalDateEnd;
+
     this.fetchTableData();
-    document.addEventListener('click', this.closeSelectors); // Geändert: Allgemeiner Handler
+    document.addEventListener('click', this.closeSelectors); 
     this.loadingCSV = false
   },
 
@@ -661,11 +664,9 @@ export default {
       this.searchQuery = '';
       this.activeSearchQuery = '';
       
-      // Reset Paging
       this.currentPage = 0;
       
-      // Reset Filter
-      this.resetFilters(false); // false = kein fetch, da fetchTableData unten kommt
+      this.resetFilters(false); 
 
       this.selectedColumns = []; 
       
@@ -686,12 +687,19 @@ export default {
     },
 
     resetFilters(doFetch = true) {
+        // Reset Search Params aber behalte Globale Filter
+        const globals = {
+            globalDateInFrom: this.searchParams.globalDateInFrom,
+            globalDateInTo: this.searchParams.globalDateInTo
+        };
+
         this.searchParams = {
             idFrom: '', idTo: '',
             sIdFrom: '', sIdTo: '',
             dateInFrom: '', dateInTo: '',
             dateOutFrom: '', dateOutTo: '',
-            aFlagsFrom: '', aFlagsTo: ''
+            aFlagsFrom: '', aFlagsTo: '',
+            ...globals
         };
         if(doFetch) this.fetchTableData();
     },
@@ -709,44 +717,47 @@ export default {
       this.itemToEdit = null;
       this.updateUserRole();
 
-      const params = new URLSearchParams();
-      // Pagination Params
-      params.append('page', this.currentPage);
-      params.append('size', this.displayLimit);
+      // AXIOS: Parameter Objekt bauen statt URLSearchParams
+      const queryParams = {
+        page: this.currentPage,
+        size: this.displayLimit
+      };
       
       // Filter Params (nur für Analysis)
       if (this.selectedTable === 'analysis') {
-          if (this.searchParams.idFrom) params.append('aId.from', this.searchParams.idFrom);
-          if (this.searchParams.idTo) params.append('aId.to', this.searchParams.idTo);
+          if (this.searchParams.idFrom) queryParams['aId.from'] = this.searchParams.idFrom;
+          if (this.searchParams.idTo) queryParams['aId.to'] = this.searchParams.idTo;
           
-          if (this.searchParams.sIdFrom) params.append('sId.from', this.searchParams.sIdFrom);
-          if (this.searchParams.sIdTo) params.append('sId.to', this.searchParams.sIdTo);
+          if (this.searchParams.sIdFrom) queryParams['sId.from'] = this.searchParams.sIdFrom;
+          if (this.searchParams.sIdTo) queryParams['sId.to'] = this.searchParams.sIdTo;
           
-          if (this.searchParams.dateInFrom) params.append('dateIn.from', this.searchParams.dateInFrom);
-          if (this.searchParams.dateInTo) params.append('dateIn.to', this.searchParams.dateInTo);
+          // Lokale Datum Filter
+          if (this.searchParams.dateInFrom) queryParams['dateIn.from'] = this.searchParams.dateInFrom;
+          if (this.searchParams.dateInTo) queryParams['dateIn.to'] = this.searchParams.dateInTo;
           
-          if (this.searchParams.dateOutFrom) params.append('dateOut.from', this.searchParams.dateOutFrom);
-          if (this.searchParams.dateOutTo) params.append('dateOut.to', this.searchParams.dateOutTo);
+          // Globale Datum Filter (überschreiben ggf. lokale, oder ergänzen - Logik hier: Global gewinnt wenn gesetzt)
+          // Besser: Nur setzen wenn lokal nicht gesetzt, oder umgekehrt. 
+          // Hier simple Logik: Global Date wird auch an 'dateIn' gemappt
+          if (this.searchParams.globalDateInFrom) queryParams['dateIn.from'] = this.searchParams.globalDateInFrom;
+          if (this.searchParams.globalDateInTo) queryParams['dateIn.to'] = this.searchParams.globalDateInTo;
           
-          if (this.searchParams.aFlagsFrom) params.append('aFlags.from', this.searchParams.aFlagsFrom);
-          if (this.searchParams.aFlagsTo) params.append('aFlags.to', this.searchParams.aFlagsTo);
+          if (this.searchParams.dateOutFrom) queryParams['dateOut.from'] = this.searchParams.dateOutFrom;
+          if (this.searchParams.dateOutTo) queryParams['dateOut.to'] = this.searchParams.dateOutTo;
+          
+          if (this.searchParams.aFlagsFrom) queryParams['aFlags.from'] = this.searchParams.aFlagsFrom;
+          if (this.searchParams.aFlagsTo) queryParams['aFlags.to'] = this.searchParams.aFlagsTo;
       }
       
       try {
-        const response = await fetch(`${API_BASE_URL}/${this.currentSchema.endpoint}/filter?${params.toString()}`, {
-          method: 'GET',
-          credentials: 'include' 
+        // AXIOS Call
+        // Pfad: /api + endpoint + /filter
+        // api.js hat baseURL /api, also hier nur endpoint...
+        const response = await api.get(`/${this.currentSchema.endpoint}/filter`, {
+            params: queryParams
         });
 
-        if (response.status === 401 || response.status === 403) {
-           this.$emit('logout');
-           return;
-        }
-
-        const data = await response.json(); 
-        if (!response.ok) {
-          throw new Error(data.message || `Fehler beim Laden von ${this.selectedTable}`);
-        }
+        const data = response.data; 
+        
         this.tableData = data.content;
         this.totalPages = data.totalPages;
         this.totalItems = data.totalElements;
@@ -758,6 +769,13 @@ export default {
 
       } catch (error) {
         console.error('Fetch error:', error);
+        
+        // 401 Check ist jetzt im Interceptor, aber UI Feedback hier:
+        if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+            this.$emit('logout');
+            return;
+        }
+        
         this.error = error;
       } finally {
         this.loading = false;
@@ -772,53 +790,44 @@ export default {
         
         this.updateUserRole();
 
-        const params = new URLSearchParams();
+        // AXIOS Params
+        const queryParams = {};
         
-        // Filter Params (nur für Analysis)
+        // Filter Params (nur für Analysis) - Analog zu fetchTableData
         if (this.selectedTable === 'analysis') {
-            if (this.searchParams.idFrom) params.append('aId.from', this.searchParams.idFrom);
-            if (this.searchParams.idTo) params.append('aId.to', this.searchParams.idTo);
+            if (this.searchParams.idFrom) queryParams['aId.from'] = this.searchParams.idFrom;
+            if (this.searchParams.idTo) queryParams['aId.to'] = this.searchParams.idTo;
             
-            if (this.searchParams.sIdFrom) params.append('sId.from', this.searchParams.sIdFrom);
-            if (this.searchParams.sIdTo) params.append('sId.to', this.searchParams.sIdTo);
+            if (this.searchParams.sIdFrom) queryParams['sId.from'] = this.searchParams.sIdFrom;
+            if (this.searchParams.sIdTo) queryParams['sId.to'] = this.searchParams.sIdTo;
             
-            if (this.searchParams.dateInFrom) params.append('dateIn.from', this.searchParams.dateInFrom);
-            if (this.searchParams.dateInTo) params.append('dateIn.to', this.searchParams.dateInTo);
+            if (this.searchParams.dateInFrom) queryParams['dateIn.from'] = this.searchParams.dateInFrom;
+            if (this.searchParams.dateInTo) queryParams['dateIn.to'] = this.searchParams.dateInTo;
+
+            if (this.searchParams.globalDateInFrom) queryParams['dateIn.from'] = this.searchParams.globalDateInFrom;
+            if (this.searchParams.globalDateInTo) queryParams['dateIn.to'] = this.searchParams.globalDateInTo;
             
-            if (this.searchParams.dateOutFrom) params.append('dateOut.from', this.searchParams.dateOutFrom);
-            if (this.searchParams.dateOutTo) params.append('dateOut.to', this.searchParams.dateOutTo);
+            if (this.searchParams.dateOutFrom) queryParams['dateOut.from'] = this.searchParams.dateOutFrom;
+            if (this.searchParams.dateOutTo) queryParams['dateOut.to'] = this.searchParams.dateOutTo;
             
-            if (this.searchParams.aFlagsFrom) params.append('aFlags.from', this.searchParams.aFlagsFrom);
-            if (this.searchParams.aFlagsTo) params.append('aFlags.to', this.searchParams.aFlagsTo);
+            if (this.searchParams.aFlagsFrom) queryParams['aFlags.from'] = this.searchParams.aFlagsFrom;
+            if (this.searchParams.aFlagsTo) queryParams['aFlags.to'] = this.searchParams.aFlagsTo;
         }
         
         try {
-          const url = `${API_BASE_URL}/${this.currentSchema.endpoint}/export?${params.toString()}`;
-          const response = await fetch(url, {
-            method: 'GET',
-            credentials: 'include' 
+          // AXIOS Blob Request
+          const response = await api.get(`/${this.currentSchema.endpoint}/export`, {
+            params: queryParams,
+            responseType: 'blob' // WICHTIG: Blob anfordern
           });
 
-          if (response.status === 401 || response.status === 403) {
-            this.$emit('logout');
-            return;
-          }
-
-          if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(errorText || `Fehler beim Export von ${this.selectedTable}`);
-          }
+          // Blob verarbeiten
+          const blob = new Blob([response.data]);
           
-          // Blob aus der Antwort erstellen
-          const blob = await response.blob();
-          
-          // Download-Link erzeugen
           const downloadUrl = window.URL.createObjectURL(blob);
-          
           const link = document.createElement('a');
           link.href = downloadUrl;
           
-          // Dateinamen setzen (optional: Zeitstempel hinzufügen)
           const timestamp = new Date().toISOString().split('T')[0];
           link.setAttribute('download', `${this.selectedTable}_export_${timestamp}.csv`);
           
@@ -831,6 +840,10 @@ export default {
 
         } catch (error) {
           console.error('Export error:', error);
+          if (error.response && error.response.status === 401) {
+             this.$emit('logout');
+             return;
+          }
           this.error = error.message;
         } finally {
           this.loadingCSV = false;
@@ -844,7 +857,6 @@ export default {
     },
 
     createNew() {
-      // ... (Unverändert) ...
       this.isNewItem = true;
       const emptyItem = {};
       const config = this.currentSchema.fieldConfigs || {};
@@ -914,36 +926,27 @@ export default {
         }
       }
 
-      let url = `${API_BASE_URL}/${schema.endpoint}`;
-      let method = 'POST';
+      let url = `/${schema.endpoint}`; // Leading slash for axios baseUrl
+      let method = 'post';
 
       if (!this.isNewItem) {
-        method = 'PUT';
+        method = 'put';
         url = this.constructUrlWithId(schema, dataToSend); 
       }
 
       try {
-        const response = await fetch(url, {
-          method,
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include', 
-          body: JSON.stringify(dataToSend),
-        });
-
-        if (response.status === 401 || response.status === 403) {
-           this.$emit('logout');
-           return;
-        }
-
-        const respData = await response.json().catch(() => ({}));
-        if (!response.ok) {
-          throw new Error(respData.message || 'Speichern fehlgeschlagen.');
-        }
+        // AXIOS POST/PUT
+        // api[method] ruft dynamisch api.post oder api.put auf
+        await api[method](url, dataToSend);
 
         await this.fetchTableData();
         this.itemToEdit = null;
       } catch (error) {
         console.log(`Fehler beim Speichern:\n${error.message}`);
+        if (error.response && error.response.status === 401) {
+             this.$emit('logout');
+             return;
+        }
         this.error = error;
       } finally {
         this.isSaving = false;
@@ -970,20 +973,8 @@ export default {
       try {
         const url = this.constructUrlWithId(schema, item);
         
-        const response = await fetch(url, { 
-          method: 'DELETE',
-          credentials: 'include' 
-        });
-        
-        if (response.status === 401 || response.status === 403) {
-           this.$emit('logout');
-           return;
-        }
-
-        if (!response.ok) {
-           const d = await response.json().catch(() => ({}));
-           throw new Error(d.message || 'Löschen fehlgeschlagen');
-        }
+        // AXIOS DELETE
+        await api.delete(url);
 
         await this.fetchTableData();
         if (this.itemToEdit && JSON.stringify(this.itemToEdit) === JSON.stringify(item)) {
@@ -991,11 +982,15 @@ export default {
         }
       } catch (error) {
         console.log(`Fehler beim Löschen: ${error.message}`);
+        if (error.response && error.response.status === 401) {
+             this.$emit('logout');
+        }
       }
     },
 
     constructUrlWithId(schema, item) {
-      let url = `${API_BASE_URL}/${schema.endpoint}`;
+      // AXIOS: BaseURL ist /api, also hier relativ starten
+      let url = `/${schema.endpoint}`;
       if (Array.isArray(schema.pk)) {
         schema.pk.forEach(key => {
           const val = item.__pk && item.__pk[key] !== undefined ? item.__pk[key] : item[key];
@@ -1094,6 +1089,7 @@ export default {
     },
 
     closeSelectors(event) {
+      // Schließt beide Selectors bei Klick außerhalb
       if (!event.target.closest('.column-selector')) {
         this.showColumnSelector = false;
         this.showFilterSelector = false;
@@ -1104,16 +1100,8 @@ export default {
 </script>
 
 <style scoped>
-/* Grundstyles bleiben gleich */
-.container { 
-    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
-    max-width: 1400px; 
-    margin: 0 auto; 
-    padding: 20px; 
-    min-height: 100%;
-    color: #333; 
-    transition: background-color 0.3s; 
-}
+/* Styles bleiben exakt wie vorher */
+.container { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 1400px; margin: 0 auto; padding: 20px; min-height: 100%; color: #333; transition: background-color 0.3s; }
 header h1 { margin-bottom: 20px; color: #2c3e50; }
 .table-selector { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 15px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 20px; }
 .control-group { display: flex; flex-direction: column; gap: 5px; }
@@ -1130,20 +1118,10 @@ input, select, .search-input { padding: 8px 12px; border: 1px solid #ced4da; bor
 .btn-cancel { background: #f8f9fa; color: #333; border: 1px solid #ddd; }
 .action-buttons { display: flex; gap: 5px; }
 .action-buttons .btn { padding: 6px; }
-
-/* NEUE BUTTON FARBEN */
-.btn-edit { 
-    background: #f59e0b; /* Angenehmes Orange */
-    color: white; 
-}
+.btn-edit { background: #f59e0b; color: white; }
 .btn-edit:hover { background: #d97706; }
-
-.btn-delete { 
-    background: #ef4444; /* Weiches Rot */
-    color: white; 
-}
+.btn-delete { background: #ef4444; color: white; }
 .btn-delete:hover { background: #dc2626; }
-
 .btn-logout { background: #dc3545; color: white; }
 .btn:hover { opacity: 0.9; }
 .mdi-icon { width: 20px; height: 20px; }
@@ -1189,47 +1167,12 @@ tr:hover .td-sticky { background: #f8f9fa; }
 .detail-row { display: contents; }
 .detail-label { font-weight: 600; color: #6c757d; padding: 8px 0; border-bottom: 1px solid #f1f3f5; align-self: center; }
 .detail-value { color: #212529; padding: 8px 0; border-bottom: 1px solid #f1f3f5; word-break: break-all; }
-/* .btn-dark-mode wurde entfernt */
-
-/* TABLE FOOTER & PAGINATION */
-.table-footer {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px 15px;
-    border-top: 1px solid #e9ecef;
-}
-
-.pagination-controls {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-}
-
-.btn-page {
-    padding: 5px 10px;
-    background: #f8f9fa;
-    border: 1px solid #dee2e6;
-    color: #333;
-    font-size: 0.9rem;
-}
-
-.btn-page:disabled {
-    opacity: 0.5;
-    cursor: default;
-}
-
-.btn-page:hover:not(:disabled) {
-    background: #e2e6ea;
-}
-
-.page-info {
-    font-size: 0.9rem;
-    margin: 0 10px;
-    color: #6c757d;
-}
-
-/* Dark Mode Overrides */
+.table-footer { display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; border-top: 1px solid #e9ecef; }
+.pagination-controls { display: flex; align-items: center; gap: 5px; }
+.btn-page { padding: 5px 10px; background: #f8f9fa; border: 1px solid #dee2e6; color: #333; font-size: 0.9rem; }
+.btn-page:disabled { opacity: 0.5; cursor: default; }
+.btn-page:hover:not(:disabled) { background: #e2e6ea; }
+.page-info { font-size: 0.9rem; margin: 0 10px; color: #6c757d; }
 :global(body.dark-theme) { background-color: #0f172a !important; }
 :global(body.dark-theme h1) { color: #ffffff !important; }
 :global(body.dark-theme .table-selector) { background-color: #1e293b !important; border-radius: 8px !important; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5) !important; }
@@ -1249,7 +1192,6 @@ tr:hover .td-sticky { background: #f8f9fa; }
 :global(body.dark-theme .btn-load) { background-color: #475569 !important; color: white !important; }
 :global(body.dark-theme .btn-load:hover) { background-color: #64748b !important; }
 :global(body.dark-theme .btn-search) { background-color: #910dfd !important; color: white !important; }
-/* .btn-dark-mode Style entfernt */
 :global(body.dark-theme .btn-page) { background-color: #334155 !important; border-color: #475569 !important; color: #fff !important; }
 :global(body.dark-theme .btn-page:hover:not(:disabled)) { background-color: #475569 !important; }
 :global(body.dark-theme .table-footer) { border-top-color: #334155 !important; }
@@ -1271,148 +1213,27 @@ tr:hover .td-sticky { background: #f8f9fa; }
 :global(body.dark-theme .detail-value) { color: #ffffff !important; border-bottom: 1px solid #334155 !important; }
 :global(body.dark-theme .status-text) { color: #94a3b8 !important; }
 :global(body.dark-theme .error-text) { background-color: #7f1d1d !important; color: #fecaca !important; }
-
-/* Column & Filter Selector Styles */
-.column-selector {
-  position:  relative;
-}
-
-.btn-columns {
-  display: flex;
-  align-items: center;
-  gap:  6px;
-  background: #6c757d;
-  color: white;
-  padding: 8px 12px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-.btn-columns:hover {
-  background: #5a6268;
-}
-
-.column-dropdown {
-  position:  absolute;
-  top:  100%;
-  left: 0;
-  margin-top: 4px;
-  background: white;
-  border: 1px solid #dee2e6;
-  border-radius:  8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  min-width: 200px;
-  max-height: 300px;
-  overflow-y: auto;
-  z-index: 1000;
-}
-
-.filter-dropdown {
-    width: 300px; /* Breiter für Filter inputs */
-    max-height: 500px;
-}
-
-.column-dropdown-header {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
-  border-bottom: 1px solid #dee2e6;
-  background: #f8f9fa;
-  border-radius: 8px 8px 0 0;
-  font-weight: 600;
-  font-size: 0.85rem;
-}
-
-.column-dropdown-header span {
-  flex: 1;
-}
-
-.btn-link {
-  background: none;
-  border:  none;
-  color: #007bff;
-  cursor: pointer;
-  font-size:  0.8rem;
-  padding: 2px 6px;
-}
-
-.btn-link:hover {
-  text-decoration: underline;
-}
-
-.column-option {
-  padding: 8px 12px;
-}
-
-.column-option:hover {
-  background: #f1f3f5;
-}
-
-.column-option label {
-  display:  flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  font-size: 0.9rem;
-}
-
-.column-option input[type="checkbox"] {
-  width:  16px;
-  height: 16px;
-  cursor: pointer;
-}
-
-/* Filter Specifics */
-.filter-content {
-    padding: 10px;
-}
-
-.filter-group {
-    margin-bottom: 10px;
-}
-
-.filter-group label {
-    font-size: 0.8rem;
-    font-weight: 600;
-    color: #6c757d;
-    display: block;
-    margin-bottom: 4px;
-}
-
-.range-inputs {
-    display: flex;
-    gap: 5px;
-}
-
-.range-inputs input {
-    width: 50%;
-    font-size: 0.85rem;
-    padding: 4px 8px;
-}
-
-/* Dark Mode für Selector */
-:global(body.dark-theme .column-dropdown) {
-  background: #1e293b;
-  border-color: #334155;
-}
-
-:global(body.dark-theme .column-dropdown-header) {
-  background:  #0f172a;
-  border-color: #334155;
-  color: #fff;
-}
-
-:global(body.dark-theme .column-option:hover) {
-  background: #334155;
-}
-
-:global(body.dark-theme .column-option label) {
-  color: #e2e8f0;
-}
-
-:global(body.dark-theme .filter-group label) {
-    color: #cbd5e1;
-}
+.column-selector { position: relative; }
+.btn-columns { display: flex; align-items: center; gap: 6px; background: #6c757d; color: white; padding: 8px 12px; border: none; border-radius: 6px; cursor: pointer; }
+.btn-columns:hover { background: #5a6268; }
+.column-dropdown { position: absolute; top: 100%; left: 0; margin-top: 4px; background: white; border: 1px solid #dee2e6; border-radius: 8px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); min-width: 200px; max-height: 300px; overflow-y: auto; z-index: 1000; }
+.filter-dropdown { width: 300px; max-height: 500px; }
+.column-dropdown-header { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-bottom: 1px solid #dee2e6; background: #f8f9fa; border-radius: 8px 8px 0 0; font-weight: 600; font-size: 0.85rem; }
+.column-dropdown-header span { flex: 1; }
+.btn-link { background: none; border: none; color: #007bff; cursor: pointer; font-size: 0.8rem; padding: 2px 6px; }
+.btn-link:hover { text-decoration: underline; }
+.column-option { padding: 8px 12px; }
+.column-option:hover { background: #f1f3f5; }
+.column-option label { display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.9rem; }
+.column-option input[type="checkbox"] { width: 16px; height: 16px; cursor: pointer; }
+.filter-content { padding: 10px; }
+.filter-group { margin-bottom: 10px; }
+.filter-group label { font-size: 0.8rem; font-weight: 600; color: #6c757d; display: block; margin-bottom: 4px; }
+.range-inputs { display: flex; gap: 5px; }
+.range-inputs input { width: 50%; font-size: 0.85rem; padding: 4px 8px; }
+:global(body.dark-theme .column-dropdown) { background: #1e293b; border-color: #334155; }
+:global(body.dark-theme .column-dropdown-header) { background: #0f172a; border-color: #334155; color: #fff; }
+:global(body.dark-theme .column-option:hover) { background: #334155; }
+:global(body.dark-theme .column-option label) { color: #e2e8f0; }
+:global(body.dark-theme .filter-group label) { color: #cbd5e1; }
 </style>

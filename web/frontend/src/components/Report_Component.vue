@@ -99,13 +99,17 @@ export default {
   watch: {
     globalDateStart(newVal) {
       this.globalDateInFrom = newVal; 
-      this.currentPage = 0;
-      this.fetchReport();
+      if (this.selectedReport) {
+          this.currentPage = 0;
+          this.fetchReport();
+      }
     },
     globalDateEnd(newVal) {
       this.globalDateInTo = newVal;
-      this.currentPage = 0;
-      this.fetchReport();
+      if (this.selectedReport) {
+          this.currentPage = 0;
+          this.fetchReport();
+      }
     }
   },
 
@@ -196,13 +200,13 @@ export default {
 
       try {
         let url = `/api/reports/${this.selectedReport}`;
-        
-        // Query Params für Pagination und Suche aufbauen
         const queryParams = new URLSearchParams();
         queryParams.append('page', this.currentPage);
         queryParams.append('size', this.displayLimit);
-        queryParams.append('globalDateInFrom', this.globalDateInFrom);
-        queryParams.append('globalDateInTo', this.globalDateInTo);
+        
+        // Globale Filter immer mitsenden (Backend entscheidet ob genutzt)
+        if(this.globalDateInFrom) queryParams.append('globalDateInFrom', this.globalDateInFrom);
+        if(this.globalDateInTo) queryParams.append('globalDateInTo', this.globalDateInTo);
         
 
         if (this.selectedReport === 'samples-suspicious-timerange') {
