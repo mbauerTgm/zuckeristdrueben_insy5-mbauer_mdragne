@@ -3,8 +3,6 @@ package com.mbauer_mdragne.vue_crud.Controllers;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.sql.Timestamp;
-import java.time.OffsetDateTime;
-import java.time.format.DateTimeParseException;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,28 +14,16 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
-import com.mbauer_mdragne.vue_crud.DTOs.AnalysisFilterDto;
 import com.mbauer_mdragne.vue_crud.DTOs.AnalysisGlobalFilterDto;
-import com.mbauer_mdragne.vue_crud.Entities.Analysis;
 import com.mbauer_mdragne.vue_crud.Entities.Sample;
 import com.mbauer_mdragne.vue_crud.Entities.SampleId;
-import com.mbauer_mdragne.vue_crud.Errors.BadRequestException;
 import com.mbauer_mdragne.vue_crud.Errors.ResourceNotFoundException;
-import com.mbauer_mdragne.vue_crud.Repositories.AnalysisRepository;
-import com.mbauer_mdragne.vue_crud.Repositories.AnalysisSpecifications;
 import com.mbauer_mdragne.vue_crud.Repositories.SampleRepository;
 import com.mbauer_mdragne.vue_crud.Repositories.SampleSpecifications;
+import com.mbauer_mdragne.vue_crud.DateUtils;
 
-import org.springframework.web.bind.annotation.RequestBody;
-import jakarta.persistence.EntityManager;
 import jakarta.servlet.http.HttpServletResponse;
 
 @RestController
@@ -45,8 +31,6 @@ import jakarta.servlet.http.HttpServletResponse;
 public class SampleController {
 
     @Autowired private SampleRepository sampleRepo;
-
-    // ------------------ Sample ------------------
 
     @GetMapping
     public List<Sample> getAllSamples(AnalysisGlobalFilterDto globalFilter) {
@@ -72,13 +56,20 @@ public class SampleController {
         return ResponseEntity.ok(sampleRepo.findAll(spec, pageable));
     }
 
+    @GetMapping("/{sId}/{sStamp}")
+    public ResponseEntity<Sample> getSampleById(@PathVariable String sId, @PathVariable String sStamp) {
+        SampleId id = new SampleId(sId, DateUtils.parseAny(sStamp));
+        Sample sample = sampleRepo.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Sample not found: " + sId));
+        return ResponseEntity.ok(sample);
+    }
+
     @PostMapping
     public ResponseEntity<Sample> createSample(@RequestBody Sample sample) {
         if (sample.getSStamp() == null) {
             sample.setSStamp(new Timestamp(System.currentTimeMillis()));
         }
-        Sample saved = sampleRepo.save(sample);
-        return ResponseEntity.ok(saved);
+        return ResponseEntity.ok(sampleRepo.save(sample));
     }
 
     @PutMapping("/{sId}/{sStamp}")
@@ -86,63 +77,31 @@ public class SampleController {
         @PathVariable String sId,
         @PathVariable String sStamp,
         @RequestBody Sample updatedSample) {
-        try {
-            OffsetDateTime odt = OffsetDateTime.parse(sStamp);
-            Timestamp ts = Timestamp.from(odt.toInstant());
-            SampleId id = new SampleId(sId, ts);
+        
+        SampleId id = new SampleId(sId, DateUtils.parseAny(sStamp));
+        Sample existing = sampleRepo.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("Sample not found"));
 
-            Sample existing = sampleRepo.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Sample not found: sId=" + sId + ", sStamp=" + sStamp));
-
-            updatedSample.setSId(existing.getSId());
-            updatedSample.setSStamp(existing.getSStamp());
-            Sample saved = sampleRepo.save(updatedSample);
-            return ResponseEntity.ok(saved);
-        } catch (DateTimeParseException e) {
-            throw new BadRequestException("Invalid timestamp: " + sStamp);
-        }
+        updatedSample.setSId(existing.getSId());
+        updatedSample.setSStamp(existing.getSStamp());
+        return ResponseEntity.ok(sampleRepo.save(updatedSample));
     }
 
     @DeleteMapping("/{sId}/{sStamp}")
-        public ResponseEntity<Void> deleteSample(@PathVariable String sId, @PathVariable String sStamp) {
-        try {
-            OffsetDateTime odt = OffsetDateTime.parse(sStamp);
-            Timestamp ts = Timestamp.from(odt.toInstant());
-            SampleId id = new SampleId(sId, ts);
-
-            if (!sampleRepo.existsById(id)) {
-                throw new ResourceNotFoundException("Sample not found: sId=" + sId + ", sStamp=" + sStamp);
-            }
-            sampleRepo.deleteById(id);
-            return ResponseEntity.noContent().build();
-        } catch (DateTimeParseException e) {
-            throw new BadRequestException("Invalid timestamp: " + sStamp);
+    public ResponseEntity<Void> deleteSample(@PathVariable String sId, @PathVariable String sStamp) {
+        SampleId id = new SampleId(sId, DateUtils.parseAny(sStamp));
+        if (!sampleRepo.existsById(id)) {
+            throw new ResourceNotFoundException("Sample not found");
         }
+        sampleRepo.deleteById(id);
+        return ResponseEntity.noContent().build();
     }
 
-    @GetMapping("/{sId}/{sStamp}")
-    public ResponseEntity<Sample> getSampleById(@PathVariable String sId, @PathVariable String sStamp) {
-        try {
-            Timestamp ts = new Timestamp(Long.parseLong(sStamp));
-            SampleId id = new SampleId(sId, ts);
-            Sample sample = sampleRepo.findById(id)
-                    .orElseThrow(() -> new ResourceNotFoundException("Sample not found: sId=" + sId + ", sStamp=" + sStamp));
-            return ResponseEntity.ok(sample);
-        } catch (NumberFormatException e) {
-            throw new BadRequestException("Invalid timestamp: " + sStamp);
-        }
-    }
-    
     @GetMapping("/export")
     public void exportSamplesToCsv(AnalysisGlobalFilterDto globalFilter, HttpServletResponse response) throws IOException {
         Specification<Sample> spec = SampleSpecifications.withGlobalDateFilter(globalFilter);
-        List<Sample> list;
-    
-        if (spec != null) {
-             list = sampleRepo.findAll(spec);
-        } else {
-             list = isResearcher() ? sampleRepo.findAllForResearcher() : sampleRepo.findAll();
-        }
+        List<Sample> list = (spec != null) ? sampleRepo.findAll(spec) : 
+                           (isResearcher() ? sampleRepo.findAllForResearcher() : sampleRepo.findAll());
 
         response.setContentType("text/csv");
         response.setCharacterEncoding("UTF-8");
@@ -166,9 +125,7 @@ public class SampleController {
 
     private boolean isResearcher() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null) return false;
-        
-        return auth.getAuthorities().stream()
+        return auth != null && auth.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_Researcher"));
     }
 }

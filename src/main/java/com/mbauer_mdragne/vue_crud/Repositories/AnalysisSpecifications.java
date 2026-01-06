@@ -4,13 +4,13 @@ import com.mbauer_mdragne.vue_crud.DTOs.AnalysisFilterDto;
 import com.mbauer_mdragne.vue_crud.DTOs.AnalysisGlobalFilterDto;
 import com.mbauer_mdragne.vue_crud.DTOs.Range;
 import com.mbauer_mdragne.vue_crud.Entities.Analysis;
+import com.mbauer_mdragne.vue_crud.DateUtils;
 import org.springframework.data.jpa.domain.Specification;
 import jakarta.persistence.criteria.Path;
 import jakarta.persistence.criteria.Predicate;
 import java.util.ArrayList;
 import java.util.List;
 import java.sql.Timestamp;
-import java.time.LocalDateTime;
 
 public class AnalysisSpecifications {
 
@@ -20,6 +20,7 @@ public class AnalysisSpecifications {
 
             addRangePredicate(predicates, cb, root.get("aId"), dto.getAId());
             addRangePredicate(predicates, cb, root.get("sId"), dto.getSId());
+            
             addDateTimeRangePredicate(predicates, cb, root.get("dateIn"), dto.getDateIn());
             addDateTimeRangePredicate(predicates, cb, root.get("dateOut"), dto.getDateOut());
 
@@ -33,15 +34,18 @@ public class AnalysisSpecifications {
             List<Predicate> predicates,
             jakarta.persistence.criteria.CriteriaBuilder cb,
             Path<Timestamp> path,
-            Range<LocalDateTime> range
+            Range<?> range
     ) {
         if (range == null) return;
 
-        if (range.getFrom() != null) {
-            predicates.add(cb.greaterThanOrEqualTo(path, Timestamp.valueOf(range.getFrom())));
+        Timestamp from = DateUtils.parseAny(range.getFrom());
+        Timestamp to = DateUtils.parseAny(range.getTo());
+
+        if (from != null) {
+            predicates.add(cb.greaterThanOrEqualTo(path, from));
         }
-        if (range.getTo() != null) {
-            predicates.add(cb.lessThanOrEqualTo(path, Timestamp.valueOf(range.getTo())));
+        if (to != null) {
+            predicates.add(cb.lessThanOrEqualTo(path, to));
         }
     }
 
@@ -63,8 +67,8 @@ public class AnalysisSpecifications {
 
     public static Specification<Analysis> forResearcher() {
         return (root, query, cb) -> {
-            jakarta.persistence.criteria.Predicate likeF = cb.like(root.get("aFlags"), "F%");
-            jakarta.persistence.criteria.Predicate likeV = cb.like(root.get("aFlags"), "V%");
+            Predicate likeF = cb.like(root.get("aFlags"), "F%");
+            Predicate likeV = cb.like(root.get("aFlags"), "V%");
             return cb.or(likeF, likeV);
         };
     }
@@ -75,13 +79,16 @@ public class AnalysisSpecifications {
                 return null;
             }
             List<Predicate> predicates = new ArrayList<>();
-            Range<LocalDateTime> range = globalDto.getGlobalDateIn();
+            Range<?> range = globalDto.getGlobalDateIn();
 
-            if (range.getFrom() != null) {
-                predicates.add(cb.greaterThanOrEqualTo(root.get("dateIn"), Timestamp.valueOf(range.getFrom())));
+            Timestamp from = DateUtils.parseAny(range.getFrom());
+            Timestamp to = DateUtils.parseAny(range.getTo());
+
+            if (from != null) {
+                predicates.add(cb.greaterThanOrEqualTo(root.get("dateIn"), from));
             }
-            if (range.getTo() != null) {
-                predicates.add(cb.lessThanOrEqualTo(root.get("dateIn"), Timestamp.valueOf(range.getTo())));
+            if (to != null) {
+                predicates.add(cb.lessThanOrEqualTo(root.get("dateIn"), to));
             }
 
             return predicates.isEmpty() ? null : cb.and(predicates.toArray(new Predicate[0]));

@@ -1,38 +1,28 @@
 package com.mbauer_mdragne.vue_crud.Controllers;
 
 import com.mbauer_mdragne.vue_crud.DTOs.AnalysisGlobalFilterDto;
-import org.springframework.security.core.Authentication;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-import com.mbauer_mdragne.vue_crud.Entities.*;
-import com.mbauer_mdragne.vue_crud.Errors.BadRequestException;
+import com.mbauer_mdragne.vue_crud.Entities.Log;
 import com.mbauer_mdragne.vue_crud.Errors.ResourceNotFoundException;
-import com.mbauer_mdragne.vue_crud.Repositories.*;
+import com.mbauer_mdragne.vue_crud.Repositories.LogRepository;
+import com.mbauer_mdragne.vue_crud.Repositories.LogSpecifications;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.data.jpa.domain.Specification;
-import com.mbauer_mdragne.vue_crud.DTOs.AnalysisFilterDto;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
-import jakarta.persistence.EntityManager;
-import jakarta.servlet.http.HttpServletResponse;
-
-import java.time.OffsetDateTime;
-import java.time.format.DateTimeParseException;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.sql.Timestamp;
 import java.util.List;
-
-import org.springframework.security.core.context.SecurityContextHolder;
 
 @RestController
 @RequestMapping("/api/logs")
 public class LogController {
-    @Autowired private LogRepository logRepo;
+
+    @Autowired 
+    private LogRepository logRepo;
+
     @GetMapping
     public List<Log> getAllLogs(AnalysisGlobalFilterDto globalFilter) {
         Specification<Log> spec = LogSpecifications.withGlobalDateFilter(globalFilter);

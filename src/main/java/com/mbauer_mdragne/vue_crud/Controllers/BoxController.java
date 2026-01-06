@@ -1,40 +1,29 @@
 package com.mbauer_mdragne.vue_crud.Controllers;
 
 import com.mbauer_mdragne.vue_crud.DTOs.AnalysisGlobalFilterDto;
-import org.springframework.security.core.Authentication;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
 import com.mbauer_mdragne.vue_crud.Entities.Box;
-import com.mbauer_mdragne.vue_crud.Errors.BadRequestException;
 import com.mbauer_mdragne.vue_crud.Errors.ResourceNotFoundException;
 import com.mbauer_mdragne.vue_crud.Repositories.BoxRepository;
 import com.mbauer_mdragne.vue_crud.Repositories.BoxSpecifications;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.data.jpa.domain.Specification;
-import com.mbauer_mdragne.vue_crud.DTOs.AnalysisFilterDto;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
-import jakarta.persistence.EntityManager;
-import jakarta.servlet.http.HttpServletResponse;
-
-import java.time.OffsetDateTime;
-import java.time.format.DateTimeParseException;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.sql.Timestamp;
 import java.util.List;
-
-import org.springframework.security.core.context.SecurityContextHolder;
 
 @RestController
 @RequestMapping("/api/boxes")
 public class BoxController {
-    @Autowired private BoxRepository boxRepo;
-    
+
+    @Autowired 
+    private BoxRepository boxRepo;
+
+
     @GetMapping
     public List<Box> getAllBoxes(AnalysisGlobalFilterDto globalFilter) {
         Specification<Box> spec = BoxSpecifications.withGlobalDateFilter(globalFilter);
@@ -69,6 +58,7 @@ public class BoxController {
         Box existing = boxRepo.findById(bId)
                 .orElseThrow(() -> new ResourceNotFoundException("Box not found with id=" + bId));
         updated.setBId(existing.getBId());
+        
         Box saved = boxRepo.save(updated);
         return ResponseEntity.ok(saved);
     }
