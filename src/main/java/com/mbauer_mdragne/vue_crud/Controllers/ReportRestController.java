@@ -151,17 +151,28 @@ public class ReportRestController {
     }
 
     private Timestamp parseTimestamp(String dateStr, boolean isStart) {
+        if (dateStr == null || dateStr.isEmpty()) return null;
         try {
             String cleanDate = dateStr.replace("T", " ");
+            
+            // Falls vom Frontend nur "YYYY-MM-DD" kommt (Länge 10)
             if (cleanDate.length() == 10) {
                 cleanDate += isStart ? " 00:00:00" : " 23:59:59";
             } 
+            // Falls "YYYY-MM-DD HH:mm" kommt
             else if (cleanDate.length() == 16) {
                 cleanDate += ":00";
             }
+            
             return Timestamp.valueOf(cleanDate);
         } catch (Exception e) {
-            return Timestamp.from(java.time.OffsetDateTime.parse(dateStr).toInstant());
+            try {
+                // Fallback für ISO Strings mit Zeitzone
+                return Timestamp.from(java.time.OffsetDateTime.parse(dateStr).toInstant());
+            } catch (Exception e2) {
+                System.err.println("Konnte Datum nicht parsen: " + dateStr);
+                return null;
+            }
         }
     }
 }
