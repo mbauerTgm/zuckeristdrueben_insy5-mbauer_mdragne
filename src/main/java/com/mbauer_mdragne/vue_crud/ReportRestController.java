@@ -87,13 +87,17 @@ public class ReportRestController {
     }
 
     private Timestamp parseTimestamp(String dateStr, boolean isStart) {
-        try {
-            // Versuche ISO-Format (von Vue .toISOString())
-            return Timestamp.from(OffsetDateTime.parse(dateStr).toInstant());
-        } catch (Exception e) {
-            // Fallback für einfaches Datum yyyy-MM-dd
-            String suffix = isStart ? " 00:00:00" : " 23:59:59";
-            return Timestamp.valueOf(dateStr + suffix);
+    try {
+        String cleanDate = dateStr.replace("T", " ");
+        if (cleanDate.length() == 10) {
+            cleanDate += isStart ? " 00:00:00" : " 23:59:59";
+        } 
+        else if (cleanDate.length() == 16) {
+            cleanDate += ":00";
         }
+        return Timestamp.valueOf(cleanDate);
+    } catch (Exception e) {
+        return Timestamp.from(java.time.OffsetDateTime.parse(dateStr).toInstant());
     }
+}
 }

@@ -58,7 +58,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="(row, idx) in paginatedData" :key="idx">
+            <tr v-for="(row, idx) in reportData" :key="idx">
               <td v-for="col in columns" :key="col">
                 {{ formatCell(col, row[col]) }}
               </td>
@@ -69,7 +69,7 @@
 
       <div class="table-footer">
         <p class="info-text">
-            Zeige {{ paginatedData.length }} von {{ reportData.length }} Einträgen
+            Zeige {{ reportData.length }} von {{ totalItems }} Einträgen
         </p>
         
         <div class="pagination-controls" v-if="totalPages > 1">
@@ -97,13 +97,14 @@ export default {
       loading: false,
       error: null,
       hasSearched: false,
-      reportData: [], // Enthält ALLE Daten vom Server
+      reportData: [],
       
-      // Pagination State
+      // Pagination State (Server-Side)
       currentPage: 0,
+      totalPages: 0,
+      totalItems: 0,
       displayLimit: 25,
 
-      // Parameter für den speziellen Zeit-Report
       params: {
         start: '',
         end: ''
@@ -126,16 +127,6 @@ export default {
     columns() {
       if (this.reportData.length === 0) return [];
       return Object.keys(this.reportData[0]);
-    },
-    // NEU: Berechnet die Gesamtzahl der Seiten
-    totalPages() {
-      return Math.ceil(this.reportData.length / this.displayLimit);
-    },
-    // NEU: Schneidet die Daten für die aktuelle Seite aus
-    paginatedData() {
-      const start = this.currentPage * this.displayLimit;
-      const end = start + this.displayLimit;
-      return this.reportData.slice(start, end);
     }
   },
   methods: {
@@ -143,13 +134,15 @@ export default {
       this.reportData = [];
       this.hasSearched = false;
       this.error = null;
-      this.currentPage = 0; // Reset Page bei Wechsel
+      this.currentPage = 0; 
+      this.totalPages = 0;
+      this.totalItems = 0;
     },
 
-    // NEU: Seitenwechsel
     changePage(newPage) {
       if (newPage >= 0 && newPage < this.totalPages) {
         this.currentPage = newPage;
+        this.fetchReport();
       }
     },
 
@@ -160,35 +153,46 @@ export default {
 
     formatCell(key, value) {
       if (value === null || value === undefined) return '-';
-      if (key.includes('date') || key.includes('stamp') || key.includes('At')) {
+      if (key.toLowerCase().includes('date') || key.toLowerCase().includes('stamp') || key.toLowerCase().includes('at')) {
         try {
-           return new Date(value).toLocaleString('de-DE');
+          return new Date(value).toLocaleString('de-DE');
         } catch (e) { return value; }
       }
+      if (typeof value === 'object' && !Array.isArray(value)) {
+        const idKey = Object.keys(value).find(k => k.toLowerCase().endsWith('id'));
+        if (idKey) return value[idKey];
+        if (value.name) return value.name;
+        return Object.values(value)[0];
+      }
+
       return value;
     },
 
     async fetchReport() {
       this.loading = true;
       this.error = null;
-      this.reportData = [];
       this.hasSearched = true;
-      this.currentPage = 0; // Reset Page bei neuer Suche
 
       try {
         let url = `/api/reports/${this.selectedReport}`;
+        
+        // Query Params für Pagination und Suche aufbauen
+        const queryParams = new URLSearchParams();
+        queryParams.append('page', this.currentPage);
+        queryParams.append('size', this.displayLimit);
 
         if (this.selectedReport === 'samples-suspicious-timerange') {
           if (!this.params.start || !this.params.end) {
             throw new Error("Bitte Start- und Endzeitpunkt wählen.");
           }
-          const startFmt = this.params.start.replace('T', ' ') + ':00';
-          const endFmt = this.params.end.replace('T', ' ') + ':59'; 
+          const startFmt = this.params.start
+          const endFmt = this.params.end
           
-          url += `?start=${encodeURIComponent(startFmt)}&end=${encodeURIComponent(endFmt)}`;
+          queryParams.append('start', startFmt);
+          queryParams.append('end', endFmt);
         }
 
-        const response = await fetch(url, {
+        const response = await fetch(`${url}?${queryParams.toString()}`, {
           method: 'GET',
           credentials: 'include' 
         });
@@ -203,11 +207,16 @@ export default {
         }
 
         const data = await response.json();
-        this.reportData = data;
+        
+        this.reportData = data.content;
+        this.totalPages = data.totalPages;
+        this.totalItems = data.totalElements;
+        this.currentPage = data.number;
 
       } catch (err) {
         console.error(err);
         this.error = err.message;
+        this.reportData = [];
       } finally {
         this.loading = false;
       }
@@ -235,7 +244,6 @@ export default {
   color: #64748b;
 }
 
-/* Controls Card */
 .controls-card {
   background: white;
   padding: 20px;
@@ -304,7 +312,6 @@ select:focus, input:focus {
   cursor: not-allowed;
 }
 
-/* Error Box */
 .error-box {
   background-color: #fef2f2;
   border: 1px solid #fecaca;
@@ -314,7 +321,6 @@ select:focus, input:focus {
   margin-top: 20px;
 }
 
-/* Table Styles */
 .table-card {
   margin-top: 30px;
   background: white;
@@ -324,7 +330,6 @@ select:focus, input:focus {
   border: 1px solid #e2e8f0;
 }
 
-/* Scroll wrapper für die Tabelle (ohne Footer) */
 .table-scroll {
   overflow-x: auto;
 }
@@ -353,13 +358,12 @@ tr:hover {
   background-color: #f8fafc;
 }
 
-/* --- PAGINATION STYLES (Analog Frontend.vue) --- */
 .table-footer {
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 10px 15px;
-    background-color: #fff; /* Wichtig */
+    background-color: #fff;
     border-top: 1px solid #e2e8f0;
 }
 
@@ -417,7 +421,6 @@ tr:hover {
   color: white;
 }
 :global(body.dark-theme .table-card) { background-color: #1e293b; border-color: #334155; }
-/* Table Footer Dark Mode */
 :global(body.dark-theme .table-footer) { background-color: #1e293b; border-color: #334155; }
 :global(body.dark-theme .info-text) { color: #94a3b8; }
 :global(body.dark-theme .page-info) { color: #94a3b8; }

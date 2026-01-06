@@ -29,7 +29,7 @@
       </nav>
 
       <div class="header-right">
-        <button @click="toggleDarkMode" class="header-btn" :title="darkMode ? 'Licht an' : 'Dunkel machen'">
+        <button @click="toggleDarkMode" class="header-btn" :title="darkMode ? 'Lichtmode' : 'Darkmode'">
           <svg v-if="darkMode" viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
             <path d="M12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,2L14.39,4.39L12,6.78L9.61,4.39L12,2M5.61,5.61L8,8L5.61,10.39L3.22,8L5.61,5.61M2,12L4.39,9.61L6.78,12L4.39,14.39L2,12M5.61,18.39L8,16L10.39,18.39L8,20.78L5.61,18.39M12,22L9.61,19.61L12,17.22L14.39,19.61L12,22M18.39,18.39L16,16L18.39,13.61L20.78,16L18.39,18.39M22,12L19.61,14.39L17.22,12L19.61,9.61L22,12M18.39,5.61L16,8L13.61,5.61L16,3.22L18.39,5.61Z" />
           </svg>
@@ -96,6 +96,9 @@ export default {
     },
 
     async onLogout() {
+      this.darkMode = false;
+      localStorage.setItem('darkMode', this.darkMode);
+      this.applyDarkMode();
       try {
         // Backend den HttpOnly Cookie löschen lassen
         await axios.post("/api/auth/logout", {}, { withCredentials: true });
@@ -151,8 +154,6 @@ export default {
 </script>
 
 <style>
-/* Global Styles */
-/* HTML & Body auf 100% Höhe fixieren und Scrollbars global verstecken */
 html, body { 
   margin: 0; 
   padding: 0;
@@ -161,7 +162,7 @@ html, body {
   font-family: 'Inter', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   background-color: #f8f9fa;
   color: #333;
-  overflow: hidden; /* WICHTIG: Verhindert Scrollbar am Body/HTML */
+  overflow: hidden; 
 }
 
 body.dark-theme {
@@ -169,7 +170,7 @@ body.dark-theme {
   color: #f8fafc;
 }
 
-/* HEADER STYLES */
+
 .app-header {
   background-color: #0f172a;
   color: white;
