@@ -91,6 +91,24 @@
 <script>
 export default {
   name: 'ReportComponent',
+  props: {
+    globalDateStart: String,
+    globalDateEnd: String
+  },
+
+  watch: {
+    globalDateStart(newVal) {
+      this.globalDateInFrom = newVal; 
+      this.currentPage = 0;
+      this.fetchReport();
+    },
+    globalDateEnd(newVal) {
+      this.globalDateInTo = newVal;
+      this.currentPage = 0;
+      this.fetchReport();
+    }
+  },
+
   data() {
     return {
       selectedReport: '',
@@ -98,6 +116,9 @@ export default {
       error: null,
       hasSearched: false,
       reportData: [],
+
+      globalDateInFrom: '',
+      globalDateInTo: '',
       
       // Pagination State (Server-Side)
       currentPage: 0,
@@ -180,6 +201,9 @@ export default {
         const queryParams = new URLSearchParams();
         queryParams.append('page', this.currentPage);
         queryParams.append('size', this.displayLimit);
+        queryParams.append('globalDateInFrom', this.globalDateInFrom);
+        queryParams.append('globalDateInTo', this.globalDateInTo);
+        
 
         if (this.selectedReport === 'samples-suspicious-timerange') {
           if (!this.params.start || !this.params.end) {
