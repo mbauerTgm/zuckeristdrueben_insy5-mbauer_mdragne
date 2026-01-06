@@ -58,6 +58,39 @@ docker exec -i zuckerpostgres psql -U postgres -d database -c "INSERT INTO venla
 Der Vorletzte Parameter in diesem INSERT Befehl ist die Rolle des Users. 1 - Admin, 2 - Researcher, 3- Reader. 
 Der letzte Parameter ist der erstellungs Zeitstempel.
 
+## Filterung & Paging im Backend
+Um eine bessere Performance sowohl im Front- als auch im Backend zu erzielen wurde eine Filterung und ein Paging im Backend umgesetzt.
+
+Für das Paging wurde Springboots Pagable interface verwendet. Es sortiert Daten und Paginiert diese automatisch im Backend. Dabei übergibt das Interface bei jedem Request die Daten im context[], aber auch Informationen für das Paging wie Seite, insgesammte Seiten und insgesammte Items der Tabelle. Dadurch musste das Frontend kaum geändert werden. 
+
+Die Filterung im Backend wurde mittels Specifications und DynamicFilter umgesetzt.
+Das Backend bekommt durch POJO Angaben, die Durch ein Dto vordefiniert sind, im HTTP Request mittgeteilt nach was gefiltert werden soll. Die Angaben werden dann durch die Implementierung der Specifications und DynamicFilter in fertige Querys umgewandelt und (gepaded) wieder an das Frontend geschickt.
+
+Die ursprünglichen GET Request wurden nicht ersetzt, sondern die Server Paginated Verion und bei den Tabellen Analysis und Sample Serverseitig gefilterte Version ist unter `/api/<tablename>/filter` zu finden.
+
+## Eingeschränkte Daten Anzeige für Researcher
+Die Einschränkung für Reseacher wurde ebenfalls durch eine filterung im Backend umgesetzt.
+Da wir zuerst das Security- und Rollenmanagment implementiert haben und danach den jenen Punkt hatten wir zwei Iterationen dieser Rollenbasierten Filterung. Bei beiden wurde aus dem SecurityContext die Rolle des Benutzers entnommen.
+
+Zuerst wurde eifach das Repository von Analysis und Sample um eine Funktion mit @Query Annotation und simpler Sql Abfrage.
+```java
+@Query("SELECT a FROM Analysis a WHERE a.aFlags LIKE 'F%' OR a.aFlags LIKE 'V%'")
+List<Analysis> findAllForResearcher();
+```
+
+Als die Backendfilterung mit Specifications und DynamicFilter implementiert wurde setzten wir es mittels `.add(...)` um. Damit wurde an den Query ein `AND` mit der Flags Bedinngung für den Researcher drangehängt.
+
+## CSV Export über ReST-Schnittstelle
+Im Gegensatz zur Web-Ansicht, die aus Performancegründen mit einer Paginierung (Seitenaufteilung) arbeitet, gibt es einen Export, der  sicherstellt, dass der gesamte Datensatz gemeinsam in einer Datei vorliegt.
+Der Button löst einen GET-Request an `/api/export` aus. Das Backend generiert zur Laufzeit einen CSV-Stream, der über das Frontend als Download (`.csv`) bereitgestellt wird.
+
+## Erstellung und Anzeige der Reports auf Basis der SQL-Funktionen
+Um Qualität der täglichen Daten sicherzustellen, nutzt das System spezialisierte SQL-Funktionen die im Backend und der Datenbank definiert sind. Das Backend besitzt API-Endpunkte, die mit den Funktionen gezielt nach ungültigen oder inkonsistenten Datensätzen suchen. Das Ziel dieser Reports ist es, Fehler im Arbeitsablauf sofort sichtbar zu machen und sicherzustellen, dass jede Probe den korrekten Prozess durchläuft.
+
+Beispielsweise konzentriert sich ein Teil dieser Analyse auf die Boxen. Hier wird automatisch geprüft, ob Boxen ohne zugewiesene Samplenummern existieren oder ob Samples im System gespeichert sind, für die noch keine Analyse gestartet wurde. Ebenso identifiziert das System Analysen, denen eine feste Rückstellposition im Lager fehlt.
+
+## Globale Filterung
+Die Globale Filterung vom DateIn wurde durch eine Erweiterung der bestehenden Filterung um ein DTO im POJO Request erweitert.
 
 # Projekt lokal starten – Schritt-für-Schritt Anleitung (aus vorherigen Aufgaben)
 
@@ -105,9 +138,31 @@ Wenn alle Container erfolgreich laufen, kann das Frontend über folgenden Link g
 
 Dort sollte das Frontend mit den geladenen Daten sichtbar sein.
 
-## Starten von Cypress-Tests
+### 4. Starten von Cypress-Tests
 Durch den folgenden Befehl, der unter /web/frontend ausgeführt werden muss, werden alle E2E Test von Cypress ausgeführt. Nach Abschluss lassen sich unter web/frontend/cypress/reports der Test Report und unter web/frontend/cypress/videos eine Video aufnahme der Test finden. !ACHTUNG: Dadurch das es jetzt eine Login Page gibt muss wie "Einfügen eines Testusers in die Datenbank" beschrieben ein User in die Datenbank eingefügt werden!
 
 ```bash
 yarn test:report
+```
+
+### 5. Open Api Dokumentation
+Die Swagger Reports sind folgende:
+* [Swagger Dokumentation](./api-doc/swagger.md)
+* [Detaillierte API Übersicht](./api-doc/README.md)
+Vorrausgesetzt alle Container laufen kann unter folgender Url die Swagger UI aufgerufen werden und manuell abfragen getestet werden.
+```bash
+http://localhost:9090/v3/api-docs
+```
+
+Mit folgendem Befehlen ließe sich ein Markdown Report erstellen. Jedoch durch die strenge Security Implementation ist die momentan nicht direkt möglich. Im Repository (sollte) ein korrekter Bericht beigelegt sein.
+```bash
+curl http://localhost:9090/v3/api-docs -o swagger.json
+```
+
+Nur eines der folgenden Befehle muss genutzt werden, es sind 2 verschieden gebaute Reports 
+```bash
+npx swagger-markdown -i swagger.json
+```
+```bash
+docker run --rm -v "%cd%:/local" openapitools/openapi-generator-cli generate -i /local/swagger.json -g markdown -o /local/api-doc
 ```
