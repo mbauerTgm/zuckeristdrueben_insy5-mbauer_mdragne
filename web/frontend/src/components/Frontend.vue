@@ -53,7 +53,7 @@
               <button 
                 type="button" 
                 class="btn btn-columns" 
-                @click="showColumnSelector = !showColumnSelector"
+                @click="toggleColumnSelector"
               >
                 <svg viewBox="0 0 24 24" class="mdi-icon">
                   <path fill="currentColor" d="M3,3H11V11H3V3M3,13H11V21H3V13M13,3H21V11H13V3M13,13H21V21H13V13M5,5V9H9V5H5M5,15V19H9V15H5M15,5V9H19V5H15M15,15V19H19V15H15Z" />
@@ -86,27 +86,28 @@
           </div>
 
           <div class="control-group" v-if="selectedTable === 'analysis' || selectedTable === 'sample'">
-            <label>Filter & Export: </label>
-            <div class="column-selector">
-              <button 
-                type="button" 
-                class="btn btn-columns" 
-                @click="showFilterSelector = !showFilterSelector"
-              >
-                <svg viewBox="0 0 24 24" class="mdi-icon">
-                  <path fill="currentColor" d="M14,12V19.88C14.04,20.18 13.94,20.5 13.71,20.71C13.32,21.1 12.69,21.1 12.3,20.71L10.29,18.7C10.06,18.47 9.96,18.16 10,17.87V12H9.97L4.21,4.62C3.87,4.19 3.95,3.56 4.38,3.22C4.57,3.08 4.78,3 5,3V3H19V3C19.22,3 19.43,3.08 19.62,3.22C20.05,3.56 20.13,4.19 19.79,4.62L14.03,12H14Z" />
-                </svg>
-                Filter
-              </button>
-              
-              <div v-if="showFilterSelector" class="column-dropdown filter-dropdown">
-                <div class="column-dropdown-header">
-                  <span>Bereichs-Filter</span>
-                  <button @click="resetFilters" class="btn-link">Reset</button>
-                </div>
-                <div class="filter-content">
-                  <template v-if="selectedTable === 'analysis'">
-                    <div class="filter-group">
+            <!--<label>Filter: </label>-->
+            <div style="display: flex; gap: 5px;">
+              <div class="column-selector">
+                <button 
+                  type="button" 
+                  class="btn btn-columns" 
+                  @click="toggleFilterSelector"
+                >
+                  <svg viewBox="0 0 24 24" class="mdi-icon">
+                    <path fill="currentColor" d="M14,12V19.88C14.04,20.18 13.94,20.5 13.71,20.71C13.32,21.1 12.69,21.1 12.3,20.71L10.29,18.7C10.06,18.47 9.96,18.16 10,17.87V12H9.97L4.21,4.62C3.87,4.19 3.95,3.56 4.38,3.22C4.57,3.08 4.78,3 5,3V3H19V3C19.22,3 19.43,3.08 19.62,3.22C20.05,3.56 20.13,4.19 19.79,4.62L14.03,12H14Z" />
+                  </svg>
+                  Filter
+                </button>
+                
+                <div v-if="showFilterSelector" class="column-dropdown filter-dropdown">
+                  <div class="column-dropdown-header">
+                    <span>Bereichs-Filter</span>
+                    <button @click="resetFilters" class="btn-link">Reset</button>
+                  </div>
+                  <div class="filter-content">
+                    <template v-if="selectedTable === 'analysis'">
+                      <div class="filter-group">
                           <label>ID (a_id)</label>
                           <div class="range-inputs">
                               <input type="number" v-model="searchParams.idFrom" placeholder="Von" />
@@ -121,37 +122,49 @@
                           </div>
                       </div>
                       <div class="filter-group">
-                        <label>Date In</label>
-                        <div class="range-inputs">
-                            <input type="datetime-local" step="1" v-model="searchParams.dateInFrom" />
-                            <input type="datetime-local" step="1" v-model="searchParams.dateInTo" />
-                        </div>
-                    </div>
-                    <div class="filter-group">
-                        <label>Date Out</label>
-                        <div class="range-inputs">
-                            <input type="datetime-local" step="1" v-model="searchParams.dateOutFrom" />
-                            <input type="datetime-local" step="1" v-model="searchParams.dateOutTo" />
-                        </div>
-                    </div>
-                    <div class="filter-group">
-                        <label>A Flags</label>
-                        <div class="range-inputs">
-                            <input type="text" v-model="searchParams.aFlagsFrom" placeholder="Von" />
-                            <input type="text" v-model="searchParams.aFlagsTo" placeholder="Bis" />
-                        </div>
-                    </div>
-                    <button class="btn btn-save" style="width: 100%; margin-top: 10px;" @click="applyBackendFilter">Anwenden</button>
-                  </template>
-                    
-                  <template v-if="!loadingCSV">
-                    <button class="btn btn-load" style="width: 100%; margin-top: 10px;" @click="exportFilteredCSV">Export filtered table as CSV</button>
-                  </template>
-                  <template v-else>
-                    <Create_Loader />
-                  </template>
+                          <label>Date In</label>
+                          <div class="range-inputs">
+                              <input type="datetime-local" step="1" v-model="searchParams.dateInFrom" />
+                              <input type="datetime-local" step="1" v-model="searchParams.dateInTo" />
+                          </div>
+                      </div>
+                      <div class="filter-group">
+                          <label>Date Out</label>
+                          <div class="range-inputs">
+                              <input type="datetime-local" step="1" v-model="searchParams.dateOutFrom" />
+                              <input type="datetime-local" step="1" v-model="searchParams.dateOutTo" />
+                          </div>
+                      </div>
+                      <div class="filter-group">
+                          <label>A Flags</label>
+                          <div class="range-inputs">
+                              <input type="text" v-model="searchParams.aFlagsFrom" placeholder="Von" />
+                              <input type="text" v-model="searchParams.aFlagsTo" placeholder="Bis" />
+                          </div>
+                      </div>
+                      <button class="btn btn-save" style="width: 100%; margin-top: 10px;" @click="applyBackendFilter">Anwenden</button>
+                    </template>
+                  </div>
                 </div>
               </div>
+
+              <button 
+                type="button" 
+                class="btn btn-columns" 
+                @click="exportFilteredCSV"
+                :disabled="loadingCSV"
+                title="Liste als CSV exportieren"
+              >
+                <template v-if="!loadingCSV">
+                  <svg viewBox="0 0 24 24" class="mdi-icon">
+                    <path fill="currentColor" d="M5,20H19V18H5M19,9H15V3H9V9H5L12,16L19,9Z" />
+                  </svg>
+                  Export CSV
+                </template>
+                <template v-else>
+                  <Create_Loader />
+                </template>
+              </button>
             </div>
           </div>
 
@@ -173,12 +186,7 @@
               Neu
             </button>
             
-            <button @click="$emit('logout')" class="btn btn-logout" title="Abmelden">
-              <svg viewBox="0 0 24 24" class="mdi-icon">
-                <path fill="currentColor" d="M17,17.25V14H10V10H17V6.75L22.25,12L17,17.25M13,2A2,2 0 0,1 15,4V8H13V4H4V20H13V16H15V20A2,2 0 0,1 13,22H4A2,2 0 0,1 2,20V4A2,2 0 0,1 4,2Z" />
-              </svg>
-            </button>
-          </div>
+            </div>
         </div>
 
         <p v-if="loading" class="status-text"> <LoadingBar /> Lade Daten... </p>
@@ -376,7 +384,7 @@ import LoadingBar from '@/components/Loadingbar.vue'
 import Create_Loader from './Create_Loader.vue';
 const API_BASE_URL = '/api';
 
-
+// SCHEMAS object remains unchanged
 const SCHEMAS = {
   analysis: {
     endpoint: 'analysis',
@@ -522,7 +530,7 @@ export default {
       currentUserRole: '',
 
       showColumnSelector: false,
-      showFilterSelector: false, 
+      showFilterSelector: false,
       selectedColumns: [],
 
       loadingCSV: false,
@@ -607,7 +615,7 @@ export default {
   mounted() {
     this.updateUserRole();
     this.fetchTableData();
-    document.addEventListener('click', this.closeSelectors);
+    document.addEventListener('click', this.closeSelectors); // Geändert: Allgemeiner Handler
     this.loadingCSV = false
   },
 
@@ -635,9 +643,11 @@ export default {
       this.searchQuery = '';
       this.activeSearchQuery = '';
       
+      // Reset Paging
       this.currentPage = 0;
       
-      this.resetFilters(false);
+      // Reset Filter
+      this.resetFilters(false); // false = kein fetch, da fetchTableData unten kommt
 
       this.selectedColumns = []; 
       
@@ -682,9 +692,11 @@ export default {
       this.updateUserRole();
 
       const params = new URLSearchParams();
+      // Pagination Params
       params.append('page', this.currentPage);
       params.append('size', this.displayLimit);
       
+      // Filter Params (nur für Analysis)
       if (this.selectedTable === 'analysis') {
           if (this.searchParams.idFrom) params.append('aId.from', this.searchParams.idFrom);
           if (this.searchParams.idTo) params.append('aId.to', this.searchParams.idTo);
@@ -744,6 +756,7 @@ export default {
 
         const params = new URLSearchParams();
         
+        // Filter Params (nur für Analysis)
         if (this.selectedTable === 'analysis') {
             if (this.searchParams.idFrom) params.append('aId.from', this.searchParams.idFrom);
             if (this.searchParams.idTo) params.append('aId.to', this.searchParams.idTo);
@@ -778,16 +791,20 @@ export default {
             throw new Error(errorText || `Fehler beim Export von ${this.selectedTable}`);
           }
           
+          // Blob aus der Antwort erstellen
           const blob = await response.blob();
           
+          // Download-Link erzeugen
           const downloadUrl = window.URL.createObjectURL(blob);
           
           const link = document.createElement('a');
           link.href = downloadUrl;
           
+          // Dateinamen setzen (optional: Zeitstempel hinzufügen)
           const timestamp = new Date().toISOString().split('T')[0];
           link.setAttribute('download', `${this.selectedTable}_export_${timestamp}.csv`);
           
+          // Link klicken und entfernen
           document.body.appendChild(link);
           link.click();
           document.body.removeChild(link);
@@ -809,6 +826,7 @@ export default {
     },
 
     createNew() {
+      // ... (Unverändert) ...
       this.isNewItem = true;
       const emptyItem = {};
       const config = this.currentSchema.fieldConfigs || {};
@@ -1043,6 +1061,20 @@ export default {
       this.selectedColumns = [];
     },
 
+    toggleColumnSelector() {
+      this.showColumnSelector = !this.showColumnSelector;
+      if (this.showColumnSelector) {
+        this.showFilterSelector = false;
+      }
+    },
+
+    toggleFilterSelector() {
+      this.showFilterSelector = !this.showFilterSelector;
+      if (this.showFilterSelector) {
+        this.showColumnSelector = false;
+      }
+    },
+
     closeSelectors(event) {
       if (!event.target.closest('.column-selector')) {
         this.showColumnSelector = false;
@@ -1054,6 +1086,7 @@ export default {
 </script>
 
 <style scoped>
+/* Grundstyles bleiben gleich */
 .container { 
     font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
     max-width: 1400px; 
