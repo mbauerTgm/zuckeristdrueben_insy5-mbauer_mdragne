@@ -3,6 +3,8 @@ package com.mbauer_mdragne.vue_crud.Entities;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
+import java.util.List;
+
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty; // Import hinzugefügt
 import lombok.Getter;
@@ -66,4 +68,11 @@ public class Sample {
     @Column(name = "date_exported")
     @JsonProperty("date_exported")
     private Timestamp dateExported;
+    
+    @OneToMany
+    @JoinColumns({
+    @JoinColumn(name = "s_id", referencedColumnName = "s_id", insertable = false, updatable = false),
+    @JoinColumn(name = "s_stamp", referencedColumnName = "s_stamp", insertable = false, updatable = false)
+    })
+    private List<Analysis> analyses;
 }

@@ -1,4 +1,4 @@
-package com.mbauer_mdragne.vue_crud;
+package com.mbauer_mdragne.vue_crud.Controllers;
 
 import com.mbauer_mdragne.vue_crud.DTOs.AnalysisGlobalFilterDto;
 import org.springframework.security.core.Authentication;
@@ -30,7 +30,7 @@ import java.util.List;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/legacy/api")
 public class ZuckerIstDruebenRestController {
 
     @Autowired private AnalysisRepository analysisRepo;
