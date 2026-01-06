@@ -1,6 +1,7 @@
 package com.mbauer_mdragne.vue_crud.Repositories;
 
 import com.mbauer_mdragne.vue_crud.DTOs.AnalysisFilterDto;
+import com.mbauer_mdragne.vue_crud.DTOs.AnalysisGlobalFilterDto;
 import com.mbauer_mdragne.vue_crud.DTOs.Range;
 import com.mbauer_mdragne.vue_crud.Entities.Analysis;
 import org.springframework.data.jpa.domain.Specification;
@@ -9,7 +10,7 @@ import jakarta.persistence.criteria.Predicate;
 import java.util.ArrayList;
 import java.util.List;
 import java.sql.Timestamp;
-import java.time.LocalDateTime; // Wichtig
+import java.time.LocalDateTime;
 
 public class AnalysisSpecifications {
 
@@ -19,8 +20,6 @@ public class AnalysisSpecifications {
 
             addRangePredicate(predicates, cb, root.get("aId"), dto.getAId());
             addRangePredicate(predicates, cb, root.get("sId"), dto.getSId());
-
-            // Nutzt jetzt die LocalDateTime Methode
             addDateTimeRangePredicate(predicates, cb, root.get("dateIn"), dto.getDateIn());
             addDateTimeRangePredicate(predicates, cb, root.get("dateOut"), dto.getDateOut());
 
@@ -30,7 +29,6 @@ public class AnalysisSpecifications {
         };
     }
 
-    // NEU: Konvertiert LocalDateTime (vom Filter) zu Timestamp (für DB)
     private static void addDateTimeRangePredicate(
             List<Predicate> predicates,
             jakarta.persistence.criteria.CriteriaBuilder cb,
@@ -40,7 +38,6 @@ public class AnalysisSpecifications {
         if (range == null) return;
 
         if (range.getFrom() != null) {
-            // valueOf konvertiert LocalDateTime -> SQL Timestamp
             predicates.add(cb.greaterThanOrEqualTo(path, Timestamp.valueOf(range.getFrom())));
         }
         if (range.getTo() != null) {
@@ -48,7 +45,6 @@ public class AnalysisSpecifications {
         }
     }
 
-    // Generische Methode für einfache Typen (Long, String)
     private static <T extends Comparable<? super T>> void addRangePredicate(
             List<Predicate> predicates,
             jakarta.persistence.criteria.CriteriaBuilder cb,
@@ -67,14 +63,28 @@ public class AnalysisSpecifications {
 
     public static Specification<Analysis> forResearcher() {
         return (root, query, cb) -> {
-            // WHERE a.a_flags LIKE 'F%'
             jakarta.persistence.criteria.Predicate likeF = cb.like(root.get("aFlags"), "F%");
-            
-            // WHERE a.a_flags LIKE 'V%'
             jakarta.persistence.criteria.Predicate likeV = cb.like(root.get("aFlags"), "V%");
-            
-            // Kombinieren mit OR
             return cb.or(likeF, likeV);
+        };
+    }
+
+    public static Specification<Analysis> withGlobalDateFilter(AnalysisGlobalFilterDto globalDto) {
+        return (root, query, cb) -> {
+            if (globalDto == null || globalDto.getGlobalDateIn() == null) {
+                return null;
+            }
+            List<Predicate> predicates = new ArrayList<>();
+            Range<LocalDateTime> range = globalDto.getGlobalDateIn();
+
+            if (range.getFrom() != null) {
+                predicates.add(cb.greaterThanOrEqualTo(root.get("dateIn"), Timestamp.valueOf(range.getFrom())));
+            }
+            if (range.getTo() != null) {
+                predicates.add(cb.lessThanOrEqualTo(root.get("dateIn"), Timestamp.valueOf(range.getTo())));
+            }
+
+            return predicates.isEmpty() ? null : cb.and(predicates.toArray(new Predicate[0]));
         };
     }
 }
