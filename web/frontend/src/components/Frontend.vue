@@ -173,15 +173,6 @@
               Neu
             </button>
             
-            <button @click="toggleDarkMode" class="btn btn-dark-mode" :title="darkMode ? 'Licht an' : 'Dunkel machen'">
-              <svg v-if="darkMode" viewBox="0 0 24 24" class="mdi-icon">
-                <path fill="currentColor" d="M12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,2L14.39,4.39L12,6.78L9.61,4.39L12,2M5.61,5.61L8,8L5.61,10.39L3.22,8L5.61,5.61M2,12L4.39,9.61L6.78,12L4.39,14.39L2,12M5.61,18.39L8,16L10.39,18.39L8,20.78L5.61,18.39M12,22L9.61,19.61L12,17.22L14.39,19.61L12,22M18.39,18.39L16,16L18.39,13.61L20.78,16L18.39,18.39M22,12L19.61,14.39L17.22,12L19.61,9.61L22,12M18.39,5.61L16,8L13.61,5.61L16,3.22L18.39,5.61Z" />
-              </svg>
-              <svg v-else viewBox="0 0 24 24" class="mdi-icon">
-                <path fill="currentColor" d="M17.75,4.09L15.22,6.03L16.13,9.09L13.5,7.28L10.87,9.09L11.78,6.03L9.25,4.09L12.44,4L13.5,1L14.56,4L17.75,4.09M21.25,11L19.61,12.25L20.2,14.23L18.5,13.06L16.8,14.23L17.39,12.25L15.75,11L17.81,10.95L18.5,9L19.19,10.95L21.25,11M18.97,15.95C19.8,15.87 20.69,15.89 21.44,16.05C19.38,18.2 16.3,19.5 13,19.5C6.92,19.5 2,14.58 2,8.5C2,5.2 3.3,2.12 5.45,0.06C5.61,0.81 5.63,1.7 5.55,2.53C5.55,7.58 9.63,11.66 14.68,11.66C15.8,11.66 16.89,11.46 17.9,11.09C18.27,13.11 18.63,14.79 18.97,15.95Z" />
-              </svg>
-            </button>
-
             <button @click="$emit('logout')" class="btn btn-logout" title="Abmelden">
               <svg viewBox="0 0 24 24" class="mdi-icon">
                 <path fill="currentColor" d="M17,17.25V14H10V10H17V6.75L22.25,12L17,17.25M13,2A2,2 0 0,1 15,4V8H13V4H4V20H13V16H15V20A2,2 0 0,1 13,22H4A2,2 0 0,1 2,20V4A2,2 0 0,1 4,2Z" />
@@ -527,8 +518,6 @@ export default {
 
       showDetailModal: false,
       itemToView: null,
-
-      darkMode: localStorage.getItem('darkMode') === 'true',
       
       currentUserRole: '',
 
@@ -618,7 +607,6 @@ export default {
   mounted() {
     this.updateUserRole();
     this.fetchTableData();
-    this.applyDarkMode();
     document.addEventListener('click', this.closeSelectors);
     this.loadingCSV = false
   },
@@ -731,7 +719,7 @@ export default {
         }
         this.tableData = data.content;
         this.totalPages = data.totalPages;
-        this.totalItems = data.totalItems;
+        this.totalItems = data.totalElements;
         this.currentPage = data.number;
         
         if (this.selectedColumns.length === 0) {
@@ -1047,18 +1035,6 @@ export default {
       this.closeDetailModal();
       this.editItem(item);
     },
-    toggleDarkMode() {
-      this.darkMode = !this.darkMode;
-      localStorage.setItem('darkMode', this.darkMode);
-      this.applyDarkMode();
-    },
-    applyDarkMode() {
-      if (this.darkMode) {
-        document.body.classList.add('dark-theme');
-      } else {
-        document.body.classList.remove('dark-theme');
-      }
-    },
     selectAllColumns() {
       this.selectedColumns = [...this.availableColumns];
     },
@@ -1078,8 +1054,15 @@ export default {
 </script>
 
 <style scoped>
-/* Grundstyles bleiben gleich */
-.container { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 1400px; margin: 0 auto; padding: 20px; min-height: 100vh; color: #333; transition: background-color 0.3s; }
+.container { 
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
+    max-width: 1400px; 
+    margin: 0 auto; 
+    padding: 20px; 
+    min-height: 100%;
+    color: #333; 
+    transition: background-color 0.3s; 
+}
 header h1 { margin-bottom: 20px; color: #2c3e50; }
 .table-selector { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 15px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 20px; }
 .control-group { display: flex; flex-direction: column; gap: 5px; }
@@ -1155,8 +1138,7 @@ tr:hover .td-sticky { background: #f8f9fa; }
 .detail-row { display: contents; }
 .detail-label { font-weight: 600; color: #6c757d; padding: 8px 0; border-bottom: 1px solid #f1f3f5; align-self: center; }
 .detail-value { color: #212529; padding: 8px 0; border-bottom: 1px solid #f1f3f5; word-break: break-all; }
-.btn-dark-mode { background: #495057; color: white; }
-.btn-dark-mode:hover { background: #343a40; }
+/* .btn-dark-mode wurde entfernt */
 
 /* TABLE FOOTER & PAGINATION */
 .table-footer {
@@ -1216,8 +1198,7 @@ tr:hover .td-sticky { background: #f8f9fa; }
 :global(body.dark-theme .btn-load) { background-color: #475569 !important; color: white !important; }
 :global(body.dark-theme .btn-load:hover) { background-color: #64748b !important; }
 :global(body.dark-theme .btn-search) { background-color: #910dfd !important; color: white !important; }
-:global(body.dark-theme .btn-dark-mode) { background-color: #334155 !important; color: white !important; }
-:global(body.dark-theme .btn-dark-mode:hover) { background-color: #475569 !important; }
+/* .btn-dark-mode Style entfernt */
 :global(body.dark-theme .btn-page) { background-color: #334155 !important; border-color: #475569 !important; color: #fff !important; }
 :global(body.dark-theme .btn-page:hover:not(:disabled)) { background-color: #475569 !important; }
 :global(body.dark-theme .table-footer) { border-top-color: #334155 !important; }
