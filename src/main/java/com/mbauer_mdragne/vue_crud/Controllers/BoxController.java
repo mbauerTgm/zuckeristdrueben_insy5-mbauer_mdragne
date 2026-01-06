@@ -1,0 +1,84 @@
+package com.mbauer_mdragne.vue_crud.Controllers;
+
+import com.mbauer_mdragne.vue_crud.DTOs.AnalysisGlobalFilterDto;
+import org.springframework.security.core.Authentication;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import com.mbauer_mdragne.vue_crud.Entities.Box;
+import com.mbauer_mdragne.vue_crud.Errors.BadRequestException;
+import com.mbauer_mdragne.vue_crud.Errors.ResourceNotFoundException;
+import com.mbauer_mdragne.vue_crud.Repositories.BoxRepository;
+import com.mbauer_mdragne.vue_crud.Repositories.BoxSpecifications;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.data.jpa.domain.Specification;
+import com.mbauer_mdragne.vue_crud.DTOs.AnalysisFilterDto;
+
+import jakarta.persistence.EntityManager;
+import jakarta.servlet.http.HttpServletResponse;
+
+import java.time.OffsetDateTime;
+import java.time.format.DateTimeParseException;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.sql.Timestamp;
+import java.util.List;
+
+import org.springframework.security.core.context.SecurityContextHolder;
+
+@RestController
+@RequestMapping("/api/boxes")
+public class BoxController {
+    @Autowired private BoxRepository boxRepo;
+    
+    @GetMapping
+    public List<Box> getAllBoxes(AnalysisGlobalFilterDto globalFilter) {
+        Specification<Box> spec = BoxSpecifications.withGlobalDateFilter(globalFilter);
+        return (spec != null) ? boxRepo.findAll(spec) : boxRepo.findAll();
+    }
+
+    @GetMapping("/filter")
+    public ResponseEntity<Page<Box>> getAllBoxes(
+            AnalysisGlobalFilterDto globalFilter,
+            @PageableDefault(size = 20, sort = "bId", direction = Sort.Direction.DESC) Pageable pageable) {
+        
+        Specification<Box> spec = BoxSpecifications.withGlobalDateFilter(globalFilter);
+        Page<Box> response = (spec != null) ? boxRepo.findAll(spec, pageable) : boxRepo.findAll(pageable);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/{bId}")
+    public ResponseEntity<Box> getBoxById(@PathVariable String bId) {
+        Box box = boxRepo.findById(bId)
+                .orElseThrow(() -> new ResourceNotFoundException("Box not found with id=" + bId));
+        return ResponseEntity.ok(box);
+    }
+
+    @PostMapping
+    public ResponseEntity<Box> createBox(@RequestBody Box box) {
+        Box saved = boxRepo.save(box);
+        return ResponseEntity.ok(saved);
+    }
+
+    @PutMapping("/{bId}")
+    public ResponseEntity<Box> updateBox(@PathVariable String bId, @RequestBody Box updated) {
+        Box existing = boxRepo.findById(bId)
+                .orElseThrow(() -> new ResourceNotFoundException("Box not found with id=" + bId));
+        updated.setBId(existing.getBId());
+        Box saved = boxRepo.save(updated);
+        return ResponseEntity.ok(saved);
+    }
+
+    @DeleteMapping("/{bId}")
+    public ResponseEntity<Void> deleteBox(@PathVariable String bId) {
+        if (!boxRepo.existsById(bId)) {
+            throw new ResourceNotFoundException("Box not found with id=" + bId);
+        }
+        boxRepo.deleteById(bId);
+        return ResponseEntity.noContent().build();
+    }
+}

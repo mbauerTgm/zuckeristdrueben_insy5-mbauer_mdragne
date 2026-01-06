@@ -491,6 +491,23 @@ export default {
     LoadingBar,
     Create_Loader
    },
+  props: {
+    globalDateStart: String,
+    globalDateEnd: String
+  },
+
+  watch: {
+    globalDateStart(newVal) {
+      this.searchParams.globalDateInFrom = newVal; 
+      this.currentPage = 0;
+      this.fetchTableData();
+    },
+    globalDateEnd(newVal) {
+      this.searchParams.globalDateInTo = newVal;
+      this.currentPage = 0;
+      this.fetchTableData();
+    }
+  },
 
   data() {
     return {
@@ -512,7 +529,8 @@ export default {
         sIdFrom: '', sIdTo: '',
         dateInFrom: '', dateInTo: '',
         dateOutFrom: '', dateOutTo: '',
-        aFlagsFrom: '', aFlagsTo: ''
+        aFlagsFrom: '', aFlagsTo: '',
+        globalDateInFrom: '', globalDateInTo: '',
       },
 
       sortKey: '',

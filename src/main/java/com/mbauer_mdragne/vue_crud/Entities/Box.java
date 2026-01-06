@@ -37,5 +37,5 @@ public class Box {
     private Timestamp dateExported;
 
     @OneToMany(mappedBy = "box") 
-    private List<BoxPos> positions;
+    private List<BoxPos> boxPositions;
 }
