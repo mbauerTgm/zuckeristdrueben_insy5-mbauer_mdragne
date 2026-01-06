@@ -1,9 +1,5 @@
 package com.mbauer_mdragne.vue_crud.Controllers;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.sql.Timestamp;
-import java.time.OffsetDateTime;
-import java.time.format.DateTimeParseException;
+
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,34 +9,22 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.mbauer_mdragne.vue_crud.DTOs.AnalysisGlobalFilterDto;
-import com.mbauer_mdragne.vue_crud.Entities.*;
-import com.mbauer_mdragne.vue_crud.Errors.BadRequestException;
+import com.mbauer_mdragne.vue_crud.Entities.Threshold;
 import com.mbauer_mdragne.vue_crud.Errors.ResourceNotFoundException;
 import com.mbauer_mdragne.vue_crud.Repositories.ThresholdRepository;
 import com.mbauer_mdragne.vue_crud.Repositories.ThresholdSpecifications;
-
-import org.springframework.web.bind.annotation.RequestBody;
-import jakarta.persistence.EntityManager;
-import jakarta.servlet.http.HttpServletResponse;
 
 @RestController
 @RequestMapping("/api/thresholds")
 public class ThresholdController {
     
-@Autowired private ThresholdRepository thresholdRepo;
+    @Autowired 
+    private ThresholdRepository thresholdRepo;
 
-@GetMapping
+    @GetMapping
     public List<Threshold> getAllThresholds(AnalysisGlobalFilterDto globalFilter) {
         Specification<Threshold> spec = ThresholdSpecifications.withGlobalDateFilter(globalFilter);
         return (spec != null) ? thresholdRepo.findAll(spec) : thresholdRepo.findAll();
@@ -61,5 +45,21 @@ public class ThresholdController {
         Threshold threshold = thresholdRepo.findById(thId)
                 .orElseThrow(() -> new ResourceNotFoundException("Threshold not found with id=" + thId));
         return ResponseEntity.ok(threshold);
+    }
+
+    @PostMapping
+    public ResponseEntity<Threshold> createThreshold(@RequestBody Threshold threshold) {
+        Threshold saved = thresholdRepo.save(threshold);
+        return ResponseEntity.ok(saved);
+    }
+
+    @PutMapping("/{thId}")
+    public ResponseEntity<Threshold> updateThreshold(@PathVariable String thId, @RequestBody Threshold updated) {
+        if (!thresholdRepo.existsById(thId)) {
+            throw new ResourceNotFoundException("Threshold not found with id=" + thId);
+        }
+        updated.setThId(thId);
+        Threshold saved = thresholdRepo.save(updated);
+        return ResponseEntity.ok(saved);
     }
 }

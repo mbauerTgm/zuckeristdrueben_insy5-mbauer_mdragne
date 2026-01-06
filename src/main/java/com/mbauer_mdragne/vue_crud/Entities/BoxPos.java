@@ -3,7 +3,7 @@ package com.mbauer_mdragne.vue_crud.Entities;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.sql.Timestamp;
-import com.fasterxml.jackson.annotation.JsonProperty; // Import hinzugefügt
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.NoArgsConstructor;
@@ -47,8 +47,8 @@ public class BoxPos {
 
     @ManyToOne
     @JoinColumns({
-            @JoinColumn(name = "s_id", referencedColumnName = "s_id", insertable = false, updatable = false),
-            @JoinColumn(name = "s_stamp", referencedColumnName = "s_stamp", insertable = false, updatable = false)
+        @JoinColumn(name = "s_id", referencedColumnName = "s_id", insertable = false, updatable = false),
+        @JoinColumn(name = "s_stamp", referencedColumnName = "s_stamp", insertable = false, updatable = false)
     })
     private Sample sample;
 }

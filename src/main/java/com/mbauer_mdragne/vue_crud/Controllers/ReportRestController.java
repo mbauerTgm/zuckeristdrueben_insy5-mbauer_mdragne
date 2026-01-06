@@ -5,11 +5,11 @@ import com.mbauer_mdragne.vue_crud.DTOs.SampleAnalysisCount;
 import com.mbauer_mdragne.vue_crud.Entities.*;
 import com.mbauer_mdragne.vue_crud.Repositories.*;
 import com.mbauer_mdragne.vue_crud.Services.EanValidatorService;
+import com.mbauer_mdragne.vue_crud.DateUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.*;
@@ -32,11 +32,11 @@ public class ReportRestController {
             AnalysisGlobalFilterDto filter,
             @PageableDefault(size = 20) Pageable pageable) {
 
-        if (filter.getGlobalDateIn() != null && filter.getGlobalDateIn().getFrom() != null) {
-             Specification<BoxPos> spec = BoxPosSpecifications.withGlobalDateFilter(filter);
-             return boxPosRepo.findAll(spec, pageable);
+        Specification<BoxPos> dateSpec = BoxPosSpecifications.withGlobalDateFilter(filter);
+        
+        if (dateSpec != null) {
+            return boxPosRepo.findAll(dateSpec, pageable);
         }
-
         return boxPosRepo.findBoxPosWithSampleButNoAnalysis(pageable);
     }
 
@@ -59,8 +59,10 @@ public class ReportRestController {
             @RequestParam String start, 
             @RequestParam String end,
             @PageableDefault(size = 20) Pageable pageable) {
-        Timestamp startTs = parseTimestamp(start, true);
-        Timestamp endTs = parseTimestamp(end, false);
+        
+        Timestamp startTs = DateUtils.parseAny(start);
+        Timestamp endTs = DateUtils.parseAny(end);
+        
         return sampleRepo.findSuspiciousSampleIdsInTimeRange(startTs, endTs, pageable);
     }
 
@@ -69,23 +71,22 @@ public class ReportRestController {
             AnalysisGlobalFilterDto filter,
             @PageableDefault(size = 20) Pageable pageable) {
         
-        if (filter.getGlobalDateIn() != null && filter.getGlobalDateIn().getFrom() != null) {
-            Specification<Analysis> spec = (root, query, cb) -> {
-                return cb.not(cb.exists(
-                    query.subquery(BoxPos.class).select(query.from(BoxPos.class).get("sId")) // Vereinfacht
-                ));
-            };
-            Specification<Analysis> dateSpec = AnalysisSpecifications.withGlobalDateFilter(filter);
-            return analysisRepo.findAll(spec.and(dateSpec), pageable); 
-        }
+        Specification<Analysis> spec = (root, query, cb) -> {
+            return cb.not(cb.exists(
+                query.subquery(BoxPos.class).select(query.from(BoxPos.class).get("sId"))
+            ));
+        };
+
+        Specification<Analysis> dateSpec = AnalysisSpecifications.withGlobalDateFilter(filter);
+        if (dateSpec != null) spec = spec.and(dateSpec);
         
-        return analysisRepo.findAnalysisWithoutBoxPos(pageable);
+        return analysisRepo.findAll(spec, pageable); 
     }
 
     @GetMapping("/analysis-zero-values")
     public Page<Analysis> getAnalysisZeroValues(
             AnalysisGlobalFilterDto filter,
-            @PageableDefault(size = 20, sort = "aId", direction = Sort.Direction.DESC) Pageable pageable) {
+            @PageableDefault(size = 20) Pageable pageable) {
         
         Specification<Analysis> zeroSpec = (root, query, cb) -> 
             cb.or(cb.equal(root.get("pol"), 0), cb.equal(root.get("nat"), 0), cb.equal(root.get("kal"), 0));
@@ -94,20 +95,6 @@ public class ReportRestController {
         if (dateSpec != null) zeroSpec = zeroSpec.and(dateSpec);
 
         return analysisRepo.findAll(zeroSpec, pageable);
-    }
-
-    @GetMapping("/analysis-missing-dates")
-    public Page<Analysis> getAnalysisMissingDates(
-            AnalysisGlobalFilterDto filter,
-            @PageableDefault(size = 20) Pageable pageable) {
-        
-        Specification<Analysis> missingSpec = (root, query, cb) -> 
-            cb.or(cb.isNull(root.get("dateIn")), cb.isNull(root.get("dateOut")));
-
-        Specification<Analysis> dateSpec = AnalysisSpecifications.withGlobalDateFilter(filter);
-        if (dateSpec != null) missingSpec = missingSpec.and(dateSpec);
-
-        return analysisRepo.findAll(missingSpec, pageable);
     }
 
     @GetMapping("/samples-multi-analysis")
@@ -120,13 +107,14 @@ public class ReportRestController {
             AnalysisGlobalFilterDto filter,
             @PageableDefault(size = 20) Pageable pageable) {
         
-        if (filter.getGlobalDateIn() != null && filter.getGlobalDateIn().getFrom() != null) {
-             Timestamp start = Timestamp.valueOf(filter.getGlobalDateIn().getFrom());
-             Timestamp end = (filter.getGlobalDateIn().getTo() != null) 
-                             ? Timestamp.valueOf(filter.getGlobalDateIn().getTo()) 
-                             : new Timestamp(System.currentTimeMillis());
+        if (filter.getGlobalDateIn() != null) {
+             Timestamp start = DateUtils.parseAny(filter.getGlobalDateIn().getFrom());
+             Timestamp end = DateUtils.parseAny(filter.getGlobalDateIn().getTo());
              
-             return sampleRepo.findSuspiciousSampleIdsInTimeRange(start, end, pageable);
+             if (start != null) {
+                 if (end == null) end = new Timestamp(System.currentTimeMillis());
+                 return sampleRepo.findSuspiciousSampleIdsInTimeRange(start, end, pageable);
+             }
         }
         return sampleRepo.findSuspiciousSampleIds(pageable);
     }
@@ -148,31 +136,5 @@ public class ReportRestController {
         if (start > allBadEans.size()) start = allBadEans.size();
 
         return new PageImpl<>(allBadEans.subList(start, end), pageable, allBadEans.size());
-    }
-
-    private Timestamp parseTimestamp(String dateStr, boolean isStart) {
-        if (dateStr == null || dateStr.isEmpty()) return null;
-        try {
-            String cleanDate = dateStr.replace("T", " ");
-            
-            // Falls vom Frontend nur "YYYY-MM-DD" kommt (Länge 10)
-            if (cleanDate.length() == 10) {
-                cleanDate += isStart ? " 00:00:00" : " 23:59:59";
-            } 
-            // Falls "YYYY-MM-DD HH:mm" kommt
-            else if (cleanDate.length() == 16) {
-                cleanDate += ":00";
-            }
-            
-            return Timestamp.valueOf(cleanDate);
-        } catch (Exception e) {
-            try {
-                // Fallback für ISO Strings mit Zeitzone
-                return Timestamp.from(java.time.OffsetDateTime.parse(dateStr).toInstant());
-            } catch (Exception e2) {
-                System.err.println("Konnte Datum nicht parsen: " + dateStr);
-                return null;
-            }
-        }
     }
 }

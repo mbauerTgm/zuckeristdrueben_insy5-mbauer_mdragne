@@ -6,7 +6,7 @@ import java.sql.Timestamp;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.annotation.JsonProperty; // Import hinzugefügt
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.NoArgsConstructor;
@@ -68,7 +68,7 @@ public class Sample {
     @Column(name = "date_exported")
     @JsonProperty("date_exported")
     private Timestamp dateExported;
-    
+
     @OneToMany
     @JoinColumns({
     @JoinColumn(name = "s_id", referencedColumnName = "s_id", insertable = false, updatable = false),
