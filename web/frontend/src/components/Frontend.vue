@@ -53,7 +53,7 @@
               <button 
                 type="button" 
                 class="btn btn-columns" 
-                @click="showColumnSelector = !showColumnSelector"
+                @click="toggleColumnSelector"
               >
                 <svg viewBox="0 0 24 24" class="mdi-icon">
                   <path fill="currentColor" d="M3,3H11V11H3V3M3,13H11V21H3V13M13,3H21V11H13V3M13,13H21V21H13V13M5,5V9H9V5H5M5,15V19H9V15H5M15,5V9H19V5H15M15,15V19H19V15H15Z" />
@@ -86,27 +86,28 @@
           </div>
 
           <div class="control-group" v-if="selectedTable === 'analysis' || selectedTable === 'sample'">
-            <label>Filter & Export: </label>
-            <div class="column-selector">
-              <button 
-                type="button" 
-                class="btn btn-columns" 
-                @click="showFilterSelector = !showFilterSelector"
-              >
-                <svg viewBox="0 0 24 24" class="mdi-icon">
-                  <path fill="currentColor" d="M14,12V19.88C14.04,20.18 13.94,20.5 13.71,20.71C13.32,21.1 12.69,21.1 12.3,20.71L10.29,18.7C10.06,18.47 9.96,18.16 10,17.87V12H9.97L4.21,4.62C3.87,4.19 3.95,3.56 4.38,3.22C4.57,3.08 4.78,3 5,3V3H19V3C19.22,3 19.43,3.08 19.62,3.22C20.05,3.56 20.13,4.19 19.79,4.62L14.03,12H14Z" />
-                </svg>
-                Filter
-              </button>
-              
-              <div v-if="showFilterSelector" class="column-dropdown filter-dropdown">
-                <div class="column-dropdown-header">
-                  <span>Bereichs-Filter</span>
-                  <button @click="resetFilters" class="btn-link">Reset</button>
-                </div>
-                <div class="filter-content">
-                  <template v-if="selectedTable === 'analysis'">
-                    <div class="filter-group">
+            <!--<label>Filter: </label>-->
+            <div style="display: flex; gap: 5px;">
+              <div class="column-selector">
+                <button 
+                  type="button" 
+                  class="btn btn-columns" 
+                  @click="toggleFilterSelector"
+                >
+                  <svg viewBox="0 0 24 24" class="mdi-icon">
+                    <path fill="currentColor" d="M14,12V19.88C14.04,20.18 13.94,20.5 13.71,20.71C13.32,21.1 12.69,21.1 12.3,20.71L10.29,18.7C10.06,18.47 9.96,18.16 10,17.87V12H9.97L4.21,4.62C3.87,4.19 3.95,3.56 4.38,3.22C4.57,3.08 4.78,3 5,3V3H19V3C19.22,3 19.43,3.08 19.62,3.22C20.05,3.56 20.13,4.19 19.79,4.62L14.03,12H14Z" />
+                  </svg>
+                  Filter
+                </button>
+                
+                <div v-if="showFilterSelector" class="column-dropdown filter-dropdown">
+                  <div class="column-dropdown-header">
+                    <span>Bereichs-Filter</span>
+                    <button @click="resetFilters" class="btn-link">Reset</button>
+                  </div>
+                  <div class="filter-content">
+                    <template v-if="selectedTable === 'analysis'">
+                      <div class="filter-group">
                           <label>ID (a_id)</label>
                           <div class="range-inputs">
                               <input type="number" v-model="searchParams.idFrom" placeholder="Von" />
@@ -121,37 +122,49 @@
                           </div>
                       </div>
                       <div class="filter-group">
-                        <label>Date In</label>
-                        <div class="range-inputs">
-                            <input type="datetime-local" step="1" v-model="searchParams.dateInFrom" />
-                            <input type="datetime-local" step="1" v-model="searchParams.dateInTo" />
-                        </div>
-                    </div>
-                    <div class="filter-group">
-                        <label>Date Out</label>
-                        <div class="range-inputs">
-                            <input type="datetime-local" step="1" v-model="searchParams.dateOutFrom" />
-                            <input type="datetime-local" step="1" v-model="searchParams.dateOutTo" />
-                        </div>
-                    </div>
-                    <div class="filter-group">
-                        <label>A Flags</label>
-                        <div class="range-inputs">
-                            <input type="text" v-model="searchParams.aFlagsFrom" placeholder="Von" />
-                            <input type="text" v-model="searchParams.aFlagsTo" placeholder="Bis" />
-                        </div>
-                    </div>
-                    <button class="btn btn-save" style="width: 100%; margin-top: 10px;" @click="applyBackendFilter">Anwenden</button>
-                  </template>
-                    
-                  <template v-if="!loadingCSV">
-                    <button class="btn btn-load" style="width: 100%; margin-top: 10px;" @click="exportFilteredCSV">Export filtered table as CSV</button>
-                  </template>
-                  <template v-else>
-                    <Create_Loader />
-                  </template>
+                          <label>Date In</label>
+                          <div class="range-inputs">
+                              <input type="datetime-local" step="1" v-model="searchParams.dateInFrom" />
+                              <input type="datetime-local" step="1" v-model="searchParams.dateInTo" />
+                          </div>
+                      </div>
+                      <div class="filter-group">
+                          <label>Date Out</label>
+                          <div class="range-inputs">
+                              <input type="datetime-local" step="1" v-model="searchParams.dateOutFrom" />
+                              <input type="datetime-local" step="1" v-model="searchParams.dateOutTo" />
+                          </div>
+                      </div>
+                      <div class="filter-group">
+                          <label>A Flags</label>
+                          <div class="range-inputs">
+                              <input type="text" v-model="searchParams.aFlagsFrom" placeholder="Von" />
+                              <input type="text" v-model="searchParams.aFlagsTo" placeholder="Bis" />
+                          </div>
+                      </div>
+                      <button class="btn btn-save" style="width: 100%; margin-top: 10px;" @click="applyBackendFilter">Anwenden</button>
+                    </template>
+                  </div>
                 </div>
               </div>
+
+              <button 
+                type="button" 
+                class="btn btn-columns" 
+                @click="exportFilteredCSV"
+                :disabled="loadingCSV"
+                title="Liste als CSV exportieren"
+              >
+                <template v-if="!loadingCSV">
+                  <svg viewBox="0 0 24 24" class="mdi-icon">
+                    <path fill="currentColor" d="M5,20H19V18H5M19,9H15V3H9V9H5L12,16L19,9Z" />
+                  </svg>
+                  Export CSV
+                </template>
+                <template v-else>
+                  <Create_Loader />
+                </template>
+              </button>
             </div>
           </div>
 
@@ -173,21 +186,7 @@
               Neu
             </button>
             
-            <button @click="toggleDarkMode" class="btn btn-dark-mode" :title="darkMode ? 'Licht an' : 'Dunkel machen'">
-              <svg v-if="darkMode" viewBox="0 0 24 24" class="mdi-icon">
-                <path fill="currentColor" d="M12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,2L14.39,4.39L12,6.78L9.61,4.39L12,2M5.61,5.61L8,8L5.61,10.39L3.22,8L5.61,5.61M2,12L4.39,9.61L6.78,12L4.39,14.39L2,12M5.61,18.39L8,16L10.39,18.39L8,20.78L5.61,18.39M12,22L9.61,19.61L12,17.22L14.39,19.61L12,22M18.39,18.39L16,16L18.39,13.61L20.78,16L18.39,18.39M22,12L19.61,14.39L17.22,12L19.61,9.61L22,12M18.39,5.61L16,8L13.61,5.61L16,3.22L18.39,5.61Z" />
-              </svg>
-              <svg v-else viewBox="0 0 24 24" class="mdi-icon">
-                <path fill="currentColor" d="M17.75,4.09L15.22,6.03L16.13,9.09L13.5,7.28L10.87,9.09L11.78,6.03L9.25,4.09L12.44,4L13.5,1L14.56,4L17.75,4.09M21.25,11L19.61,12.25L20.2,14.23L18.5,13.06L16.8,14.23L17.39,12.25L15.75,11L17.81,10.95L18.5,9L19.19,10.95L21.25,11M18.97,15.95C19.8,15.87 20.69,15.89 21.44,16.05C19.38,18.2 16.3,19.5 13,19.5C6.92,19.5 2,14.58 2,8.5C2,5.2 3.3,2.12 5.45,0.06C5.61,0.81 5.63,1.7 5.55,2.53C5.55,7.58 9.63,11.66 14.68,11.66C15.8,11.66 16.89,11.46 17.9,11.09C18.27,13.11 18.63,14.79 18.97,15.95Z" />
-              </svg>
-            </button>
-
-            <button @click="$emit('logout')" class="btn btn-logout" title="Abmelden">
-              <svg viewBox="0 0 24 24" class="mdi-icon">
-                <path fill="currentColor" d="M17,17.25V14H10V10H17V6.75L22.25,12L17,17.25M13,2A2,2 0 0,1 15,4V8H13V4H4V20H13V16H15V20A2,2 0 0,1 13,22H4A2,2 0 0,1 2,20V4A2,2 0 0,1 4,2Z" />
-              </svg>
-            </button>
-          </div>
+            </div>
         </div>
 
         <p v-if="loading" class="status-text"> <LoadingBar /> Lade Daten... </p>
@@ -385,7 +384,7 @@ import LoadingBar from '@/components/Loadingbar.vue'
 import Create_Loader from './Create_Loader.vue';
 const API_BASE_URL = '/api';
 
-
+// SCHEMAS object remains unchanged
 const SCHEMAS = {
   analysis: {
     endpoint: 'analysis',
@@ -527,13 +526,11 @@ export default {
 
       showDetailModal: false,
       itemToView: null,
-
-      darkMode: localStorage.getItem('darkMode') === 'true',
       
       currentUserRole: '',
 
       showColumnSelector: false,
-      showFilterSelector: false, 
+      showFilterSelector: false,
       selectedColumns: [],
 
       loadingCSV: false,
@@ -618,8 +615,7 @@ export default {
   mounted() {
     this.updateUserRole();
     this.fetchTableData();
-    this.applyDarkMode();
-    document.addEventListener('click', this.closeSelectors);
+    document.addEventListener('click', this.closeSelectors); // Geändert: Allgemeiner Handler
     this.loadingCSV = false
   },
 
@@ -647,9 +643,11 @@ export default {
       this.searchQuery = '';
       this.activeSearchQuery = '';
       
+      // Reset Paging
       this.currentPage = 0;
       
-      this.resetFilters(false);
+      // Reset Filter
+      this.resetFilters(false); // false = kein fetch, da fetchTableData unten kommt
 
       this.selectedColumns = []; 
       
@@ -694,9 +692,11 @@ export default {
       this.updateUserRole();
 
       const params = new URLSearchParams();
+      // Pagination Params
       params.append('page', this.currentPage);
       params.append('size', this.displayLimit);
       
+      // Filter Params (nur für Analysis)
       if (this.selectedTable === 'analysis') {
           if (this.searchParams.idFrom) params.append('aId.from', this.searchParams.idFrom);
           if (this.searchParams.idTo) params.append('aId.to', this.searchParams.idTo);
@@ -731,7 +731,7 @@ export default {
         }
         this.tableData = data.content;
         this.totalPages = data.totalPages;
-        this.totalItems = data.totalItems;
+        this.totalItems = data.totalElements;
         this.currentPage = data.number;
         
         if (this.selectedColumns.length === 0) {
@@ -756,6 +756,7 @@ export default {
 
         const params = new URLSearchParams();
         
+        // Filter Params (nur für Analysis)
         if (this.selectedTable === 'analysis') {
             if (this.searchParams.idFrom) params.append('aId.from', this.searchParams.idFrom);
             if (this.searchParams.idTo) params.append('aId.to', this.searchParams.idTo);
@@ -790,16 +791,20 @@ export default {
             throw new Error(errorText || `Fehler beim Export von ${this.selectedTable}`);
           }
           
+          // Blob aus der Antwort erstellen
           const blob = await response.blob();
           
+          // Download-Link erzeugen
           const downloadUrl = window.URL.createObjectURL(blob);
           
           const link = document.createElement('a');
           link.href = downloadUrl;
           
+          // Dateinamen setzen (optional: Zeitstempel hinzufügen)
           const timestamp = new Date().toISOString().split('T')[0];
           link.setAttribute('download', `${this.selectedTable}_export_${timestamp}.csv`);
           
+          // Link klicken und entfernen
           document.body.appendChild(link);
           link.click();
           document.body.removeChild(link);
@@ -821,6 +826,7 @@ export default {
     },
 
     createNew() {
+      // ... (Unverändert) ...
       this.isNewItem = true;
       const emptyItem = {};
       const config = this.currentSchema.fieldConfigs || {};
@@ -1047,24 +1053,26 @@ export default {
       this.closeDetailModal();
       this.editItem(item);
     },
-    toggleDarkMode() {
-      this.darkMode = !this.darkMode;
-      localStorage.setItem('darkMode', this.darkMode);
-      this.applyDarkMode();
-    },
-    applyDarkMode() {
-      if (this.darkMode) {
-        document.body.classList.add('dark-theme');
-      } else {
-        document.body.classList.remove('dark-theme');
-      }
-    },
     selectAllColumns() {
       this.selectedColumns = [...this.availableColumns];
     },
 
     deselectAllColumns() {
       this.selectedColumns = [];
+    },
+
+    toggleColumnSelector() {
+      this.showColumnSelector = !this.showColumnSelector;
+      if (this.showColumnSelector) {
+        this.showFilterSelector = false;
+      }
+    },
+
+    toggleFilterSelector() {
+      this.showFilterSelector = !this.showFilterSelector;
+      if (this.showFilterSelector) {
+        this.showColumnSelector = false;
+      }
     },
 
     closeSelectors(event) {
@@ -1079,7 +1087,15 @@ export default {
 
 <style scoped>
 /* Grundstyles bleiben gleich */
-.container { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 1400px; margin: 0 auto; padding: 20px; min-height: 100vh; color: #333; transition: background-color 0.3s; }
+.container { 
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
+    max-width: 1400px; 
+    margin: 0 auto; 
+    padding: 20px; 
+    min-height: 100%;
+    color: #333; 
+    transition: background-color 0.3s; 
+}
 header h1 { margin-bottom: 20px; color: #2c3e50; }
 .table-selector { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 15px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 20px; }
 .control-group { display: flex; flex-direction: column; gap: 5px; }
@@ -1155,8 +1171,7 @@ tr:hover .td-sticky { background: #f8f9fa; }
 .detail-row { display: contents; }
 .detail-label { font-weight: 600; color: #6c757d; padding: 8px 0; border-bottom: 1px solid #f1f3f5; align-self: center; }
 .detail-value { color: #212529; padding: 8px 0; border-bottom: 1px solid #f1f3f5; word-break: break-all; }
-.btn-dark-mode { background: #495057; color: white; }
-.btn-dark-mode:hover { background: #343a40; }
+/* .btn-dark-mode wurde entfernt */
 
 /* TABLE FOOTER & PAGINATION */
 .table-footer {
@@ -1216,8 +1231,7 @@ tr:hover .td-sticky { background: #f8f9fa; }
 :global(body.dark-theme .btn-load) { background-color: #475569 !important; color: white !important; }
 :global(body.dark-theme .btn-load:hover) { background-color: #64748b !important; }
 :global(body.dark-theme .btn-search) { background-color: #910dfd !important; color: white !important; }
-:global(body.dark-theme .btn-dark-mode) { background-color: #334155 !important; color: white !important; }
-:global(body.dark-theme .btn-dark-mode:hover) { background-color: #475569 !important; }
+/* .btn-dark-mode Style entfernt */
 :global(body.dark-theme .btn-page) { background-color: #334155 !important; border-color: #475569 !important; color: #fff !important; }
 :global(body.dark-theme .btn-page:hover:not(:disabled)) { background-color: #475569 !important; }
 :global(body.dark-theme .table-footer) { border-top-color: #334155 !important; }
