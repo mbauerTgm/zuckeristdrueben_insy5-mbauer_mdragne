@@ -6,15 +6,13 @@ module.exports = {
     appleMobileWebAppCapable: 'yes',
     appleMobileWebAppStatusBarStyle: 'default',
 
-    // Pfade relativ zu /public
     iconPaths: {
-      favicon32: 'img/icons/favicon-32x32.png',
-      favicon16: 'img/icons/favicon-16x16.png',
+      favicon32: 'favicon.ico',
+      favicon16: 'favicon.ico',
       appleTouchIcon: 'img/icons/apple-touch-icon.png',
       msTileImage: 'img/icons/msapplication-icon-144x144.png'
     },
 
-    // Manifest-Inhalt (WICHTIG: icons NICHT leer!)
     manifestOptions: {
       name: 'INSY Frontend',
       short_name: 'INSY',
