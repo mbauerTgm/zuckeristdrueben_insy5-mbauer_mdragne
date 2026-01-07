@@ -85,7 +85,7 @@
             </div>
           </div>
 
-          <div class="control-group" v-if="selectedTable === 'analysis' || selectedTable === 'sample'">
+          <div class="control-group" v-if="selectedTable === 'analysis'">
             <div style="display: flex; gap: 5px;">
               <div class="column-selector">
                 <button 
