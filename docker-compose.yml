@@ -12,6 +12,7 @@ services:
       - ./postgres-data:/var/lib/postgresql/data
       - ./backups:/backups
       - ./db_init_schema/init_schema.sql:/docker-entrypoint-initdb.d/10-schema.sql
+      - ./db_init_schema/functions.sql:/docker-entrypoint-initdb.d/20-functions.sql
     networks:
       backend:
         ipv4_address: 172.28.0.10

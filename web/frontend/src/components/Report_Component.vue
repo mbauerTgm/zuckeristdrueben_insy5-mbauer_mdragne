@@ -16,14 +16,15 @@
         </select>
       </div>
 
-      <div v-if="selectedReport === 'samples-suspicious-timerange'" class="time-inputs">
+      <div v-if="selectedReport === 'daily-report' || selectedReport === 'analysis/without-boxpos' || selectedReport === 'analysis/with-zero-values' || selectedReport === 'analysis/without-time' 
+                  || selectedReport === 'samples/multiple-analyses' || selectedReport === 'samples/suspicious/by-date'" class="time-inputs">
         <div class="control-group">
           <label>Von:</label>
-          <input type="datetime-local" v-model="params.start" step="1" />
+          <input type="date" v-model="params.start" step="1" />
         </div>
         <div class="control-group">
           <label>Bis:</label>
-          <input type="datetime-local" v-model="params.end" step="1" />
+          <input type="date" v-model="params.end" step="1" />
         </div>
       </div>
 
@@ -67,7 +68,7 @@
         </table>
       </div>
 
-      <div class="table-footer">
+      <div class="table-footer" v-if="!selectedReport === 'daily-report'">
         <p class="info-text">
             Zeige {{ reportData.length }} von {{ totalItems }} Einträgen
         </p>
@@ -136,15 +137,16 @@ export default {
       },
 
       reports: [
-        { id: 'boxpos-no-analysis', label: 'BoxPos ohne Analysis' },
-        { id: 'boxpos-empty', label: 'Leere Box-Positionen' },
-        { id: 'analysis-no-boxpos', label: 'Analysis ohne BoxPos' },
-        { id: 'analysis-zero-values', label: 'Analysis mit Null-Werten' },
-        { id: 'analysis-missing-dates', label: 'Analysis mit fehlenden Daten' },
-        { id: 'samples-multi-analysis', label: 'Samples mit mehrfachen Analysen' },
-        { id: 'samples-suspicious', label: 'Verdächtige Samples (Allgemein)' },
-        { id: 'samples-bad-ean', label: 'Ungültige EAN-Codes' },
-        { id: 'samples-suspicious-timerange', label: 'Verdächtige Samples (Zeitraum)' } 
+        { id: 'daily-report', label: 'Daily Report' },
+        { id: 'boxpos/with-sample-no-analysis', label: 'BoxPos mit Sample ohne Analysis' }, 
+        { id: 'boxpos/without-sample', label: 'Box-Positionen ohne Sample' },
+        { id: 'analysis/without-boxpos', label: 'Analysis ohne BoxPos' },
+        { id: 'analysis/with-zero-values', label: 'Analysis mit Null-Werten' },
+        { id: 'analysis/without-time', label: 'Analysis mit fehlendem Timestamp' },
+        { id: 'samples/multiple-analyses', label: 'Samples mit mehrfachen Analysen' },
+        { id: 'samples/suspicious', label: 'Verdächtige Samples (Allgemein)' },
+        { id: 'samples/suspicious/by-date', label: 'Verdächtige Samples (in Zeitraum)' },
+        { id: 'samples/invalid-ean13', label: 'Samples mit ungültigem EAN-Code' },
       ]
     };
   },
@@ -205,19 +207,20 @@ export default {
         queryParams.append('size', this.displayLimit);
         
         // Globale Filter immer mitsenden (Backend entscheidet ob genutzt)
-        if(this.globalDateInFrom) queryParams.append('globalDateInFrom', this.globalDateInFrom);
-        if(this.globalDateInTo) queryParams.append('globalDateInTo', this.globalDateInTo);
+        // if(this.globalDateInFrom) queryParams.append('globalDateInFrom', this.globalDateInFrom);
+        // if(this.globalDateInTo) queryParams.append('globalDateInTo', this.globalDateInTo);
         
 
-        if (this.selectedReport === 'samples-suspicious-timerange') {
+        if (this.selectedReport === 'daily-report' ||  this.selectedReport === 'analysis/without-boxpos' || this.selectedReport === 'analysis/with-zero-values' 
+            || this.selectedReport === 'analysis/without-time' || this.selectedReport === 'samples/multiple-analyses' || this.selectedReport === 'samples/suspicious/by-date') {
           if (!this.params.start || !this.params.end) {
             throw new Error("Bitte Start- und Endzeitpunkt wählen.");
           }
           const startFmt = this.params.start
           const endFmt = this.params.end
           
-          queryParams.append('start', startFmt);
-          queryParams.append('end', endFmt);
+          queryParams.append('startDate', startFmt);
+          queryParams.append('endDate', endFmt);
         }
 
         const response = await fetch(`${url}?${queryParams.toString()}`, {
@@ -235,11 +238,16 @@ export default {
         }
 
         const data = await response.json();
+
+        if(this.selectedReport === 'daily-report'){ //der schas daily ist nd paginated
+          this.reportData = data
+        } else {
+          this.reportData = data.content;
+          this.totalPages = data.totalPages;
+          this.totalItems = data.totalElements;
+          this.currentPage = data.number;
+        }
         
-        this.reportData = data.content;
-        this.totalPages = data.totalPages;
-        this.totalItems = data.totalElements;
-        this.currentPage = data.number;
 
       } catch (err) {
         console.error(err);

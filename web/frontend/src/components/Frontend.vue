@@ -631,7 +631,6 @@ export default {
   mounted() {
     this.updateUserRole();
     
-    // Props Initialisierung falls bereits gesetzt
     if(this.globalDateStart) this.searchParams.globalDateInFrom = this.globalDateStart;
     if(this.globalDateEnd) this.searchParams.globalDateInTo = this.globalDateEnd;
 
@@ -735,17 +734,14 @@ export default {
           if (this.searchParams.dateInFrom) queryParams['dateIn.from'] = this.searchParams.dateInFrom;
           if (this.searchParams.dateInTo) queryParams['dateIn.to'] = this.searchParams.dateInTo;
           
-          // Globale Datum Filter (überschreiben ggf. lokale, oder ergänzen - Logik hier: Global gewinnt wenn gesetzt)
-          // Besser: Nur setzen wenn lokal nicht gesetzt, oder umgekehrt. 
-          // Hier simple Logik: Global Date wird auch an 'dateIn' gemappt
-          if (this.searchParams.globalDateInFrom) queryParams['dateIn.from'] = this.searchParams.globalDateInFrom;
-          if (this.searchParams.globalDateInTo) queryParams['dateIn.to'] = this.searchParams.globalDateInTo;
-          
           if (this.searchParams.dateOutFrom) queryParams['dateOut.from'] = this.searchParams.dateOutFrom;
           if (this.searchParams.dateOutTo) queryParams['dateOut.to'] = this.searchParams.dateOutTo;
           
           if (this.searchParams.aFlagsFrom) queryParams['aFlags.from'] = this.searchParams.aFlagsFrom;
           if (this.searchParams.aFlagsTo) queryParams['aFlags.to'] = this.searchParams.aFlagsTo;
+
+          if (this.searchParams.globalDateInFrom) queryParams['globalDateIn.from'] = this.searchParams.globalDateInFrom;
+          if (this.searchParams.globalDateInTo) queryParams['globalDateIn.to'] = this.searchParams.globalDateInTo;
       }
       
       try {

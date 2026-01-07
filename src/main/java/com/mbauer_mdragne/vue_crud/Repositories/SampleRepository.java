@@ -1,6 +1,7 @@
 package com.mbauer_mdragne.vue_crud.Repositories;
 
 import java.sql.Timestamp;
+import java.time.LocalDate;
 import java.util.List;
 
 import com.mbauer_mdragne.vue_crud.DTOs.*;
@@ -15,7 +16,6 @@ import com.mbauer_mdragne.vue_crud.Entities.Sample;
 import com.mbauer_mdragne.vue_crud.Entities.SampleId;
 
 public interface SampleRepository extends JpaRepository<Sample, SampleId>, JpaSpecificationExecutor<Sample> {
-
     @Query("SELECT s FROM Sample s WHERE s.sFlags LIKE 'F%' OR s.sFlags LIKE 'V%'")
     List<Sample> findAllForResearcher();
     @Query("SELECT s FROM Sample s WHERE s.sFlags LIKE 'F%' OR s.sFlags LIKE 'V%'")
@@ -29,8 +29,20 @@ public interface SampleRepository extends JpaRepository<Sample, SampleId>, JpaSp
     @Query(value = "SELECT * FROM venlab.get_suspicious_ean13_samples(:start_date, :end_date)",
             countQuery = "SELECT count(*) FROM venlab.get_suspicious_ean13_samples(:start_date, :end_date)",
             nativeQuery = true)
-    Page<Sample> findSuspiciousSampleIdsInTimeRange(@Param("start_date") Timestamp start, @Param("end_date") Timestamp end,Pageable pageable);
+    Page<Sample> findSuspiciousSampleIdsInTimeRange(@Param("start_date") LocalDate start_date, @Param("end_date") LocalDate end_date,Pageable pageable);
 
-    @Query(value = "SELECT * FROM venlab.sample s WHERE length(s.s_id) != 13 OR s.s_id !~ '^[0-9]+$'", nativeQuery = true)
-    Page<Sample> findSuspiciousSampleIds(Pageable pageable);
+    @Query(value = "SELECT * FROM venlab.sample s WHERE NOT venlab.check_ean13(s.s_id)",
+           nativeQuery = true)
+    List<Sample> findSamplesWithInvalidEan();
+
+    @Query(value = "SELECT MIN(s.s_stamp)::date FROM venlab.sample s", nativeQuery = true)
+    LocalDate findEarliestSampleDate();
+
+    @Query(value = "SELECT MAX(s.s_stamp)::date FROM venlab.sample s", nativeQuery = true)
+    LocalDate findLatestSampleDate();
+    default Page<Sample> findAllSuspiciousSamples(Pageable pageable) {
+        LocalDate start = findEarliestSampleDate();
+        LocalDate end = findLatestSampleDate(); 
+        return findSuspiciousSampleIdsInTimeRange(start, end, pageable);
+    }
 }
