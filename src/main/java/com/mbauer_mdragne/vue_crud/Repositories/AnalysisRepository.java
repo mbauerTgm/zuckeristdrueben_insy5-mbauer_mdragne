@@ -17,12 +17,18 @@ public interface AnalysisRepository extends JpaRepository<Analysis, Long>, JpaSp
     @Query("SELECT a FROM Analysis a WHERE a.aFlags LIKE 'F%' OR a.aFlags LIKE 'V%'")
     Page<Analysis> findAllForResearcher(Pageable pageable);
 
-    @Query("SELECT a FROM Analysis a WHERE NOT EXISTS (SELECT bp FROM BoxPos bp WHERE bp.sId = a.sId AND bp.sStamp = a.sStamp)")
-    Page<Analysis> findAnalysisWithoutBoxPos(Pageable pageable);
+    @Query(value = "SELECT * FROM venlab.get_suspicious_analysis_without_boxpos(:start_date, :end_date)",
+            countQuery = "SELECT count(*) FROM venlab.get_suspicious_analysis_without_boxpos(:start_date, :end_date)",
+            nativeQuery = true)
+    Page<Analysis> findAnalysisWithoutBoxPos(@Param("start_date")LocalDate start_date,@Param("end_date")LocalDate end_date,Pageable pageable);
 
-    @Query("SELECT a FROM Analysis a WHERE a.pol = 0 OR a.nat = 0 OR a.kal = 0")
-    Page<Analysis> findAnalysisWithZeroValues(Pageable pageable);
+    @Query(value = "SELECT * FROM venlab.get_suspicious_analysis_with_null_values(:start_date, :end_date)",
+            countQuery = "SELECT count(*) FROM venlab.get_suspicious_analysis_with_null_values(:start_date, :end_date)",
+            nativeQuery = true)
+    Page<Analysis> findAnalysisWithNullValues(@Param("start_date")LocalDate start_date,@Param("end_date")LocalDate end_date,Pageable pageable);
 
-    @Query("SELECT a FROM Analysis a WHERE a.dateIn IS NULL OR a.dateOut IS NULL")
-    Page<Analysis> findAnalysisWithMissingDates(Pageable pageable);
+    @Query(value = "SELECT * FROM venlab.get_suspicious_analysis_without_time(:start_date, :end_date)",
+            countQuery = "SELECT count(*) FROM venlab.get_suspicious_analysis_without_time(:start_date, :end_date)",
+            nativeQuery = true)
+    Page<Analysis> findAnalysisWithMissingDates(@Param("start_date")LocalDate start_date,@Param("end_date")LocalDate end_date, Pageable pageable);
 }

@@ -13,10 +13,14 @@ import org.springframework.data.domain.Pageable;
 
 public interface BoxPosRepository extends JpaRepository<BoxPos, BoxPosId>, JpaSpecificationExecutor<BoxPos> {
     //Rueckstellbehaelter (BoxPos) haben Proben, aber keine Analyse dazu
-    @Query("SELECT bp FROM BoxPos bp WHERE bp.sId IS NOT NULL AND NOT EXISTS (SELECT a FROM Analysis a WHERE a.sId = bp.sId AND a.sStamp = bp.sStamp)")
-    Page<BoxPos> findBoxPosWithSampleButNoAnalysis(Pageable pageable);
+    @Query(value = "SELECT * FROM venlab.get_suspicious_boxpos_without_analysis()",
+            countQuery = "SELECT count(*) FROM venlab.get_suspicious_boxpos_without_analysis()",
+            nativeQuery = true)
+    Page<BoxPos> findBoxPosWithoutAnalysis(Pageable pageable);
 
     //Rueckstellbehaelter haben gar keine Probenummer
-    @Query("SELECT bp FROM BoxPos bp WHERE bp.sId IS NULL OR bp.sId = ''")
+    @Query(value = "SELECT * FROM venlab.get_suspicious_boxpos_without_samples()",
+            countQuery = "SELECT count(*) FROM venlab.get_suspicious_boxpos_without_samples()",
+            nativeQuery = true)
     Page<BoxPos> findBoxPosWithoutSample(Pageable pageable);
 }
