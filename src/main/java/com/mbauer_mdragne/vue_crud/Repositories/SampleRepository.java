@@ -11,6 +11,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import com.mbauer_mdragne.vue_crud.Entities.Sample;
 import com.mbauer_mdragne.vue_crud.Entities.SampleId;
+import com.mbauer_mdragne.vue_crud.Projections.SampleMultipleAnalysisView;
+import com.mbauer_mdragne.vue_crud.Projections.SuspiciousEanSampleView;
 
 public interface SampleRepository extends JpaRepository<Sample, SampleId>, JpaSpecificationExecutor<Sample> {
     @Query("SELECT s FROM Sample s WHERE s.sFlags LIKE 'F%' OR s.sFlags LIKE 'V%'")
@@ -21,23 +23,24 @@ public interface SampleRepository extends JpaRepository<Sample, SampleId>, JpaSp
     @Query(value = "SELECT * FROM venlab.get_suspicious_samples_with_multiple_analysis(:start_date, :end_date)",
             countQuery = "SELECT count(*) FROM venlab.get_suspicious_samples_with_multiple_analysis(:start_date, :end_date)",
             nativeQuery = true)
-    Page<SampleAnalysisCount> findSamplesWithMultipleAnalyses(@Param("start_date")LocalDate start_date,@Param("end_date")LocalDate end_date,Pageable pageable);
+    Page<SampleMultipleAnalysisView> findSamplesWithMultipleAnalyses(@Param("start_date")LocalDate start_date,@Param("end_date")LocalDate end_date,Pageable pageable);
 
     @Query(value = "SELECT * FROM venlab.get_suspicious_ean13_samples(:start_date, :end_date)",
             countQuery = "SELECT count(*) FROM venlab.get_suspicious_ean13_samples(:start_date, :end_date)",
             nativeQuery = true)
-    Page<Sample> findSuspiciousSampleIdsInTimeRange(@Param("start_date") LocalDate start_date, @Param("end_date") LocalDate end_date,Pageable pageable);
+    Page<SuspiciousEanSampleView> findSuspiciousSampleIdsInTimeRange(@Param("start_date") LocalDate start_date, @Param("end_date") LocalDate end_date,Pageable pageable);
 
     @Query(value = "SELECT * FROM venlab.sample s WHERE NOT venlab.check_ean13(s.s_id)",
+            countQuery = "SELECT count(*) FROM venlab.sample s WHERE NOT venlab.check_ean13(s.s_id)",
            nativeQuery = true)
-    List<Sample> findSamplesWithInvalidEan();
+    Page<SuspiciousEanSampleView> findSamplesWithInvalidEan(Pageable pageable);
 
     @Query(value = "SELECT MIN(s.s_stamp)::date FROM venlab.sample s", nativeQuery = true)
     LocalDate findEarliestSampleDate();
 
     @Query(value = "SELECT MAX(s.s_stamp)::date FROM venlab.sample s", nativeQuery = true)
     LocalDate findLatestSampleDate();
-    default Page<Sample> findAllSuspiciousSamples(Pageable pageable) {
+    default Page<SuspiciousEanSampleView> findAllSuspiciousSamples(Pageable pageable) {
         LocalDate start = findEarliestSampleDate();
         LocalDate end = findLatestSampleDate(); 
         return findSuspiciousSampleIdsInTimeRange(start, end, pageable);
