@@ -473,7 +473,7 @@ ALTER TABLE venlab.role OWNER TO postgres;
 -- Insert Roles (Reader, Admin, Researcher)
 --
 INSERT INTO venlab.role (role_name, description) VALUES 
-('Admin', 'Admin Rights'),
+('Admin', 'Admin Rights'), 
 ('Reader', 'Read Only'),
 ('Researcher', 'Partial Rights: only validated Data (Flags F/V)');
 

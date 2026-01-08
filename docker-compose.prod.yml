@@ -20,6 +20,7 @@ services:
       
       # Schema: Wird AUTOMATISCH ausgeführt beim ersten Start (weil im initdb.d Ordner)
       - ./db_init_schema/init_schema.sql:/docker-entrypoint-initdb.d/10-schema.sql
+      - ./db_init_schema/functions.sql:/docker-entrypoint-initdb.d/20-functions.sql
       
       # Alle Backup-Dateien & Skripte (Ordner-Mapping)
       # Bringt import_backups.sql UND die .dat Dateien auf einmal rein.

@@ -2,19 +2,19 @@
 von: Maximilian Bauer, Matei Dragne, Denis Gernesch 5CHITM
 
 ## Continuous Integration
-Um bei jedem Push auf GitHub die vollständige Lauffähigkeit des Projekts sicherzustellen, wurde mithilfe von GitHub Actions ein automatisierter Integrationstest (CI – Build & Tests) eingerichtet. Darin wird das Projekt in Docker gebaut, die erforderliche Datenstruktur eingespielt und anschließend End-to-End-Tests (E2E) mit Cypress durchgeführt.
+Um bei jedem Push auf GitHub die vollständige Lauffähigkeit des Projekts sicherzustellen, wurde mithilfe von GitHub Actions ein automatisierter Integrationstest (CI – Build & Tests) eingerichtet. Darin wird das Projekt in Docker gebaut, die erforderliche Datenstruktur eingespielt und anschließend End-to-End-Tests (E2E) mit Cypress durchgeführt.[2] [4]
 
 ## Deployment & CD
-Vorbereitung des Servers: Auf einem Privaten Cloud Server (über Oracle) wurde die Website gehostet. Dazu mussten zuerst in der OCI die Port 80 und 443 im Subnetz der Servers freigegeben werden. Danach mussten sie aufgrund der Voreinstellungen von Oracle im Linux System extra freigegeben werden. 
+Vorbereitung des Servers: Auf einem Privaten Cloud Server (über Oracle) wurde die Website gehostet. Dazu mussten zuerst in der OCI die Port 80 und 443 im Subnetz der Servers freigegeben werden. Danach mussten sie aufgrund der Voreinstellungen von Oracle im Linux System extra freigegeben werden. [1]
 
-Während dieser Aufgabe wurden ein automatisches Deployment mittels Github Actions ermöglicht. Dabei werden bei einem Push auf den Main-Branch im CD alle Images erstellt. Anschließend werden diese auf einem Cloudserver gepulled und gestartet. Damit der Workflow auf den Server zugreifen kann wurden in den Github secrets sowohl die IP des Servers (HOST), als auch der Server Username und Privatekey des Servers eingetragen. Weiters wurde ein Deploy Key für den Serveruser erstellt, damit dieser änderungen aus dem Repo Pullen kann.
+Während dieser Aufgabe wurden ein automatisches Deployment mittels Github Actions ermöglicht. Dabei werden bei einem Push auf den Main-Branch im CD alle Images erstellt. Anschließend werden diese auf einem Cloudserver gepulled und gestartet. Damit der Workflow auf den Server zugreifen kann wurden in den Github secrets sowohl die IP des Servers (HOST), als auch der Server Username und Privatekey des Servers eingetragen. Weiters wurde ein Deploy Key für den Serveruser erstellt, damit dieser änderungen aus dem Repo Pullen kann. [2]
 
 Die Website ist unter [https://zuckeristdrueben.live](https://zuckeristdrueben.live) erreichbar. Die Domain wurde beim Anbieter mit der IP des Servers verbunden.
 
-Um das SSL-Zertifikat zu erhalten wurde der Caddy Reverse-Proxy verwendet.
+Um das SSL-Zertifikat zu erhalten wurde der Caddy Reverse-Proxy verwendet. [3]
 
 ### Einspielen von Backups
-Damit der Postgres Container direkt mit einem DB Schema bespielt wird wurde das Restore.sql aufgeteilt, in init_schema.sql und import_backups.sql aufgeteilt. Für eine lokale- bzw. Testumgebung einget sich weiterhin der in "lokale Verwendung" beschriebene Befehl mit der Restore.sql Datei.
+Damit der Postgres Container direkt mit einem DB Schema bespielt wird wurde das Restore.sql aufgeteilt, in init_schema.sql und import_backups.sql aufgeteilt. Für eine lokale- bzw. Testumgebung kann alternativ weiterhin der in "lokale Verwendung" beschriebene Befehl mit der Restore.sql Datei. 
 
 Um die Backupdateien auf dem Server einspielen zukönnen muss selbstverständlich direkter Zugriff auf den Server bestehen. Ist das der Fall und die Dateien sind unter /backups/ verfügbar, kann folgender Befehlt ausgeführt werden um die Daten in die Datenbank einzuspielen:
 
@@ -35,6 +35,44 @@ Um die forcefully alle Daten der Datenbank zu löschen (inklusive der Schemas un
 ```bash
 sudo rm -rf postgres-data
 ```
+
+### PWA Umsetzung
+
+Mit der Neusten Version wurde die Website als Progressive Web application umgesetzt, damit man die Seite auch als App nutzen kann. 
+jetzt kann sie auf allen unterstüzten Geräten verwendet werden. 
+[5]
+**Manifest**</br>
+Das die Seite auch installiert werden kann, wurde ein Web App Manifest erstellt. 
+
+**Service Worker & Caching**</br>
+Zusätzlich wurde ein Service Worker integriert, der zentrale PWA-Funktionen übernimmt
+- Caching
+- Offline kompatibilität
+- Schnellere Ladezeiten
+[5]
+
+**Favicon generierung**</br>
+Es gab an Anfang nur ein Favicon und mit der Website kann man die weiteren Generieren für die App </br>
+[6]
+**Testing / Validierung**
+
+Die PWA-Funktionalität wurde mit Browser-Tools überprüft unter Chrome DevTools → Application → Manifest / Service Worker / Cache Storage
+
+### Dark mode
+Die Weboberfläche unterstützt einen Dark Mode, um die Lesbarkeit bei wenig Licht zu verbessern und eine moderne UI bereitzustellen</br>
+[7][8]
+Die Styles werden zentral geregelt zb: :global(.....) und betreffen
+- Tabelle 
+- Hintergrund
+- Dopdowns 
+- Inputfelder
+
+### Einzelne Attribute auswählen
+
+Die Tabellenansicht bietet eine Mehrfachauswahl für Spalten. 
+Damit können Benutzer gezielt festlegen, welche Spalten angezeigt werden. 
+Zusätzlich gibt es „Alle“ und „Keine“, um schnell alle Spalten ein- oder auszublenden.
+[9][10]
 
 # Informationssysteme "PWA Deployment" EK
 von: Maximilian Bauer, Matei Dragne 5CHITM
@@ -166,3 +204,22 @@ npx swagger-markdown -i swagger.json
 ```bash
 docker run --rm -v "%cd%:/local" openapitools/openapi-generator-cli generate -i /local/swagger.json -g markdown -o /local/api-doc
 ```
+
+## Quellen:
+\[1\] Oracle, "Connecting to a Port Forwarding Session," Oracle Cloud Infrastructure Documentation, 2024. [Online]. Available: https://docs.oracle.com/en-us/iaas/Content/Bastion/Tasks/connect-port-forwarding.htm. Accessed: Jan. 8, 2026. <br>
+\[2\] GitHub, "What is CI/CD? Building automated workflows for faster releases," GitHub Resources, 2024. [Online]. Available: https://github.com/resources/articles/ci-cd. Accessed: Jan. 8, 2026. <br>
+\[3\] Caddy, "Welcome to Caddy," Caddy Documentation, 2024. [Online]. Available: https://caddyserver.com/docs/. Accessed: Jan. 8, 2026. <br>
+\[4\] GitLab, "Tutorial: Create and run your first GitLab CI/CD pipeline," GitLab Docs, 2025. [Online]. Available: https://docs.gitlab.com/ci/quick_start/. Accessed: Jan. 8, 2026. <br>
+
+Quellen_dgernesch <br>
+\[5\] Google, "Progressive Web Apps," web.dev, 2024. [Online]. Available: https://web.dev/explore/progressive-web-apps. Accessed: Jan. 8, 2026.
+
+\[6\] RealFaviconGenerator, "Favicon Generator for perfect icons on all browsers," RealFaviconGenerator, 2024. [Online]. Available: https://realfavicongenerator.net/. Accessed: Jan. 8, 2026. 
+
+\[7\] Rsbuild, "Use CSS Modules," Rsbuild Documentation, 2024. [Online]. Available: https://rsbuild.rs/guide/styling/css-modules. Accessed: Jan. 8, 2026.
+
+\[8\] Vue Mastery, "Implementing Dark Mode with VueUse," Vue Mastery Blog, 2023. [Online]. Available: https://www.vuemastery.com/blog/implementing-dark-mode-with-vueuse/. Accessed: Jan. 8, 2026.
+
+\[9\] PrimeVue, "MultiSelect," PrimeVue Components Documentation, 2024. [Online]. Available: https://primevue.org/multiselect/?utm_source=chatgpt.com. Accessed: Jan. 8, 2026.
+
+\[10\] Vueform, "Vueform Multiselect," GitHub Repository, 2024. [Online]. Available: https://github.com/vueform/multiselect?utm_source=chatgpt.com. Accessed: Jan. 8, 2026.

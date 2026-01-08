@@ -1,22 +1,26 @@
 package com.mbauer_mdragne.vue_crud.Controllers;
 
 import com.mbauer_mdragne.vue_crud.DTOs.AnalysisGlobalFilterDto;
-import com.mbauer_mdragne.vue_crud.DTOs.SampleAnalysisCount;
+import com.mbauer_mdragne.vue_crud.Projections.AnalysisWithNullValuesView;
+import com.mbauer_mdragne.vue_crud.Projections.AnalysisWithoutBoxposView;
+import com.mbauer_mdragne.vue_crud.Projections.AnalysisWithoutTimeView;
+import com.mbauer_mdragne.vue_crud.Projections.BoxPosWithoutTableView;
+import com.mbauer_mdragne.vue_crud.Projections.DayReportView;
+import com.mbauer_mdragne.vue_crud.Projections.SampleMultipleAnalysisView;
+import com.mbauer_mdragne.vue_crud.Projections.SuspiciousEanSampleView;
 import com.mbauer_mdragne.vue_crud.Entities.*;
 import com.mbauer_mdragne.vue_crud.Repositories.*;
-import com.mbauer_mdragne.vue_crud.Services.EanValidatorService;
 import com.mbauer_mdragne.vue_crud.DateUtils;
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.sql.Timestamp;
-import java.util.List;
-import java.util.stream.Collectors;
+import java.time.LocalDate;
 
 @RestController
 @RequestMapping("/api/reports")
@@ -25,116 +29,80 @@ public class ReportRestController {
     @Autowired private BoxPosRepository boxPosRepo;
     @Autowired private AnalysisRepository analysisRepo;
     @Autowired private SampleRepository sampleRepo;
-    @Autowired private EanValidatorService eanService;
+    @Autowired private ReportRepository reportRepo;
 
-    @GetMapping("/boxpos-no-analysis")
-    public Page<BoxPos> getBoxPosNoAnalysis(
-            AnalysisGlobalFilterDto filter,
-            @PageableDefault(size = 20) Pageable pageable) {
-
-        Specification<BoxPos> dateSpec = BoxPosSpecifications.withGlobalDateFilter(filter);
-        
-        if (dateSpec != null) {
-            return boxPosRepo.findAll(dateSpec, pageable);
-        }
-        return boxPosRepo.findBoxPosWithSampleButNoAnalysis(pageable);
+    @GetMapping("/boxpos/with-sample-no-analysis")
+    public ResponseEntity<Page<BoxPosWithoutTableView>> getBoxPosWithSampleNoAnalysis(@PageableDefault(size = 20) Pageable pageable) {
+        Page<BoxPosWithoutTableView> result = boxPosRepo.findBoxPosWithoutAnalysis(pageable);
+        return ResponseEntity.ok(result);
+    }
+    @GetMapping("/boxpos/without-sample")
+    public ResponseEntity<Page<BoxPosWithoutTableView>> getBoxPosWithoutSample(@PageableDefault(size = 20) Pageable pageable) {
+        Page<BoxPosWithoutTableView> result = boxPosRepo.findBoxPosWithoutSample(pageable);
+        return ResponseEntity.ok(result);
     }
 
-    @GetMapping("/boxpos-empty")
-    public Page<BoxPos> getBoxPosEmpty(
-            AnalysisGlobalFilterDto filter,
+    @GetMapping("/samples/suspicious/by-date")
+    public ResponseEntity<Page<SuspiciousEanSampleView>> getSuspiciousSamplesByDate(
+            @RequestParam LocalDate startDate,
+            @RequestParam LocalDate endDate,
+            @PageableDefault(size = 20) Pageable pageable) {
+
+        Page<SuspiciousEanSampleView> result = sampleRepo.findSuspiciousSampleIdsInTimeRange(startDate, endDate, pageable);
+
+        return ResponseEntity.ok(result);
+    }
+    @GetMapping("/analysis/without-boxpos")
+    public ResponseEntity<Page<AnalysisWithoutBoxposView>> getAnalysesWithoutBoxPos(
+            @RequestParam LocalDate startDate,
+            @RequestParam LocalDate endDate,
             @PageableDefault(size = 20) Pageable pageable) {
         
-        Specification<BoxPos> spec = (root, query, cb) -> 
-            cb.or(cb.isNull(root.get("sId")), cb.equal(root.get("sId"), ""));
-            
-        Specification<BoxPos> dateSpec = BoxPosSpecifications.withGlobalDateFilter(filter);
-        if (dateSpec != null) spec = spec.and(dateSpec);
-
-        return boxPosRepo.findAll(spec, pageable);
+        Page<AnalysisWithoutBoxposView> result = analysisRepo.findAnalysisWithoutBoxPos(startDate, endDate, pageable);
+        return ResponseEntity.ok(result);
     }
-
-    @GetMapping("/samples-suspicious-timerange")
-    public Page<Sample> getSuspiciousSamplesInRange(
-            @RequestParam String start, 
-            @RequestParam String end,
+    @GetMapping("/analysis/with-zero-values")
+    public ResponseEntity<Page<AnalysisWithNullValuesView>> getAnalysesWithZeroValues(
+            @RequestParam LocalDate startDate,
+            @RequestParam LocalDate endDate,
             @PageableDefault(size = 20) Pageable pageable) {
         
-        Timestamp startTs = DateUtils.parseAny(start);
-        Timestamp endTs = DateUtils.parseAny(end);
-        
-        return sampleRepo.findSuspiciousSampleIdsInTimeRange(startTs, endTs, pageable);
+        Page<AnalysisWithNullValuesView> result = analysisRepo.findAnalysisWithNullValues(startDate, endDate, pageable);
+        return ResponseEntity.ok(result);
     }
 
-    @GetMapping("/analysis-no-boxpos")
-    public Page<Analysis> getAnalysisNoBoxPos(
-            AnalysisGlobalFilterDto filter,
+    @GetMapping("/analysis/without-time")
+    public ResponseEntity<Page<AnalysisWithoutTimeView>> getAnalysesWithoutTime(
+            @RequestParam LocalDate startDate,
+            @RequestParam LocalDate endDate,
+            @PageableDefault(size = 20) Pageable pageable) {
+
+        Page<AnalysisWithoutTimeView> result = analysisRepo.findAnalysisWithMissingDates(startDate, endDate, pageable);
+        return ResponseEntity.ok(result);
+    }
+    @GetMapping("/samples/multiple-analyses")
+    public ResponseEntity<Page<SampleMultipleAnalysisView>> getSamplesWithMultipleAnalyses(
+            @RequestParam LocalDate startDate,
+            @RequestParam LocalDate endDate,
             @PageableDefault(size = 20) Pageable pageable) {
         
-        Specification<Analysis> spec = (root, query, cb) -> {
-            return cb.not(cb.exists(
-                query.subquery(BoxPos.class).select(query.from(BoxPos.class).get("sId"))
-            ));
-        };
-
-        Specification<Analysis> dateSpec = AnalysisSpecifications.withGlobalDateFilter(filter);
-        if (dateSpec != null) spec = spec.and(dateSpec);
+        Page<SampleMultipleAnalysisView> result = sampleRepo.findSamplesWithMultipleAnalyses(startDate, endDate, pageable);
+        return ResponseEntity.ok(result);
+    }
+    @GetMapping("/samples/suspicious")
+    public ResponseEntity<Page<SuspiciousEanSampleView>> getAllSuspiciousSamples(@PageableDefault(size = 20) Pageable pageable) {
+        Page<SuspiciousEanSampleView> result = sampleRepo.findAllSuspiciousSamples(pageable);
+        return ResponseEntity.ok(result);
+    }
+    @GetMapping("/samples/invalid-ean13")
+    public ResponseEntity<Page<SuspiciousEanSampleView>> getSamplesWithInvalidEan13(@PageableDefault(size = 20) Pageable pageable) {
         
-        return analysisRepo.findAll(spec, pageable); 
+        Page<SuspiciousEanSampleView> result = sampleRepo.findSamplesWithInvalidEan(pageable);
+        return ResponseEntity.ok(result);
     }
 
-    @GetMapping("/analysis-zero-values")
-    public Page<Analysis> getAnalysisZeroValues(
-            AnalysisGlobalFilterDto filter,
-            @PageableDefault(size = 20) Pageable pageable) {
-        
-        Specification<Analysis> zeroSpec = (root, query, cb) -> 
-            cb.or(cb.equal(root.get("pol"), 0), cb.equal(root.get("nat"), 0), cb.equal(root.get("kal"), 0));
-
-        Specification<Analysis> dateSpec = AnalysisSpecifications.withGlobalDateFilter(filter);
-        if (dateSpec != null) zeroSpec = zeroSpec.and(dateSpec);
-
-        return analysisRepo.findAll(zeroSpec, pageable);
-    }
-
-    @GetMapping("/samples-multi-analysis")
-    public Page<SampleAnalysisCount> getSamplesMultiAnalysis(@PageableDefault(size = 20) Pageable pageable) {
-        return sampleRepo.findSamplesWithMultipleAnalyses(pageable);
-    }
-
-    @GetMapping("/samples-suspicious")
-    public Page<Sample> getSuspiciousSamples(
-            AnalysisGlobalFilterDto filter,
-            @PageableDefault(size = 20) Pageable pageable) {
-        
-        if (filter.getGlobalDateIn() != null) {
-             Timestamp start = DateUtils.parseAny(filter.getGlobalDateIn().getFrom());
-             Timestamp end = DateUtils.parseAny(filter.getGlobalDateIn().getTo());
-             
-             if (start != null) {
-                 if (end == null) end = new Timestamp(System.currentTimeMillis());
-                 return sampleRepo.findSuspiciousSampleIdsInTimeRange(start, end, pageable);
-             }
-        }
-        return sampleRepo.findSuspiciousSampleIds(pageable);
-    }
-
-    @GetMapping("/samples-bad-ean")
-    public Page<Sample> getSamplesBadEan(
-            AnalysisGlobalFilterDto filter,
-            @PageableDefault(size = 20) Pageable pageable) {
-        
-        Specification<Sample> dateSpec = SampleSpecifications.withGlobalDateFilter(filter);
-        List<Sample> baseList = (dateSpec != null) ? sampleRepo.findAll(dateSpec) : sampleRepo.findAll();
-
-        List<Sample> allBadEans = baseList.stream()
-                .filter(s -> !eanService.isValidEan13(s.getSId()))
-                .collect(Collectors.toList());
-
-        int start = (int) pageable.getOffset();
-        int end = Math.min((start + pageable.getPageSize()), allBadEans.size());
-        if (start > allBadEans.size()) start = allBadEans.size();
-
-        return new PageImpl<>(allBadEans.subList(start, end), pageable, allBadEans.size());
+    @GetMapping("/daily-report")
+    public List<DayReportView> getDailySummaryReport(@RequestParam LocalDate startDate, @RequestParam LocalDate endDate) {
+        return reportRepo.getDayReports(startDate, endDate);
     }
 }

@@ -50,7 +50,7 @@
             <div class="filter-content">
               
               <div class="filter-section">
-                <label class="section-label">Globaler Zeitraum</label>
+                <label class="section-label">Globaler Zeitraum<br>!Achtung: Agiert nur als zusätzlicher Filter für den Analysis Table!</label>
                 <div class="filter-group">
                     <label>Von</label>
                     <input type="datetime-local" step="1" v-model="settingsStart" class="full-width" />

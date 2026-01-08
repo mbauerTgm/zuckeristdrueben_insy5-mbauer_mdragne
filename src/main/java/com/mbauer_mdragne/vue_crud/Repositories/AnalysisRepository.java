@@ -1,28 +1,35 @@
 package com.mbauer_mdragne.vue_crud.Repositories;
 
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
-
-import java.sql.Timestamp;
-import java.util.List;
-
+import java.time.LocalDate;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import com.mbauer_mdragne.vue_crud.Entities.Analysis;
+import com.mbauer_mdragne.vue_crud.Projections.AnalysisWithNullValuesView;
+import com.mbauer_mdragne.vue_crud.Projections.AnalysisWithoutBoxposView;
+import com.mbauer_mdragne.vue_crud.Projections.AnalysisWithoutTimeView;
 
 public interface AnalysisRepository extends JpaRepository<Analysis, Long>, JpaSpecificationExecutor<Analysis> {
 
     @Query("SELECT a FROM Analysis a WHERE a.aFlags LIKE 'F%' OR a.aFlags LIKE 'V%'")
     Page<Analysis> findAllForResearcher(Pageable pageable);
 
-    @Query("SELECT a FROM Analysis a WHERE NOT EXISTS (SELECT bp FROM BoxPos bp WHERE bp.sId = a.sId AND bp.sStamp = a.sStamp)")
-    Page<Analysis> findAnalysisWithoutBoxPos(Pageable pageable);
+    @Query(value = "SELECT * FROM venlab.get_suspicious_analysis_without_boxpos(:start_date, :end_date)",
+            countQuery = "SELECT count(*) FROM venlab.get_suspicious_analysis_without_boxpos(:start_date, :end_date)",
+            nativeQuery = true)
+    Page<AnalysisWithoutBoxposView> findAnalysisWithoutBoxPos(@Param("start_date")LocalDate start_date,@Param("end_date")LocalDate end_date,Pageable pageable);
 
-    @Query("SELECT a FROM Analysis a WHERE a.pol = 0 OR a.nat = 0 OR a.kal = 0")
-    Page<Analysis> findAnalysisWithZeroValues(Pageable pageable);
+    @Query(value = "SELECT * FROM venlab.get_suspicious_analysis_with_null_values(:start_date, :end_date)",
+            countQuery = "SELECT count(*) FROM venlab.get_suspicious_analysis_with_null_values(:start_date, :end_date)",
+            nativeQuery = true)
+    Page<AnalysisWithNullValuesView> findAnalysisWithNullValues(@Param("start_date")LocalDate start_date,@Param("end_date")LocalDate end_date,Pageable pageable);
 
-    @Query("SELECT a FROM Analysis a WHERE a.dateIn IS NULL OR a.dateOut IS NULL")
-    Page<Analysis> findAnalysisWithMissingDates(Pageable pageable);
+    @Query(value = "SELECT * FROM venlab.get_suspicious_analysis_without_time(:start_date, :end_date)",
+            countQuery = "SELECT count(*) FROM venlab.get_suspicious_analysis_without_time(:start_date, :end_date)",
+            nativeQuery = true)
+    Page<AnalysisWithoutTimeView> findAnalysisWithMissingDates(@Param("start_date")LocalDate start_date,@Param("end_date")LocalDate end_date, Pageable pageable);
 }

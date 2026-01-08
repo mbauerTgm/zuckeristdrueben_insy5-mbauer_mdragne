@@ -85,7 +85,7 @@
             </div>
           </div>
 
-          <div class="control-group" v-if="selectedTable === 'analysis' || selectedTable === 'sample'">
+          <div class="control-group" v-if="selectedTable === 'analysis'">
             <div style="display: flex; gap: 5px;">
               <div class="column-selector">
                 <button 
@@ -348,6 +348,9 @@
               />
             </div>
           </div>
+          <div>
+            <p v-if="error_isRequired" class="error-text">Alle Pflichtfelder müssen ausgefüllt sein <br>{{ error_isRequired_message }}</p>
+          </div>
           <div class="form-actions">
             <button @click="cancelEdit" class="btn btn-cancel" :disabled="isSaving">Abbrechen</button>
             <button @click="saveItem" class="btn btn-save" :disabled="isSaving">
@@ -550,6 +553,9 @@ export default {
       selectedColumns: [],
 
       loadingCSV: false,
+
+      error_isRequired: false,
+      error_isRequired_message: '',
     };
   },
 
@@ -631,7 +637,6 @@ export default {
   mounted() {
     this.updateUserRole();
     
-    // Props Initialisierung falls bereits gesetzt
     if(this.globalDateStart) this.searchParams.globalDateInFrom = this.globalDateStart;
     if(this.globalDateEnd) this.searchParams.globalDateInTo = this.globalDateEnd;
 
@@ -672,6 +677,9 @@ export default {
       
       this.showColumnSelector = false;
       this.showFilterSelector = false;
+
+      this.error_isRequired = false;
+      this.error_isRequired_message = '';
       
       this.fetchTableData();
     },
@@ -735,17 +743,14 @@ export default {
           if (this.searchParams.dateInFrom) queryParams['dateIn.from'] = this.searchParams.dateInFrom;
           if (this.searchParams.dateInTo) queryParams['dateIn.to'] = this.searchParams.dateInTo;
           
-          // Globale Datum Filter (überschreiben ggf. lokale, oder ergänzen - Logik hier: Global gewinnt wenn gesetzt)
-          // Besser: Nur setzen wenn lokal nicht gesetzt, oder umgekehrt. 
-          // Hier simple Logik: Global Date wird auch an 'dateIn' gemappt
-          if (this.searchParams.globalDateInFrom) queryParams['dateIn.from'] = this.searchParams.globalDateInFrom;
-          if (this.searchParams.globalDateInTo) queryParams['dateIn.to'] = this.searchParams.globalDateInTo;
-          
           if (this.searchParams.dateOutFrom) queryParams['dateOut.from'] = this.searchParams.dateOutFrom;
           if (this.searchParams.dateOutTo) queryParams['dateOut.to'] = this.searchParams.dateOutTo;
           
           if (this.searchParams.aFlagsFrom) queryParams['aFlags.from'] = this.searchParams.aFlagsFrom;
           if (this.searchParams.aFlagsTo) queryParams['aFlags.to'] = this.searchParams.aFlagsTo;
+
+          if (this.searchParams.globalDateInFrom) queryParams['globalDateIn.from'] = this.searchParams.globalDateInFrom;
+          if (this.searchParams.globalDateInTo) queryParams['globalDateIn.to'] = this.searchParams.globalDateInTo;
       }
       
       try {
@@ -902,14 +907,38 @@ export default {
 
     cancelEdit() {
       this.itemToEdit = null;
+      this.error_isRequired = false;
+      this.error_isRequired_message = '';
     },
 
     async saveItem() {
+
+      const config = this.currentSchema.fieldConfigs || {};
+      const missingFields = [];
+
+      for (const col of this.formColumns) {
+        if (config[col]?.required) {
+          const val = this.itemToEdit[col];
+          // Prüfen auf null, undefined oder leerer String
+          if (val === null || val === undefined || val === '') {
+            missingFields.push(this.formatHeader(col));
+          }
+        }
+      }
+
+      if (missingFields.length > 0) {
+        // Abbruch wenn Pflichtfelder fehlen
+        this.error_isRequired_message = `Fehlende Felder: - ${missingFields.join(' - ')}`
+        console.log(this.error_isRequired_message);
+        this.error_isRequired = true;
+        return; 
+      }
+
       this.isSaving = true;
 
       const schema = this.currentSchema;
       const dataToSend = { ...this.itemToEdit };
-      const config = schema.fieldConfigs || {};
+      // config wurde oben schon definiert
 
       for (const key in dataToSend) {
         if (config[key]?.type === 'number') {
