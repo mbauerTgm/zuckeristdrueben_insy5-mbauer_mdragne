@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.7.5] - 2026-01-08
+
+### Added 
+- error messages on create and edit page
+- documentation
+- improved docker volume structure
+
 ## [1.7.4] - 2026-01-07
 
 ### Fixed
@@ -164,6 +171,7 @@
 
 _Initial Release._
 
+[1.7.5]: https://github.com/TGM-HIT/insy5-informationssysteme-vue-pwa-pwa_mbauer_mdragne_dgernesch/tree/40d5d5d928ac8007b068e0a3008584b9e6f1edab
 [1.7.4]: https://github.com/TGM-HIT/insy5-informationssysteme-vue-pwa-pwa_mbauer_mdragne_dgernesch/tree/fa9408150a941e6b0ff3662e486c3b3798819081
 [1.7.3]: https://github.com/TGM-HIT/insy5-informationssysteme-vue-pwa-pwa_mbauer_mdragne_dgernesch/tree/69b151e4cb6877aa13c2c5bb6e7be66138311363
 [1.7.2]: https://github.com/TGM-HIT/insy5-informationssysteme-vue-pwa-pwa_mbauer_mdragne_dgernesch/tree/e167af1148995b76d608aba08b1cb58c76cb7700
