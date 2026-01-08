@@ -166,3 +166,41 @@ npx swagger-markdown -i swagger.json
 ```bash
 docker run --rm -v "%cd%:/local" openapitools/openapi-generator-cli generate -i /local/swagger.json -g markdown -o /local/api-doc
 ```
+
+### 6. PWA Umsetzung
+
+Mit der Neusten Version wurde die Website als Progressive Web application umgesetzt, damit man die Seite auch als App nutzen kann. 
+jetzt kann sie auf allen unterstüzten Geräten verwendet werden. 
+[1]
+**Manifest**</br>
+Das die Seite auch installiert werden kann, wurde ein Web App Manifest erstellt. 
+
+**Service Worker & Caching**</br>
+Zusätzlich wurde ein Service Worker integriert, der zentrale PWA-Funktionen übernimmt
+- Caching
+- Offline kompatibilität
+- Schnellere Ladezeiten
+[1]
+
+**Favicon generierung**</br>
+Es gab an Anfang nur ein Favicon und mit der Website kann man die weiteren Generieren für die App </br>
+[2]
+**Testing / Validierung**
+
+Die PWA-Funktionalität wurde mit Browser-Tools überprüft unter Chrome DevTools → Application → Manifest / Service Worker / Cache Storage
+
+### 7. Dark mode
+Die Weboberfläche unterstützt einen Dark Mode, um die Lesbarkeit bei wenig Licht zu verbessern und eine moderne UI bereitzustellen</br>
+[3][4]
+Die Styles werden zentral geregelt zb: :global(.....) und betreffen
+- Tabelle 
+- Hintergrund
+- Dopdowns 
+- Inputfelder
+
+### 8. Einzelne Attribute auswählen
+
+Die Tabellenansicht bietet eine Mehrfachauswahl für Spalten. 
+Damit können Benutzer gezielt festlegen, welche Spalten angezeigt werden. 
+Zusätzlich gibt es „Alle“ und „Keine“, um schnell alle Spalten ein- oder auszublenden.
+[5][6]
