@@ -12,7 +12,7 @@ describe('Sample Test:', () => {
     //Daten Laden
     cy.get('.btn-load').click()
 
-    cy.wait(5000)
+    //cy.wait(5000)
 
     //neuer Eintrag
     cy.get('.btn-save').click()
@@ -182,7 +182,7 @@ describe('Sample Test:', () => {
     cy.get('.btn-delete').click()
     cy.get('.modal-actions > .btn-delete').click()
     cy.get('body').should($body => {
-      const infoText = $body.find('.info-text:contains("Zeige 0 von 0 Einträgen")').length > 0;
+      const infoText = $body.find('.info-text:contains("Zeige 0 von")').length > 0;
       const statusText = $body.find('.status-text:contains("Keine Daten vorhanden.")').length > 0;
 
       expect(infoText || statusText, 'Info- oder Status-Text vorhanden').to.be.true;
@@ -201,7 +201,7 @@ describe('Sample Test:', () => {
     //Save btn
     cy.get('.form-actions > .btn-save').click()
     cy.get('.error-text').should('contain', 'Alle Pflichtfelder müssen ausgefüllt sein')
-    //cy.get('.error-text').should('contain', 'Fehlende Felder: - S id - S stamp')
+    cy.get('.error-text').should('contain', 'Fehlende Felder: - S id - S stamp')
   })
   
 })

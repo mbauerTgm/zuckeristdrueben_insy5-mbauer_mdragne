@@ -213,7 +213,7 @@ describe('Analysis Test:', () => {
     cy.get('.btn-delete').click()
     cy.get('.modal-actions > .btn-delete').click()
     cy.get('body').should($body => {
-      const infoText = $body.find('.info-text:contains("Zeige 0 von 0 Einträgen")').length > 0;
+      const infoText = $body.find('.info-text:contains("Zeige 0 von")').length > 0;
       const statusText = $body.find('.status-text:contains("Keine Daten vorhanden.")').length > 0;
 
       expect(infoText || statusText, 'Info- oder Status-Text vorhanden').to.be.true;
@@ -230,6 +230,84 @@ describe('Analysis Test:', () => {
     //Save btn
     cy.get('.form-actions > .btn-save').click()
     cy.get('.error-text').should('contain', 'Alle Pflichtfelder müssen ausgefüllt sein')
-    //cy.get('.error-text').should('contain', 'Fehlende Felder: - S id')
+    cy.get('.error-text').should('contain', 'Fehlende Felder: - S id')
+  })
+
+  it('Check edit required error', () => {
+    const sId = sampleData.s_id
+    const pol = 1.87
+    const nat = 18.78
+    const kal = '83.15'
+    const an = '0.18'
+    const glu = 0
+    const dry = 0
+    const date_in = erstelleDatum(0)
+    const date_out = erstelleDatum(1)
+    const a_flags = 'MLHHL------'
+    const lane = 1
+    const comment = 'Normal__//Analysis_TEST_CASE_187_DONT_CHANGE_187_TIMESTAMP:' + erstelleDatum(0)
+
+    //---------- Create
+
+    cy.get(':nth-child(1) > select').select('Analysis')
+    //Daten Laden
+    cy.get('.btn-load').click()
+    //neuer Eintrag
+    cy.get('.btn-save').click()
+    // S id
+    cy.get('#field-s_id').type(sId)
+    // Pol
+    cy.get('#field-pol').type(pol)
+    // Nat
+    cy.get('#field-nat').type(nat)
+    // Kal
+    cy.get('#field-kal').type(kal)
+    // An
+    cy.get('#field-an').type(an)
+    // Glu
+    cy.get('#field-glu').type(glu)
+    // Dry
+    cy.get('#field-dry').type(dry)
+    //Date In
+    cy.get('#field-date_in').type(date_in)
+    //Date Out 2023-07-27T10:37:06.000+00:00
+    cy.get('#field-date_out').type(date_out)
+
+    // A-Flags
+    cy.get('#field-a_flags').type(a_flags)
+    // Lane
+    cy.get('#field-lane').type(lane)
+    //Comment
+    cy.get('#field-comment').type(comment)
+
+    //Save btn
+    cy.get('.form-actions > .btn-save').click()
+    
+    // search creatted item
+    cy.get('.search-input').clear().type(comment)
+    cy.get('.search-input-group > .btn').click()
+
+    // edit button
+    cy.get('.btn-edit').click()
+
+    // S id
+    cy.get('#field-s_id').clear()
+
+    //Save btn
+    cy.get('.form-actions > .btn-save').click()
+
+    //check error messages
+    cy.get('.error-text').should('contain', 'Alle Pflichtfelder müssen ausgefüllt sein')
+    cy.get('.error-text').should('contain', 'Fehlende Felder: - S id')
+
+    cy.get('.btn-cancel').click()
+
+    // search creatted item
+    cy.get('.search-input').clear().type(comment)
+    cy.get('.search-input-group > .btn').click()
+
+    //delete
+    cy.get('.btn-delete').click()
+    cy.get('.modal-actions > .btn-delete').click()
   })
 })

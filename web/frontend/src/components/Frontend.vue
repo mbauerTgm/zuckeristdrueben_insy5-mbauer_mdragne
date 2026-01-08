@@ -928,7 +928,7 @@ export default {
 
       if (missingFields.length > 0) {
         // Abbruch wenn Pflichtfelder fehlen
-        this.error_isRequired_message = `Fehlende Felder:\n- ${missingFields.join('\n- ')}`
+        this.error_isRequired_message = `Fehlende Felder: - ${missingFields.join(' - ')}`
         console.log(this.error_isRequired_message);
         this.error_isRequired = true;
         return; 
