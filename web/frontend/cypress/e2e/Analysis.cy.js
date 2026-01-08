@@ -221,30 +221,6 @@ describe('Analysis Test:', () => {
   })
 
   it('Check create required error', () => {
-    cy.get(':nth-child(1) > select').select('Analysis')
-    //Daten Laden
-    cy.get('.btn-load').click()
-    //neuer Eintrag
-    cy.get('.btn-save').click()
-    //Save btn
-    cy.get('.form-actions > .btn-save').click()
-    cy.get('.error-text').should('contain', 'Alle Pflichtfelder müssen ausgefüllt sein')
-    cy.get('.error-text').should('contain', 'Fehlende Felder: - S id')
-  })
-
-  it('Check create required error', () => {
-    cy.get(':nth-child(1) > select').select('Analysis')
-    //Daten Laden
-    cy.get('.btn-load').click()
-    //neuer Eintrag
-    cy.get('.btn-save').click()
-    //Save btn
-    cy.get('.form-actions > .btn-save').click()
-    cy.get('.error-text').should('contain', 'Alle Pflichtfelder müssen ausgefüllt sein')
-    cy.get('.error-text').should('contain', 'Fehlende Felder: - S id')
-  })
-
-  it('Check create required error', () => {
     
     cy.get(':nth-child(1) > select').select('Analysis')
     //Daten Laden
