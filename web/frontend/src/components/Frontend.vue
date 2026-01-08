@@ -348,6 +348,9 @@
               />
             </div>
           </div>
+          <div>
+            <p v-if="error_isRequired" class="error-text">Alle Pflichtfelder müssen ausgefüllt sein <br>{{ error_isRequired_message }}</p>
+          </div>
           <div class="form-actions">
             <button @click="cancelEdit" class="btn btn-cancel" :disabled="isSaving">Abbrechen</button>
             <button @click="saveItem" class="btn btn-save" :disabled="isSaving">
@@ -550,6 +553,9 @@ export default {
       selectedColumns: [],
 
       loadingCSV: false,
+
+      error_isRequired: false,
+      error_isRequired_message: '',
     };
   },
 
@@ -901,11 +907,33 @@ export default {
     },
 
     async saveItem() {
+
+      const config = this.currentSchema.fieldConfigs || {};
+      const missingFields = [];
+
+      for (const col of this.formColumns) {
+        if (config[col]?.required) {
+          const val = this.itemToEdit[col];
+          // Prüfen auf null, undefined oder leerer String
+          if (val === null || val === undefined || val === '') {
+            missingFields.push(this.formatHeader(col));
+          }
+        }
+      }
+
+      if (missingFields.length > 0) {
+        // Abbruch wenn Pflichtfelder fehlen
+        this.error_isRequired_message = `Bitte füllen Sie folgende Pflichtfelder aus:\n- ${missingFields.join('\n- ')}`
+        console.log(this.error_isRequired_message);
+        this.error_isRequired = true;
+        return; 
+      }
+
       this.isSaving = true;
 
       const schema = this.currentSchema;
       const dataToSend = { ...this.itemToEdit };
-      const config = schema.fieldConfigs || {};
+      // config wurde oben schon definiert
 
       for (const key in dataToSend) {
         if (config[key]?.type === 'number') {
