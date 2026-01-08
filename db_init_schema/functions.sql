@@ -1,4 +1,4 @@
-\c database
+\c venlab
 
 DROP VIEW IF EXISTS venlab.sample_boxpos;
 DROP EXTENSION IF EXISTS isn CASCADE;
