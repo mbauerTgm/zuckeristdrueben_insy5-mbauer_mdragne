@@ -190,7 +190,9 @@ describe('Sample Test:', () => {
   })
 
   it('Check create required error', () => {
-    
+    cy.visit('http://localhost:8082/')
+    cy.login('TestAdmin','Sehr_Schwieriges_Test_Passwort!!_Sehr_Geheim_12253')
+
     cy.get(':nth-child(1) > select').select('Sample')
     //Daten Laden
     cy.get('.btn-load').click()
