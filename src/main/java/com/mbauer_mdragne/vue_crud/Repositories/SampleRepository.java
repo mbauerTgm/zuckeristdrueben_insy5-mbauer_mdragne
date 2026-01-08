@@ -1,9 +1,7 @@
 package com.mbauer_mdragne.vue_crud.Repositories;
 
-import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.util.List;
-
 import com.mbauer_mdragne.vue_crud.DTOs.*;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
@@ -11,7 +9,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-
 import com.mbauer_mdragne.vue_crud.Entities.Sample;
 import com.mbauer_mdragne.vue_crud.Entities.SampleId;
 

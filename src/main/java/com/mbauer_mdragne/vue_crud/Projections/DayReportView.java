@@ -1,9 +1,9 @@
-package com.mbauer_mdragne.vue_crud.DTOs;
+package com.mbauer_mdragne.vue_crud.Projections;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
-public interface DayReportDto {
+public interface DayReportView {
 
     LocalDate getDay();
 

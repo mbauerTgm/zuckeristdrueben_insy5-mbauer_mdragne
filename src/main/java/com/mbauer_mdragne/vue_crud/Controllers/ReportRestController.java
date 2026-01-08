@@ -1,7 +1,7 @@
 package com.mbauer_mdragne.vue_crud.Controllers;
 
 import com.mbauer_mdragne.vue_crud.DTOs.AnalysisGlobalFilterDto;
-import com.mbauer_mdragne.vue_crud.DTOs.DayReportDto;
+import com.mbauer_mdragne.vue_crud.Projections.DayReportView;
 import com.mbauer_mdragne.vue_crud.DTOs.SampleAnalysisCount;
 import com.mbauer_mdragne.vue_crud.Entities.*;
 import com.mbauer_mdragne.vue_crud.Repositories.*;
@@ -99,7 +99,7 @@ public class ReportRestController {
     }
 
     @GetMapping("/daily-report")
-    public List<DayReportDto> getDailySummaryReport(@RequestParam LocalDate startDate, @RequestParam LocalDate endDate) {
+    public List<DayReportView> getDailySummaryReport(@RequestParam LocalDate startDate, @RequestParam LocalDate endDate) {
         return reportRepo.getDayReports(startDate, endDate);
     }
 }
