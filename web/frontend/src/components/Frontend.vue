@@ -677,6 +677,9 @@ export default {
       
       this.showColumnSelector = false;
       this.showFilterSelector = false;
+
+      this.error_isRequired = false;
+      this.error_isRequired_message = '';
       
       this.fetchTableData();
     },
@@ -904,6 +907,8 @@ export default {
 
     cancelEdit() {
       this.itemToEdit = null;
+      this.error_isRequired = false;
+      this.error_isRequired_message = '';
     },
 
     async saveItem() {

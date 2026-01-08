@@ -136,7 +136,7 @@ const boxData = {
 
   it('Check create required error', () => {
     
-    cy.get(':nth-child(1) > select').select('Sample')
+    cy.get(':nth-child(1) > select').select('Box Pos')
     //Daten Laden
     cy.get('.btn-load').click()
     //neuer Eintrag
@@ -144,7 +144,7 @@ const boxData = {
     //Save btn
     cy.get('.form-actions > .btn-save').click()
     cy.get('.error-text').should('contain', 'Alle Pflichtfelder müssen ausgefüllt sein')
-    cy.get('.error-text').should('contain', 'Fehlende Felder: - S id - S stamp')
+    cy.get('.error-text').should('contain', 'Fehlende Felder: - B id - Bpos id')
   })
 
 })

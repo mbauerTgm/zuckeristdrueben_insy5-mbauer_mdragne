@@ -113,4 +113,18 @@ describe('Box Test:', () => {
       expect(infoText || statusText, 'Info- oder Status-Text vorhanden').to.be.true;
     });
   })
+
+  it('Check create required error', () => {
+    
+    cy.get(':nth-child(1) > select').select('Box')
+    //Daten Laden
+    cy.get('.btn-load').click()
+    //neuer Eintrag
+    cy.get('.btn-save').click()
+    //Save btn
+    cy.get('.form-actions > .btn-save').click()
+    cy.get('.error-text').should('contain', 'Alle Pflichtfelder müssen ausgefüllt sein')
+    cy.get('.error-text').should('contain', 'Fehlende Felder: - B id')
+  })
+
 })
