@@ -203,9 +203,10 @@ export default {
       try {
         let url = `/api/reports/${this.selectedReport}`;
         const queryParams = new URLSearchParams();
-        queryParams.append('page', this.currentPage);
-        queryParams.append('size', this.displayLimit);
-        
+        if(!this.selectedReport === 'daily-report'){
+          queryParams.append('page', this.currentPage);
+          queryParams.append('size', this.displayLimit);
+        }
         // Globale Filter immer mitsenden (Backend entscheidet ob genutzt)
         // if(this.globalDateInFrom) queryParams.append('globalDateInFrom', this.globalDateInFrom);
         // if(this.globalDateInTo) queryParams.append('globalDateInTo', this.globalDateInTo);

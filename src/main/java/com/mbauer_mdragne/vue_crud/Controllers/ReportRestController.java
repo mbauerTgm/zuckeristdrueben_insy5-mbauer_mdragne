@@ -1,6 +1,5 @@
 package com.mbauer_mdragne.vue_crud.Controllers;
 
-import com.mbauer_mdragne.vue_crud.DTOs.AnalysisGlobalFilterDto;
 import com.mbauer_mdragne.vue_crud.Projections.AnalysisWithNullValuesView;
 import com.mbauer_mdragne.vue_crud.Projections.AnalysisWithoutBoxposView;
 import com.mbauer_mdragne.vue_crud.Projections.AnalysisWithoutTimeView;
@@ -8,9 +7,7 @@ import com.mbauer_mdragne.vue_crud.Projections.BoxPosWithoutTableView;
 import com.mbauer_mdragne.vue_crud.Projections.DayReportView;
 import com.mbauer_mdragne.vue_crud.Projections.SampleMultipleAnalysisView;
 import com.mbauer_mdragne.vue_crud.Projections.SuspiciousEanSampleView;
-import com.mbauer_mdragne.vue_crud.Entities.*;
 import com.mbauer_mdragne.vue_crud.Repositories.*;
-import com.mbauer_mdragne.vue_crud.DateUtils;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;

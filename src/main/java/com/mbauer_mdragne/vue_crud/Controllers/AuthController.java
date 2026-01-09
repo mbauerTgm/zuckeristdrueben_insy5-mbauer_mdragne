@@ -6,7 +6,6 @@ import com.mbauer_mdragne.vue_crud.Repositories.RoleRepository;
 import com.mbauer_mdragne.vue_crud.Services.UsersService;
 import com.mbauer_mdragne.vue_crud.JwtUtil;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
@@ -34,7 +33,6 @@ public class AuthController {
     private final JwtUtil jwtUtil;
     private final BCryptPasswordEncoder passwordEncoder;
 
-    @Autowired
     public AuthController(UsersService UsersService, RoleRepository roleRepository, JwtUtil jwtUtil, BCryptPasswordEncoder passwordEncoder) {
         this.UsersService = UsersService;
         this.roleRepository = roleRepository;

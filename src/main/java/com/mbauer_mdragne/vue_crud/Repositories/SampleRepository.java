@@ -2,7 +2,6 @@ package com.mbauer_mdragne.vue_crud.Repositories;
 
 import java.time.LocalDate;
 import java.util.List;
-import com.mbauer_mdragne.vue_crud.DTOs.*;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
