@@ -1,23 +1,13 @@
 package com.mbauer_mdragne.vue_crud.Controllers;
 
-import com.mbauer_mdragne.vue_crud.Projections.AnalysisWithNullValuesView;
-import com.mbauer_mdragne.vue_crud.Projections.AnalysisWithoutBoxposView;
-import com.mbauer_mdragne.vue_crud.Projections.AnalysisWithoutTimeView;
-import com.mbauer_mdragne.vue_crud.Projections.BoxPosWithoutTableView;
-import com.mbauer_mdragne.vue_crud.Projections.DayReportView;
-import com.mbauer_mdragne.vue_crud.Projections.SampleMultipleAnalysisView;
-import com.mbauer_mdragne.vue_crud.Projections.SuspiciousEanSampleView;
+import com.mbauer_mdragne.vue_crud.Projections.*;
 import com.mbauer_mdragne.vue_crud.Repositories.*;
-import java.util.List;
-
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/reports")
@@ -29,77 +19,73 @@ public class ReportRestController {
     @Autowired private ReportRepository reportRepo;
 
     @GetMapping("/boxpos/with-sample-no-analysis")
-    public ResponseEntity<Page<BoxPosWithoutTableView>> getBoxPosWithSampleNoAnalysis(@PageableDefault(size = 20) Pageable pageable) {
-        Page<BoxPosWithoutTableView> result = boxPosRepo.findBoxPosWithoutAnalysis(pageable);
+    public ResponseEntity<List<BoxPosWithoutTableView>> getBoxPosWithSampleNoAnalysis() {
+        List<BoxPosWithoutTableView> result = boxPosRepo.findBoxPosWithoutAnalysis();
         return ResponseEntity.ok(result);
     }
+
     @GetMapping("/boxpos/without-sample")
-    public ResponseEntity<Page<BoxPosWithoutTableView>> getBoxPosWithoutSample(@PageableDefault(size = 20) Pageable pageable) {
-        Page<BoxPosWithoutTableView> result = boxPosRepo.findBoxPosWithoutSample(pageable);
+    public ResponseEntity<List<BoxPosWithoutTableView>> getBoxPosWithoutSample() {
+        List<BoxPosWithoutTableView> result = boxPosRepo.findBoxPosWithoutSample();
         return ResponseEntity.ok(result);
     }
 
     @GetMapping("/samples/suspicious/by-date")
-    public ResponseEntity<Page<SuspiciousEanSampleView>> getSuspiciousSamplesByDate(
+    public ResponseEntity<List<SuspiciousEanSampleView>> getSuspiciousSamplesByDate(
             @RequestParam LocalDate startDate,
-            @RequestParam LocalDate endDate,
-            @PageableDefault(size = 20) Pageable pageable) {
-
-        Page<SuspiciousEanSampleView> result = sampleRepo.findSuspiciousSampleIdsInTimeRange(startDate, endDate, pageable);
-
+            @RequestParam LocalDate endDate) {
+        List<SuspiciousEanSampleView> result = sampleRepo.findSuspiciousSampleIdsInTimeRange(startDate, endDate);
         return ResponseEntity.ok(result);
     }
+
     @GetMapping("/analysis/without-boxpos")
-    public ResponseEntity<Page<AnalysisWithoutBoxposView>> getAnalysesWithoutBoxPos(
+    public ResponseEntity<List<AnalysisWithoutBoxposView>> getAnalysesWithoutBoxPos(
             @RequestParam LocalDate startDate,
-            @RequestParam LocalDate endDate,
-            @PageableDefault(size = 20) Pageable pageable) {
-        
-        Page<AnalysisWithoutBoxposView> result = analysisRepo.findAnalysisWithoutBoxPos(startDate, endDate, pageable);
+            @RequestParam LocalDate endDate) {
+        List<AnalysisWithoutBoxposView> result = analysisRepo.findAnalysisWithoutBoxPos(startDate, endDate);
         return ResponseEntity.ok(result);
     }
+
     @GetMapping("/analysis/with-zero-values")
-    public ResponseEntity<Page<AnalysisWithNullValuesView>> getAnalysesWithZeroValues(
+    public ResponseEntity<List<AnalysisWithNullValuesView>> getAnalysesWithZeroValues(
             @RequestParam LocalDate startDate,
-            @RequestParam LocalDate endDate,
-            @PageableDefault(size = 20) Pageable pageable) {
-        
-        Page<AnalysisWithNullValuesView> result = analysisRepo.findAnalysisWithNullValues(startDate, endDate, pageable);
+            @RequestParam LocalDate endDate) {
+        List<AnalysisWithNullValuesView> result = analysisRepo.findAnalysisWithNullValues(startDate, endDate);
         return ResponseEntity.ok(result);
     }
 
     @GetMapping("/analysis/without-time")
-    public ResponseEntity<Page<AnalysisWithoutTimeView>> getAnalysesWithoutTime(
+    public ResponseEntity<List<AnalysisWithoutTimeView>> getAnalysesWithoutTime(
             @RequestParam LocalDate startDate,
-            @RequestParam LocalDate endDate,
-            @PageableDefault(size = 20) Pageable pageable) {
+            @RequestParam LocalDate endDate) {
+        List<AnalysisWithoutTimeView> result = analysisRepo.findAnalysisWithMissingDates(startDate, endDate);
+        return ResponseEntity.ok(result);
+    }
 
-        Page<AnalysisWithoutTimeView> result = analysisRepo.findAnalysisWithMissingDates(startDate, endDate, pageable);
-        return ResponseEntity.ok(result);
-    }
     @GetMapping("/samples/multiple-analyses")
-    public ResponseEntity<Page<SampleMultipleAnalysisView>> getSamplesWithMultipleAnalyses(
+    public ResponseEntity<List<SampleMultipleAnalysisView>> getSamplesWithMultipleAnalyses(
             @RequestParam LocalDate startDate,
-            @RequestParam LocalDate endDate,
-            @PageableDefault(size = 20) Pageable pageable) {
-        
-        Page<SampleMultipleAnalysisView> result = sampleRepo.findSamplesWithMultipleAnalyses(startDate, endDate, pageable);
+            @RequestParam LocalDate endDate) {
+        List<SampleMultipleAnalysisView> result = sampleRepo.findSamplesWithMultipleAnalyses(startDate, endDate);
         return ResponseEntity.ok(result);
     }
+
     @GetMapping("/samples/suspicious")
-    public ResponseEntity<Page<SuspiciousEanSampleView>> getAllSuspiciousSamples(@PageableDefault(size = 20) Pageable pageable) {
-        Page<SuspiciousEanSampleView> result = sampleRepo.findAllSuspiciousSamples(pageable);
+    public ResponseEntity<List<SuspiciousEanSampleView>> getAllSuspiciousSamples() {
+        List<SuspiciousEanSampleView> result = sampleRepo.findAllSuspiciousSamples();
         return ResponseEntity.ok(result);
     }
+
     @GetMapping("/samples/invalid-ean13")
-    public ResponseEntity<Page<SuspiciousEanSampleView>> getSamplesWithInvalidEan13(@PageableDefault(size = 20) Pageable pageable) {
-        
-        Page<SuspiciousEanSampleView> result = sampleRepo.findSamplesWithInvalidEan(pageable);
+    public ResponseEntity<List<SuspiciousEanSampleView>> getSamplesWithInvalidEan13() {
+        List<SuspiciousEanSampleView> result = sampleRepo.findSamplesWithInvalidEan();
         return ResponseEntity.ok(result);
     }
 
     @GetMapping("/daily-report")
-    public List<DayReportView> getDailySummaryReport(@RequestParam LocalDate startDate, @RequestParam LocalDate endDate) {
-        return reportRepo.getDayReports(startDate, endDate);
+    public ResponseEntity<List<DayReportView>> getDailySummaryReport(
+            @RequestParam LocalDate startDate, 
+            @RequestParam LocalDate endDate) {
+        return ResponseEntity.ok(reportRepo.getDayReports(startDate, endDate));
     }
 }
