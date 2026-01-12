@@ -1,3 +1,7 @@
+[![CD – Deployment (main)](https://github.com/TGM-HIT/insy5-informationssysteme-vue-pwa-pwa_mbauer_mdragne_dgernesch/actions/workflows/cd.yml/badge.svg)](https://github.com/TGM-HIT/insy5-informationssysteme-vue-pwa-pwa_mbauer_mdragne_dgernesch/actions/workflows/cd.yml)
+[![CI – Build & Tests (main)](https://github.com/TGM-HIT/insy5-informationssysteme-vue-pwa-pwa_mbauer_mdragne_dgernesch/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/TGM-HIT/insy5-informationssysteme-vue-pwa-pwa_mbauer_mdragne_dgernesch/actions/workflows/ci.yml)
+[![CI – Build & Tests (dev)](https://github.com/TGM-HIT/insy5-informationssysteme-vue-pwa-pwa_mbauer_mdragne_dgernesch/actions/workflows/ci.yml/badge.svg?branch=dev)](https://github.com/TGM-HIT/insy5-informationssysteme-vue-pwa-pwa_mbauer_mdragne_dgernesch/actions/workflows/ci.yml)
+
 # Informationssysteme "PWA Deployment" GK
 von: Maximilian Bauer, Matei Dragne, Denis Gernesch 5CHITM
 
