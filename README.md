@@ -209,6 +209,20 @@ npx swagger-markdown -i swagger.json
 docker run --rm -v "%cd%:/local" openapitools/openapi-generator-cli generate -i /local/swagger.json -g markdown -o /local/api-doc
 ```
 
+### 6. Web App Manifest
+Das Manifest (manifest.json) definiert die Identität der App. Durch die Konfiguration in der vue.config.js wird sichergestellt, dass die App im Standalone-Modus (ohne Browser-Adressleiste) startet.
+
+- Display: standalone für das "Native App"-Feeling.
+
+- Icons: Bereitstellung von hochauflösenden Icons (192x192 und 512x512) für Homescreen und Taskleiste. [5][6]
+
+- Service Worker mit Workbox
+Die App nutzt das Workbox-Plugin im Modus GenerateSW, um den Service Worker automatisch zu bauen.
+
+Caching-Strategie: Ressourcen (HTML, JS, CSS) werden lokal zwischengespeichert, was zu extrem schnellen Ladezeiten und eingeschränkter Offline-Kompatibilität führt.
+
+Update-Logik: Durch skipWaiting: true und clientsClaim: true werden neue Versionen der App nach einem Deployment sofort aktiv.
+
 ## Quellen:
 \[1\] Oracle, "Connecting to a Port Forwarding Session," Oracle Cloud Infrastructure Documentation, 2024. [Online]. Available: https://docs.oracle.com/en-us/iaas/Content/Bastion/Tasks/connect-port-forwarding.htm. Accessed: Jan. 8, 2026. <br>
 \[2\] GitHub, "What is CI/CD? Building automated workflows for faster releases," GitHub Resources, 2024. [Online]. Available: https://github.com/resources/articles/ci-cd. Accessed: Jan. 8, 2026. <br>
