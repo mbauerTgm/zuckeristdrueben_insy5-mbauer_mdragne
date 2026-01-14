@@ -203,8 +203,9 @@ export default {
       try {
         let url = `/api/reports/${this.selectedReport}`;
         const queryParams = new URLSearchParams();
-        queryParams.append('page', this.currentPage);
-        queryParams.append('size', this.displayLimit);
+
+        // queryParams.append('page', this.currentPage);
+        // queryParams.append('size', this.displayLimit);
         
         // Globale Filter immer mitsenden (Backend entscheidet ob genutzt)
         // if(this.globalDateInFrom) queryParams.append('globalDateInFrom', this.globalDateInFrom);
@@ -239,14 +240,16 @@ export default {
 
         const data = await response.json();
 
-        if(this.selectedReport === 'daily-report'){ //der schas daily ist nd paginated
-          this.reportData = data
-        } else {
-          this.reportData = data.content;
-          this.totalPages = data.totalPages;
-          this.totalItems = data.totalElements;
-          this.currentPage = data.number;
-        }
+        this.reportData = data
+
+        // if(this.selectedReport === 'daily-report'){
+        //   this.reportData = data
+        // } else {
+        //   this.reportData = data.content;
+        //   this.totalPages = data.totalPages;
+        //   this.totalItems = data.totalElements;
+        //   this.currentPage = data.number;
+        // }
         
 
       } catch (err) {

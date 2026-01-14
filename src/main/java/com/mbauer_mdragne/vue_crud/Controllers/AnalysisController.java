@@ -24,7 +24,6 @@ import com.mbauer_mdragne.vue_crud.Errors.BadRequestException;
 import com.mbauer_mdragne.vue_crud.Errors.ResourceNotFoundException;
 import com.mbauer_mdragne.vue_crud.Repositories.AnalysisRepository;
 import com.mbauer_mdragne.vue_crud.Repositories.AnalysisSpecifications;
-import com.mbauer_mdragne.vue_crud.DateUtils;
 
 import jakarta.persistence.EntityManager;
 import jakarta.servlet.http.HttpServletResponse;

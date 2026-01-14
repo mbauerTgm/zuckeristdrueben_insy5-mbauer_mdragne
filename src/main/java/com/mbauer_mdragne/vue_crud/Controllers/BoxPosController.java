@@ -14,7 +14,6 @@ import org.springframework.web.bind.annotation.*;
 import com.mbauer_mdragne.vue_crud.DTOs.AnalysisGlobalFilterDto;
 import com.mbauer_mdragne.vue_crud.Entities.BoxPos;
 import com.mbauer_mdragne.vue_crud.Entities.BoxPosId;
-import com.mbauer_mdragne.vue_crud.Entities.Sample;
 import com.mbauer_mdragne.vue_crud.Errors.BadRequestException;
 import com.mbauer_mdragne.vue_crud.Errors.ResourceNotFoundException;
 import com.mbauer_mdragne.vue_crud.Repositories.BoxPosRepository;
