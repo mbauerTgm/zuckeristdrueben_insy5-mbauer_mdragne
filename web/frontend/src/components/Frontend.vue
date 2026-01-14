@@ -1134,7 +1134,7 @@ export default {
 header h1 { margin-bottom: 20px; color: #2c3e50; }
 .table-selector { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 15px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 20px; }
 .control-group { display: flex; flex-direction: column; gap: 5px; }
-.control-group label { font-size: 0.9rem; font-weight: 600; color: #6c757d; text-transform: uppercase; }
+.control-group label { font-size: 0.85rem; font-weight: 600; color: #6c757d; text-transform: uppercase; }
 .search-wrapper { flex-grow: 1; }
 .search-input-group { display: flex; }
 input, select, .search-input { padding: 8px 12px; border: 1px solid #ced4da; border-radius: 4px; font-size: 1rem; }
@@ -1156,8 +1156,8 @@ input, select, .search-input { padding: 8px 12px; border: 1px solid #ced4da; bor
 .mdi-icon { width: 20px; height: 20px; }
 .action-buttons .mdi-icon { width: 18px; height: 18px; }
 .table-wrapper { background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); overflow-x: auto; }
-table { width: 100%; border-collapse: collapse; font-size: 1.35rem; }
-th, td { padding: 14px 18px; text-align: left; border-bottom: 1px solid #e9ecef; }
+table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
+th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #e9ecef; }
 th { background: #f1f3f5; font-weight: 600; color: #495057; white-space: nowrap; }
 .sortable-header { cursor: pointer; user-select: none; }
 .sortable-header:hover { background: #e2e6ea; }
