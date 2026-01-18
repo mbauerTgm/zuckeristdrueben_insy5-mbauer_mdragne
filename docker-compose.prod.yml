@@ -28,7 +28,7 @@ services:
 
   backend:
     build:
-    image: ghcr.io/tgm-hit/insy5-informationssysteme-vue-pwa-pwa_mbauer_mdragne_dgernesch/backend:latest
+    image: ghcr.io/mbauertgm/zuckeristdrueben_insy5-mbauer_mdragne/backend:latest
     restart: always
     environment:
       # Begrenzt Java auf maximal 475MB RAM
@@ -45,7 +45,7 @@ services:
 
   frontend:
     build:
-    image: ghcr.io/tgm-hit/insy5-informationssysteme-vue-pwa-pwa_mbauer_mdragne_dgernesch/frontend:latest
+    image: ghcr.io/mbauertgm/zuckeristdrueben_insy5-mbauer_mdragne/frontend:latest
     restart: always
     ports: []
     volumes: []

@@ -6,8 +6,8 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME_BACKEND: ghcr.io/tgm-hit/insy5-informationssysteme-vue-pwa-pwa_mbauer_mdragne_dgernesch/backend
-  IMAGE_NAME_FRONTEND: ghcr.io/tgm-hit/insy5-informationssysteme-vue-pwa-pwa_mbauer_mdragne_dgernesch/frontend
+  IMAGE_NAME_BACKEND: ghcr.io/mbauertgm/zuckeristdrueben_insy5-mbauer_mdragne/backend
+  IMAGE_NAME_FRONTEND: ghcr.io/mbauertgm/zuckeristdrueben_insy5-mbauer_mdragne/frontend
 
 jobs:
   build-and-push:
