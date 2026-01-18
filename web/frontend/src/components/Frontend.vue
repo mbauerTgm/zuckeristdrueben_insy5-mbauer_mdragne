@@ -1210,11 +1210,11 @@ tr:hover .td-sticky { background: #f8f9fa; }
 :global(body.dark-theme .table-selector input::placeholder) { color: #64748b !important; }
 :global(body.dark-theme .table-selector input:focus), :global(body.dark-theme .table-selector select:focus) { border-color: #910dfd !important; box-shadow: 0 0 0 0.2rem rgba(145, 13, 253, 0.25) !important; }
 :global(body.dark-theme .table-wrapper) { background-color: #0f172a !important; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5) !important; }
-:global(body.dark-theme th) { background-color: #1e293b !important; color: #ffffff !important; border-bottom: 2px solid #334155 !important; }
+:global(body.dark-theme th) { background-color: #334155 !important; color: #94a3b8 !important;font-weight: 600; border-bottom: 2px solid #334155 !important; }
 :global(body.dark-theme .th-sticky) { background-color: #1e293b !important; }
-:global(body.dark-theme td) { background-color: #0f172a !important; color: #ffffff !important; border-bottom: 1px solid #334155 !important; }
+:global(body.dark-theme td) { background-color: #1e293b !important; letter-spacing: 0.02em; color: #cbd5e1 !important; font-weight: 450; border-bottom: 1px solid #334155 !important; }
 :global(body.dark-theme .td-sticky) { background-color: #0f172a !important; }
-:global(body.dark-theme tr:hover td), :global(body.dark-theme tr:hover .td-sticky) { background-color: #1e293b !important; }
+:global(body.dark-theme tr:hover td), :global(body.dark-theme tr:hover .td-sticky) { background-color: #2d3a4f !important; }
 :global(body.dark-theme .sortable-header:hover) { background-color: #334155 !important; }
 :global(body.dark-theme .info-text) { color: #94a3b8 !important; }
 :global(body.dark-theme .page-info) { color: #94a3b8 !important; }
@@ -1242,6 +1242,7 @@ tr:hover .td-sticky { background: #f8f9fa; }
 :global(body.dark-theme .detail-value) { color: #ffffff !important; border-bottom: 1px solid #334155 !important; }
 :global(body.dark-theme .status-text) { color: #94a3b8 !important; }
 :global(body.dark-theme .error-text) { background-color: #7f1d1d !important; color: #fecaca !important; }
+:global(body.dark-theme tbody tr:nth-child(even) td) { background-color: #1a2536 !important; }
 .column-selector { position: relative; }
 .btn-columns { display: flex; align-items: center; gap: 6px; background: #6c757d; color: white; padding: 8px 12px; border: none; border-radius: 6px; cursor: pointer; }
 .btn-columns:hover { background: #5a6268; }
