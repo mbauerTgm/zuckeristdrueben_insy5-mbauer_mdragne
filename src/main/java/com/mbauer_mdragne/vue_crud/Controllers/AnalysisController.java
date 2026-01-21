@@ -153,17 +153,23 @@ public class AnalysisController {
         response.setHeader("Content-Disposition", "attachment; filename=analysis_export.csv");
         
         try (PrintWriter writer = response.getWriter()) {
-            writer.write('\ufeff'); 
+            writer.write('\ufeff');
 
-            // Spaltenüberschriften schreiben
-            writer.println(String.join(";", columns));
+            List<String> headerRow = new ArrayList<>();
+            for (String col : columns) {
+                headerRow.add("\"" + col + "\"");
+            }
+            writer.println(String.join(";", headerRow));
+
             for (Analysis a : list) {
                 List<String> row = new ArrayList<>();
                 for (String col : columns) {
                     String val = getFieldValue(a, col, sdf);
                     
                     if (val == null) val = "";
+                    // Doppelte Anführungszeichen escapen (CSV Standard)
                     val = val.replace("\"", "\"\""); 
+                    
                     row.add("\"" + val + "\"");
                 }
                 writer.println(String.join(";", row));
@@ -172,24 +178,40 @@ public class AnalysisController {
         }
     }
 
-    private String getFieldValue(Analysis a, String col, SimpleDateFormat sdf) {
+   private String getFieldValue(Analysis a, String col, SimpleDateFormat sdf) {
         Object val = null;
-        switch (col) {
-            case "aId": val = a.getAId(); break;
-            case "sId": val = a.getSId(); break;
-            case "dateIn": val = a.getDateIn() != null ? sdf.format(a.getDateIn()) : ""; break;
-            case "dateOut": val = a.getDateOut() != null ? sdf.format(a.getDateOut()) : ""; break;
+        String colKey = col.toLowerCase().replace("_", "");
+        
+        switch (colKey) {
+            case "aid": val = a.getAId(); break;
+            case "sid": val = a.getSId(); break;
+            case "sstamp": val = a.getSStamp(); break;
+            case "datein": val = a.getDateIn() != null ? sdf.format(a.getDateIn()) : ""; break;
+            case "dateout": val = a.getDateOut() != null ? sdf.format(a.getDateOut()) : ""; break;
             case "pol": val = a.getPol(); break;
             case "nat": val = a.getNat(); break;
             case "kal": val = a.getKal(); break;
             case "an": val = a.getAn(); break;
             case "glu": val = a.getGlu(); break;
             case "dry": val = a.getDry(); break;
-            case "aFlags": val = a.getAFlags(); break;
+            case "weightmea": val = a.getWeightMea(); break;
+            case "density": val = a.getDensity(); break;
+            case "aflags": val = a.getAFlags(); break;
             case "comment": val = a.getComment() != null ? a.getComment().replace(";", ",") : ""; break;
             default: val = "";
         }
-        return val != null ? val.toString() : "";
+        
+        if (val == null) return "";
+
+        if (colKey.equals("sid") || colKey.equals("aid")) {
+             return "=\"" + val.toString() + "\"";
+        }
+
+        if (val instanceof Number) {
+            return val.toString().replace(".", ",");
+        }
+
+        return val.toString();
     }
 
     private Sample findLatestSample(String sId) {
