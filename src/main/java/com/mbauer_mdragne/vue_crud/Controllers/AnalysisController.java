@@ -126,7 +126,9 @@ public class AnalysisController {
         Specification<Analysis> spec = AnalysisSpecifications.withDynamicFilter(searchDto);
         Specification<Analysis> globalSpec = AnalysisSpecifications.withGlobalDateFilter(globalFilter);
         if (globalSpec != null) spec = (spec == null) ? globalSpec : spec.and(globalSpec);
-        
+        if (isResearcher()) {
+            spec = (spec == null) ? AnalysisSpecifications.forResearcher() : spec.and(AnalysisSpecifications.forResearcher());
+        }
         List<Analysis> list = analysisRepo.findAll(spec);
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
