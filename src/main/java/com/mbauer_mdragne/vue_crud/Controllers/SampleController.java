@@ -12,6 +12,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
@@ -33,6 +34,7 @@ public class SampleController {
     @Autowired private SampleRepository sampleRepo;
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('User', 'Researcher', 'Admin')")
     public List<Sample> getAllSamples(AnalysisGlobalFilterDto globalFilter) {
         Specification<Sample> spec = SampleSpecifications.withGlobalDateFilter(globalFilter);
         if (isResearcher()) {
@@ -42,6 +44,7 @@ public class SampleController {
     }
     
     @GetMapping("/filter")
+    @PreAuthorize("hasAnyRole('User', 'Researcher', 'Admin')")
     public ResponseEntity<Page<Sample>> filterSamples(
         AnalysisGlobalFilterDto globalFilter,
         @PageableDefault(size = 20, sort = "sId", direction = Sort.Direction.DESC) Pageable pageable) {
@@ -57,6 +60,7 @@ public class SampleController {
     }
 
     @GetMapping("/{sId}/{sStamp}")
+    @PreAuthorize("hasAnyRole('User', 'Researcher', 'Admin')")
     public ResponseEntity<Sample> getSampleById(@PathVariable String sId, @PathVariable String sStamp) {
         SampleId id = new SampleId(sId, DateUtils.parseAny(sStamp));
         Sample sample = sampleRepo.findById(id)
@@ -65,6 +69,7 @@ public class SampleController {
     }
 
     @PostMapping
+    @PreAuthorize("hasAnyRole('Researcher', 'Admin')")
     public ResponseEntity<Sample> createSample(@RequestBody Sample sample) {
         if (sample.getSStamp() == null) {
             sample.setSStamp(new Timestamp(System.currentTimeMillis()));
@@ -73,6 +78,7 @@ public class SampleController {
     }
 
     @PutMapping("/{sId}/{sStamp}")
+    @PreAuthorize("hasAnyRole('Researcher', 'Admin')")
     public ResponseEntity<Sample> updateSample(
         @PathVariable String sId,
         @PathVariable String sStamp,
@@ -88,6 +94,7 @@ public class SampleController {
     }
 
     @DeleteMapping("/{sId}/{sStamp}")
+    @PreAuthorize("hasRole('Admin')")
     public ResponseEntity<Void> deleteSample(@PathVariable String sId, @PathVariable String sStamp) {
         SampleId id = new SampleId(sId, DateUtils.parseAny(sStamp));
         if (!sampleRepo.existsById(id)) {
@@ -98,6 +105,7 @@ public class SampleController {
     }
 
     @GetMapping("/export")
+    @PreAuthorize("hasAnyRole('User', 'Researcher', 'Admin')")
     public void exportSamplesToCsv(AnalysisGlobalFilterDto globalFilter, HttpServletResponse response) throws IOException {
         Specification<Sample> spec = SampleSpecifications.withGlobalDateFilter(globalFilter);
         List<Sample> list = (spec != null) ? sampleRepo.findAll(spec) : 

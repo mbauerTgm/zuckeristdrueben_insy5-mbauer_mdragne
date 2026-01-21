@@ -96,7 +96,7 @@ Falls für das das lokale verwenden oder das ausführen der Tests, eine User ben
 ```bash
 docker exec -i zuckerpostgres psql -U postgres -d database -c "INSERT INTO venlab.users (username, password_hash, role_id, created_at) VALUES ('TestAdmin', '$2a$12$/x3aVXCCLs6YCvN5O4lwhu3TLNLfncNqhRAiIrkfFXkC0GrPYVU..', 1, NOW());"
 ```
-Der Vorletzte Parameter in diesem INSERT Befehl ist die Rolle des Users. 1 - Admin, 2 - Researcher, 3- Reader. 
+Der Vorletzte Parameter in diesem INSERT Befehl ist die Rolle des Users. 1 - Admin, 3 - Researcher, 2 - Reader. 
 Der letzte Parameter ist der erstellungs Zeitstempel.
 
 ## Filterung & Paging im Backend

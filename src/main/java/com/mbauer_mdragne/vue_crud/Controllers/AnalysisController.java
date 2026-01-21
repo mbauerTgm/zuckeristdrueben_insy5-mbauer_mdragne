@@ -25,6 +25,7 @@ import com.mbauer_mdragne.vue_crud.Errors.BadRequestException;
 import com.mbauer_mdragne.vue_crud.Errors.ResourceNotFoundException;
 import com.mbauer_mdragne.vue_crud.Repositories.AnalysisRepository;
 import com.mbauer_mdragne.vue_crud.Repositories.AnalysisSpecifications;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import jakarta.persistence.EntityManager;
 import jakarta.servlet.http.HttpServletResponse;
@@ -37,17 +38,15 @@ public class AnalysisController {
     @Autowired private EntityManager em;
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('User', 'Researcher', 'Admin')")
     public List<Analysis> getAllAnalysis(AnalysisGlobalFilterDto globalFilter) {
         Specification<Analysis> spec = AnalysisSpecifications.withGlobalDateFilter(globalFilter);
-        
-        if (isResearcher()) {
-            spec = (spec == null) ? AnalysisSpecifications.forResearcher() : spec.and(AnalysisSpecifications.forResearcher());
-        }
         
         return spec != null ? analysisRepo.findAll(spec) : analysisRepo.findAll();
     }
 
     @GetMapping("/filter")
+    @PreAuthorize("hasAnyRole('User', 'Researcher', 'Admin')")
     public ResponseEntity<Page<Analysis>> filterAnalysis(
         AnalysisFilterDto filterDto,
         AnalysisGlobalFilterDto globalFilter,
@@ -63,16 +62,12 @@ public class AnalysisController {
         if (globalSpec != null) {
             spec = (spec == null) ? globalSpec : spec.and(globalSpec);
         }
-
-        // 3. Researcher-Pflichtfilter (F% oder V%)
-        if (researcher) {
-            spec = (spec == null) ? AnalysisSpecifications.forResearcher() : spec.and(AnalysisSpecifications.forResearcher());
-        }
         
         return ResponseEntity.ok(analysisRepo.findAll(spec, pageable));
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('User', 'Researcher', 'Admin')")
     public ResponseEntity<Analysis> getAnalysisById(@PathVariable Long id) {
         return analysisRepo.findById(id)
                 .map(ResponseEntity::ok)
@@ -80,6 +75,7 @@ public class AnalysisController {
     }
 
     @PostMapping
+    @PreAuthorize("hasAnyRole('Researcher', 'Admin')")
     public ResponseEntity<Analysis> createAnalysis(@RequestBody Analysis analysis) {
         if (analysis.getSId() == null) {
             throw new BadRequestException("sId darf nicht null sein");
@@ -92,6 +88,7 @@ public class AnalysisController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('Researcher', 'Admin')")
     public ResponseEntity<Analysis> updateAnalysis(@PathVariable Long id, @RequestBody Analysis updated) {
         Analysis existing = analysisRepo.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Analysis not found with id=" + id));
@@ -117,6 +114,7 @@ public class AnalysisController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('Admin')")
     public ResponseEntity<Void> deleteAnalysis(@PathVariable Long id) {
         if (!analysisRepo.existsById(id)) throw new ResourceNotFoundException("Not found");
         analysisRepo.deleteById(id);
@@ -124,6 +122,7 @@ public class AnalysisController {
     }
 
     @GetMapping("/export")
+    @PreAuthorize("hasAnyRole('User', 'Researcher', 'Admin')")
     public void exportAnalysisToCsv(
             AnalysisFilterDto searchDto, 
             AnalysisGlobalFilterDto globalFilter,
@@ -136,9 +135,6 @@ public class AnalysisController {
         Specification<Analysis> spec = AnalysisSpecifications.withDynamicFilter(searchDto, researcher);
         Specification<Analysis> globalSpec = AnalysisSpecifications.withGlobalDateFilter(globalFilter);
         if (globalSpec != null) spec = (spec == null) ? globalSpec : spec.and(globalSpec);
-        if (researcher) {
-            spec = (spec == null) ? AnalysisSpecifications.forResearcher() : spec.and(AnalysisSpecifications.forResearcher());
-        }
 
         List<Analysis> list = analysisRepo.findAll(spec);
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");

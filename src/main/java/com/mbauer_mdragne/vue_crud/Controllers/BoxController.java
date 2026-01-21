@@ -12,6 +12,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -25,12 +26,14 @@ public class BoxController {
 
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('User', 'Researcher', 'Admin')")
     public List<Box> getAllBoxes(AnalysisGlobalFilterDto globalFilter) {
         Specification<Box> spec = BoxSpecifications.withGlobalDateFilter(globalFilter);
         return (spec != null) ? boxRepo.findAll(spec) : boxRepo.findAll();
     }
 
     @GetMapping("/filter")
+    @PreAuthorize("hasAnyRole('User', 'Researcher', 'Admin')")
     public ResponseEntity<Page<Box>> getAllBoxes(
             AnalysisGlobalFilterDto globalFilter,
             @PageableDefault(size = 20, sort = "bId", direction = Sort.Direction.DESC) Pageable pageable) {
@@ -41,6 +44,7 @@ public class BoxController {
     }
 
     @GetMapping("/{bId}")
+    @PreAuthorize("hasAnyRole('User', 'Researcher', 'Admin')")
     public ResponseEntity<Box> getBoxById(@PathVariable String bId) {
         Box box = boxRepo.findById(bId)
                 .orElseThrow(() -> new ResourceNotFoundException("Box not found with id=" + bId));
@@ -48,12 +52,14 @@ public class BoxController {
     }
 
     @PostMapping
+    @PreAuthorize("hasAnyRole('Researcher', 'Admin')")
     public ResponseEntity<Box> createBox(@RequestBody Box box) {
         Box saved = boxRepo.save(box);
         return ResponseEntity.ok(saved);
     }
 
     @PutMapping("/{bId}")
+    @PreAuthorize("hasAnyRole('Researcher', 'Admin')")
     public ResponseEntity<Box> updateBox(@PathVariable String bId, @RequestBody Box updated) {
         Box existing = boxRepo.findById(bId)
                 .orElseThrow(() -> new ResourceNotFoundException("Box not found with id=" + bId));
@@ -64,6 +70,7 @@ public class BoxController {
     }
 
     @DeleteMapping("/{bId}")
+    @PreAuthorize("hasRole('Admin')")
     public ResponseEntity<Void> deleteBox(@PathVariable String bId) {
         if (!boxRepo.existsById(bId)) {
             throw new ResourceNotFoundException("Box not found with id=" + bId);
