@@ -14,20 +14,35 @@ import java.sql.Timestamp;
 
 public class AnalysisSpecifications {
 
-    public static Specification<Analysis> withDynamicFilter(AnalysisFilterDto dto) {
+    public static Specification<Analysis> withDynamicFilter(AnalysisFilterDto dto, boolean isResearcher) {
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
 
             addRangePredicate(predicates, cb, root.get("aId"), dto.getAId());
             addRangePredicate(predicates, cb, root.get("sId"), dto.getSId());
-            
             addDateTimeRangePredicate(predicates, cb, root.get("dateIn"), dto.getDateIn());
             addDateTimeRangePredicate(predicates, cb, root.get("dateOut"), dto.getDateOut());
+            if (isResearcher) {
+                Predicate likeF = cb.like(root.get("aFlags"), "F%");
+                Predicate likeV = cb.like(root.get("aFlags"), "V%");
+                predicates.add(cb.or(likeF, likeV));
+            } else {
+                addAFlagsPredicate(predicates, cb, root.get("aFlags"), dto.getAFlags());
+            }
 
-            addRangePredicate(predicates, cb, root.get("aFlags"), dto.getAFlags());
 
             return cb.and(predicates.toArray(new Predicate[0]));
         };
+    }
+    private static void addAFlagsPredicate(
+        List<Predicate> predicates,
+        jakarta.persistence.criteria.CriteriaBuilder cb,
+        Path<String> path,
+        Range<String> range
+    ) {
+        if (range == null || range.getFrom() == null) return;
+
+        predicates.add(cb.like(path, range.getFrom() + "%"));
     }
 
     private static void addDateTimeRangePredicate(
@@ -91,7 +106,8 @@ public class AnalysisSpecifications {
                 predicates.add(cb.lessThanOrEqualTo(root.get("dateIn"), to));
             }
 
-            return predicates.isEmpty() ? null : cb.and(predicates.toArray(new Predicate[0]));
+            return predicates.isEmpty() ? cb.conjunction() : cb.and(predicates.toArray(new Predicate[0]));
+
         };
     }
 }

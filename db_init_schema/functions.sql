@@ -1,4 +1,4 @@
-\c venlab
+
 
 DROP VIEW IF EXISTS venlab.sample_boxpos;
 DROP EXTENSION IF EXISTS isn CASCADE;
@@ -47,11 +47,19 @@ AS
 $BODY$
 BEGIN
     PERFORM venlab.isn_weak(true);
-IF ( length(sampleId) = 13)
-   then return venlab.is_valid(sampleId::ean13);
-ELSE
-    return false;
-END IF;
+    
+    IF (length(sampleId) = 13) THEN
+        BEGIN
+            -- Wir versuchen den Cast in einem inneren Block
+            RETURN venlab.is_valid(sampleId::venlab.ean13);
+        EXCEPTION WHEN OTHERS THEN
+            -- Wenn der Cast fehlschlägt (z.B. wegen Leerzeichen oder Buchstaben),
+            -- fangen wir den Fehler ab und geben einfach FALSE zurück.
+            RETURN FALSE;
+        END;
+    ELSE
+        RETURN FALSE;
+    END IF;
 END;
 $BODY$
 LANGUAGE plpgsql;

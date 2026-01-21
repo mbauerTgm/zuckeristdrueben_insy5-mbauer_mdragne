@@ -9,6 +9,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import com.mbauer_mdragne.vue_crud.DTOs.AnalysisGlobalFilterDto;
@@ -35,6 +36,7 @@ public class BoxPosController {
     }
 
     @GetMapping("/filter")
+    @PreAuthorize("hasAnyRole('User', 'Researcher', 'Admin')")
     public ResponseEntity<Page<BoxPos>> getAllBoxPos(
             AnalysisGlobalFilterDto globalFilter,
             @PageableDefault(size = 20, sort = "bId", direction = Sort.Direction.DESC) Pageable pageable) {
@@ -45,6 +47,7 @@ public class BoxPosController {
     }
 
     @GetMapping("/{bId}/{bposId}")
+    @PreAuthorize("hasAnyRole('User', 'Researcher', 'Admin')")
     public ResponseEntity<BoxPos> getBoxPosById(@PathVariable String bId, @PathVariable Integer bposId) {
         BoxPosId id = new BoxPosId(bId, bposId);
         BoxPos boxPos = boxPosRepo.findById(id)
@@ -53,6 +56,7 @@ public class BoxPosController {
     }
 
     @PostMapping
+    @PreAuthorize("hasAnyRole('Researcher', 'Admin')")
     public ResponseEntity<BoxPos> createBoxPos(@RequestBody BoxPos boxPos) {
         if (boxPos.getSId() == null) throw new BadRequestException("sId missing");
         
@@ -61,6 +65,7 @@ public class BoxPosController {
     }
 
     @PutMapping("/{bId}/{bposId}")
+    @PreAuthorize("hasAnyRole('Researcher', 'Admin')")
     public ResponseEntity<BoxPos> updateBoxPos(
             @PathVariable String bId, 
             @PathVariable Integer bposId, 
@@ -81,6 +86,7 @@ public class BoxPosController {
     }
 
     @DeleteMapping("/{bId}/{bposId}")
+    @PreAuthorize("hasRole('Admin')")
     public ResponseEntity<Void> deleteBoxPos(@PathVariable String bId, @PathVariable Integer bposId) {
         BoxPosId id = new BoxPosId(bId, bposId);
         if (!boxPosRepo.existsById(id)) throw new ResourceNotFoundException("Not found");

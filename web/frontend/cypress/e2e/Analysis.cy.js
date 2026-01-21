@@ -310,4 +310,119 @@ describe('Analysis Test:', () => {
     cy.get('.btn-delete').click()
     cy.get('.modal-actions > .btn-delete').click()
   })
+
+  it('Check Filter: Create entry, filter match (positive) and filter no-match (negative)', () => {
+    const sId = sampleData.s_id
+    const pol = 2.50
+    const nat = 15.50
+    const comment = 'FilterTest__' + erstelleDatum(0)
+    // Ein eindeutiges Flag für den Filter-Test
+    const uniqueFlag = 'FILTERME' 
+
+    // -----------------------------------------------------
+    // 1. Eintrag erstellen (damit wir etwas zu filtern haben)
+    // -----------------------------------------------------
+    cy.get(':nth-child(1) > select').select('Analysis')
+    cy.get('.btn-load').click()
+    cy.get('.btn-save').click()
+
+    // Felder ausfüllen
+    cy.get('#field-s_id').type(sId)
+    cy.get('#field-pol').type(pol)
+    cy.get('#field-nat').type(nat)
+    cy.get('#field-date_in').type(erstelleDatum(0))
+    // Wir nutzen a_flags als eindeutiges Merkmal für diesen Test
+    cy.get('#field-a_flags').type(uniqueFlag)
+    cy.get('#field-comment').type(comment)
+
+    // Speichern
+    cy.get('.form-actions > .btn-save').click()
+    
+    // Warten bis Tabelle neu geladen ist
+    cy.wait(500) 
+
+    // -----------------------------------------------------
+    // 2. Filter öffnen
+    // -----------------------------------------------------
+    // Den "Filter"-Button finden und klicken (Button mit Icon und Text "Filter")
+    cy.contains('button', 'Filter').click()
+    
+    // Sicherstellen, dass das Dropdown offen ist
+    cy.get('.filter-dropdown').should('be.visible')
+
+    // -----------------------------------------------------
+    // 3. POSITIV-TEST: Filter setzen, der den Eintrag finden MUSS
+    // -----------------------------------------------------
+    
+    // Wir filtern nach den A-Flags, da wir dort 'FILTERME' eingetragen haben
+    // (Alternativ könnte man auch nach S-ID filtern)
+    cy.contains('.filter-group', 'A Flags').within(() => {
+        // "Von" Feld
+        cy.get('input').eq(0).type(uniqueFlag)
+        // "Bis" Feld (für exakten Match hier auch eintragen oder leer lassen, 
+        // je nach Backend-Logik. String-Filter ist meist "contains" oder "equals")
+        // Wir tippen es ins erste Feld ("Von"), das oft als "Contains" oder Startwert fungiert
+    })
+
+    // "Anwenden" klicken
+    cy.get('.filter-dropdown .btn-save').click()
+
+    // API Call abwarten (oder kurz warten)
+    cy.wait(500)
+
+    // Prüfen: Der Eintrag muss in der Tabelle sein
+    cy.get('table').should('contain', sId)
+    cy.get('table').should('contain', uniqueFlag)
+    cy.get('table').should('contain', comment)
+
+    // -----------------------------------------------------
+    // 4. NEGATIV-TEST: Filter setzen, der den Eintrag NICHT finden darf
+    // -----------------------------------------------------
+    
+    // Filter wieder öffnen
+    cy.contains('button', 'Filter').click()
+    
+    // Reset klicken, um alte Filter zu löschen
+    cy.contains('.btn-link', 'Reset').click()
+    
+    // Nun nach einer S-ID filtern, die es nicht gibt (z.B. lauter 9er)
+    const wrongId = '999999999999'
+    cy.contains('.filter-group', 'Sample ID (s_id)').within(() => {
+        cy.get('input').eq(0).type(wrongId)
+        cy.get('input').eq(1).type(wrongId)
+    })
+
+    // "Anwenden" klicken
+    cy.get('.filter-dropdown .btn-save').click()
+    cy.wait(500)
+
+    // Prüfen: Tabelle sollte leer sein oder den Eintrag NICHT enthalten
+    cy.get('body').then(($body) => {
+        // Entweder wird "Keine Daten vorhanden" angezeigt...
+        if ($body.find('.status-text:contains("Keine Daten vorhanden.")').length > 0) {
+            cy.get('.status-text').should('contain', 'Keine Daten vorhanden.')
+        } else {
+            // ...oder die Tabelle ist da, darf aber unseren Eintrag nicht enthalten
+            cy.get('table').should('not.contain', comment)
+            cy.get('table').should('not.contain', uniqueFlag)
+        }
+    })
+
+    // -----------------------------------------------------
+    // 5. Cleanup: Eintrag löschen
+    // -----------------------------------------------------
+    // Wir müssen den Filter resetten, um den Eintrag wieder zu sehen und zu löschen
+    cy.contains('button', 'Filter').click()
+    cy.contains('.btn-link', 'Reset').click()
+    cy.get('.filter-dropdown .btn-save').click() // Leeren Filter anwenden = Alle zeigen
+    
+    // Nach unserem Eintrag suchen (über normale Suche, um ihn sicher zu finden)
+    cy.get('.search-input').clear().type(comment)
+    cy.get('.search-input-group > .btn').click()
+    
+    // Löschen
+    cy.get('.btn-delete').first().click()
+    cy.get('.modal-actions > .btn-delete').click()
+  })
+
 })

@@ -2,6 +2,7 @@ package com.mbauer_mdragne.vue_crud.Controllers;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.ArrayList;
 import java.util.List;
 import java.text.SimpleDateFormat;
 
@@ -24,6 +25,7 @@ import com.mbauer_mdragne.vue_crud.Errors.BadRequestException;
 import com.mbauer_mdragne.vue_crud.Errors.ResourceNotFoundException;
 import com.mbauer_mdragne.vue_crud.Repositories.AnalysisRepository;
 import com.mbauer_mdragne.vue_crud.Repositories.AnalysisSpecifications;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import jakarta.persistence.EntityManager;
 import jakarta.servlet.http.HttpServletResponse;
@@ -36,37 +38,36 @@ public class AnalysisController {
     @Autowired private EntityManager em;
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('User', 'Researcher', 'Admin')")
     public List<Analysis> getAllAnalysis(AnalysisGlobalFilterDto globalFilter) {
         Specification<Analysis> spec = AnalysisSpecifications.withGlobalDateFilter(globalFilter);
-        
-        if (isResearcher()) {
-            spec = (spec == null) ? AnalysisSpecifications.forResearcher() : spec.and(AnalysisSpecifications.forResearcher());
-        }
         
         return spec != null ? analysisRepo.findAll(spec) : analysisRepo.findAll();
     }
 
     @GetMapping("/filter")
+    @PreAuthorize("hasAnyRole('User', 'Researcher', 'Admin')")
     public ResponseEntity<Page<Analysis>> filterAnalysis(
-            AnalysisFilterDto filterDto,
-            AnalysisGlobalFilterDto globalFilter,
-            @PageableDefault(size = 20, sort = "aId", direction = Sort.Direction.DESC) Pageable pageable) {
+        AnalysisFilterDto filterDto,
+        AnalysisGlobalFilterDto globalFilter,
+        @PageableDefault(size = 20, sort = "aId", direction = Sort.Direction.DESC) Pageable pageable) {
+    
+        boolean researcher = isResearcher();
         
-        Specification<Analysis> spec = AnalysisSpecifications.withDynamicFilter(filterDto);
+        // 1. Dynamischen Filter laden (jetzt mit researcher flag)
+        Specification<Analysis> spec = AnalysisSpecifications.withDynamicFilter(filterDto, researcher);
+        
+        // 2. Globalen Datumsfilter
         Specification<Analysis> globalSpec = AnalysisSpecifications.withGlobalDateFilter(globalFilter);
-
         if (globalSpec != null) {
             spec = (spec == null) ? globalSpec : spec.and(globalSpec);
-        }
-
-        if (isResearcher()) {
-            spec = (spec == null) ? AnalysisSpecifications.forResearcher() : spec.and(AnalysisSpecifications.forResearcher());
         }
         
         return ResponseEntity.ok(analysisRepo.findAll(spec, pageable));
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('User', 'Researcher', 'Admin')")
     public ResponseEntity<Analysis> getAnalysisById(@PathVariable Long id) {
         return analysisRepo.findById(id)
                 .map(ResponseEntity::ok)
@@ -74,6 +75,7 @@ public class AnalysisController {
     }
 
     @PostMapping
+    @PreAuthorize("hasAnyRole('Researcher', 'Admin')")
     public ResponseEntity<Analysis> createAnalysis(@RequestBody Analysis analysis) {
         if (analysis.getSId() == null) {
             throw new BadRequestException("sId darf nicht null sein");
@@ -86,6 +88,7 @@ public class AnalysisController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('Researcher', 'Admin')")
     public ResponseEntity<Analysis> updateAnalysis(@PathVariable Long id, @RequestBody Analysis updated) {
         Analysis existing = analysisRepo.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Analysis not found with id=" + id));
@@ -111,6 +114,7 @@ public class AnalysisController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('Admin')")
     public ResponseEntity<Void> deleteAnalysis(@PathVariable Long id) {
         if (!analysisRepo.existsById(id)) throw new ResourceNotFoundException("Not found");
         analysisRepo.deleteById(id);
@@ -118,34 +122,92 @@ public class AnalysisController {
     }
 
     @GetMapping("/export")
+    @PreAuthorize("hasAnyRole('User', 'Researcher', 'Admin')")
     public void exportAnalysisToCsv(
             AnalysisFilterDto searchDto, 
             AnalysisGlobalFilterDto globalFilter,
+            @RequestParam(value = "columns", required = false) List<String> columns,
             HttpServletResponse response) throws IOException {
         
-        Specification<Analysis> spec = AnalysisSpecifications.withDynamicFilter(searchDto);
+        boolean researcher = isResearcher();
+        
+        // 1. Spezifikation wie bisher
+        Specification<Analysis> spec = AnalysisSpecifications.withDynamicFilter(searchDto, researcher);
         Specification<Analysis> globalSpec = AnalysisSpecifications.withGlobalDateFilter(globalFilter);
         if (globalSpec != null) spec = (spec == null) ? globalSpec : spec.and(globalSpec);
-        
+
         List<Analysis> list = analysisRepo.findAll(spec);
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
+        if (columns == null || columns.isEmpty()) {
+            columns = List.of("aId", "sId", "dateIn", "pol", "nat", "kal", "comment");
+        }
+
+        // HTTP Header setzen
         response.setContentType("text/csv");
         response.setCharacterEncoding("UTF-8");
         response.setHeader("Content-Disposition", "attachment; filename=analysis_export.csv");
         
         try (PrintWriter writer = response.getWriter()) {
-            writer.println("ID;SampleID;DateIn;Pol;Nat;Kal;Comment");
-            for (Analysis a : list) {
-                writer.println(String.format("%s;%s;%s;%s;%s;%s;%s",
-                    a.getAId(),
-                    a.getSId(),
-                    a.getDateIn() != null ? sdf.format(a.getDateIn()) : "",
-                    a.getPol(), a.getNat(), a.getKal(),
-                    a.getComment() != null ? a.getComment().replace(";", ",") : ""
-                ));
+            writer.write('\ufeff');
+
+            List<String> headerRow = new ArrayList<>();
+            for (String col : columns) {
+                headerRow.add("\"" + col + "\"");
             }
+            writer.println(String.join(";", headerRow));
+
+            for (Analysis a : list) {
+                List<String> row = new ArrayList<>();
+                for (String col : columns) {
+                    String val = getFieldValue(a, col, sdf);
+                    
+                    if (val == null) val = "";
+                    // Doppelte Anführungszeichen escapen (CSV Standard)
+                    val = val.replace("\"", "\"\""); 
+                    
+                    row.add("\"" + val + "\"");
+                }
+                writer.println(String.join(";", row));
+            }
+            writer.flush();
         }
+    }
+
+   private String getFieldValue(Analysis a, String col, SimpleDateFormat sdf) {
+        Object val = null;
+        String colKey = col.toLowerCase().replace("_", "");
+        
+        switch (colKey) {
+            case "aid": val = a.getAId(); break;
+            case "sid": val = a.getSId(); break;
+            case "sstamp": val = a.getSStamp(); break;
+            case "datein": val = a.getDateIn() != null ? sdf.format(a.getDateIn()) : ""; break;
+            case "dateout": val = a.getDateOut() != null ? sdf.format(a.getDateOut()) : ""; break;
+            case "pol": val = a.getPol(); break;
+            case "nat": val = a.getNat(); break;
+            case "kal": val = a.getKal(); break;
+            case "an": val = a.getAn(); break;
+            case "glu": val = a.getGlu(); break;
+            case "dry": val = a.getDry(); break;
+            case "weightmea": val = a.getWeightMea(); break;
+            case "density": val = a.getDensity(); break;
+            case "aflags": val = a.getAFlags(); break;
+            case "comment": val = a.getComment() != null ? a.getComment().replace(";", ",") : ""; break;
+            default: val = "";
+        }
+        
+        if (val == null) return "";
+
+        if (colKey.equals("sid") || colKey.equals("aid")) {
+             return "=\"" + val.toString() + "\"";
+        }
+
+        if (val instanceof Number) {
+            return val.toString().replace(".", ",");
+        }
+
+        return val.toString();
     }
 
     private Sample findLatestSample(String sId) {

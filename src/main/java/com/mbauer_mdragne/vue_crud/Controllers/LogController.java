@@ -12,6 +12,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -24,12 +25,14 @@ public class LogController {
     private LogRepository logRepo;
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('User', 'Researcher', 'Admin')")
     public List<Log> getAllLogs(AnalysisGlobalFilterDto globalFilter) {
         Specification<Log> spec = LogSpecifications.withGlobalDateFilter(globalFilter);
         return (spec != null) ? logRepo.findAll(spec) : logRepo.findAll();
     }
     
     @GetMapping("/filter")
+    @PreAuthorize("hasAnyRole('User', 'Researcher', 'Admin')")
     public ResponseEntity<Page<Log>> getAllLogs(
             AnalysisGlobalFilterDto globalFilter,
             @PageableDefault(size = 20, sort = "logId", direction = Sort.Direction.DESC) Pageable pageable) {
@@ -40,6 +43,7 @@ public class LogController {
     }
 
     @GetMapping("/{logId}")
+    @PreAuthorize("hasAnyRole('User', 'Researcher', 'Admin')")
     public ResponseEntity<Log> getLogById(@PathVariable Long logId) {
         Log log = logRepo.findById(logId)
                 .orElseThrow(() -> new ResourceNotFoundException("Log not found with id=" + logId));

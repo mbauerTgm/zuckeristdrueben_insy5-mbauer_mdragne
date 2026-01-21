@@ -390,7 +390,7 @@ const SCHEMAS = {
   analysis: {
     endpoint: 'analysis',
     pk: 'a_id',
-    displayColumns: ['a_id', 's_id', 's_stamp', 'pol', 'nat', 'glu', 'date_in', 'a_flags'],
+    displayColumns: ['a_id', 's_id', 's_stamp', 'pol', 'nat', 'glu', 'date_in', 'a_flags', 'comment'],
     formColumns: [
       's_id', 'pol', 'nat', 'kal', 'an', 'glu', 'dry',
       'date_in', 'date_out', 'weight_mea', 'weight_nrm', 'weight_cur',
@@ -791,14 +791,23 @@ export default {
       this.loadingCSV = true;
       this.error = null;
 
+      // Export ist aktuell primär für Analysis optimiert (wegen der Spalten/Filter Logik)
       if(this.selectedTable === 'analysis' || this.selectedTable === 'sample') {
         
         this.updateUserRole();
 
-        // AXIOS Params
+        // AXIOS Params Objekt
         const queryParams = {};
         
-        // Filter Params (nur für Analysis) - Analog zu fetchTableData
+        // 1. Spaltenübergabe: Nur die Spalten exportieren, die der User ausgewählt hat
+        // Falls keine gewählt sind (selectedColumns leer), schicken wir alle verfügbaren
+        const colsToExport = this.selectedColumns.length > 0 
+          ? this.selectedColumns 
+          : this.availableColumns;
+        
+        queryParams['columns'] = colsToExport.join(',');
+
+        // 2. Filter-Mapping (Analog zu fetchTableData)
         if (this.selectedTable === 'analysis') {
             if (this.searchParams.idFrom) queryParams['aId.from'] = this.searchParams.idFrom;
             if (this.searchParams.idTo) queryParams['aId.to'] = this.searchParams.idTo;
@@ -809,8 +818,8 @@ export default {
             if (this.searchParams.dateInFrom) queryParams['dateIn.from'] = this.searchParams.dateInFrom;
             if (this.searchParams.dateInTo) queryParams['dateIn.to'] = this.searchParams.dateInTo;
 
-            if (this.searchParams.globalDateInFrom) queryParams['dateIn.from'] = this.searchParams.globalDateInFrom;
-            if (this.searchParams.globalDateInTo) queryParams['dateIn.to'] = this.searchParams.globalDateInTo;
+            if (this.searchParams.globalDateInFrom) queryParams['globalDateIn.from'] = this.searchParams.globalDateInFrom;
+            if (this.searchParams.globalDateInTo) queryParams['globalDateIn.to'] = this.searchParams.globalDateInTo;
             
             if (this.searchParams.dateOutFrom) queryParams['dateOut.from'] = this.searchParams.dateOutFrom;
             if (this.searchParams.dateOutTo) queryParams['dateOut.to'] = this.searchParams.dateOutTo;
@@ -823,12 +832,11 @@ export default {
           // AXIOS Blob Request
           const response = await api.get(`/${this.currentSchema.endpoint}/export`, {
             params: queryParams,
-            responseType: 'blob' // WICHTIG: Blob anfordern
+            responseType: 'blob' 
           });
 
-          // Blob verarbeiten
-          const blob = new Blob([response.data]);
-          
+          // Blob verarbeiten und Download auslösen
+          const blob = new Blob([response.data], { type: 'text/csv' });
           const downloadUrl = window.URL.createObjectURL(blob);
           const link = document.createElement('a');
           link.href = downloadUrl;
@@ -836,7 +844,6 @@ export default {
           const timestamp = new Date().toISOString().split('T')[0];
           link.setAttribute('download', `${this.selectedTable}_export_${timestamp}.csv`);
           
-          // Link klicken und entfernen
           document.body.appendChild(link);
           link.click();
           document.body.removeChild(link);
@@ -846,18 +853,16 @@ export default {
         } catch (error) {
           console.error('Export error:', error);
           if (error.response && error.response.status === 401) {
-             this.$emit('logout');
-             return;
+            this.$emit('logout');
+            return;
           }
-          this.error = error.message;
+          this.error = "Export fehlgeschlagen: " + (error.response?.data?.message || error.message);
         } finally {
           this.loadingCSV = false;
         }
       } else {
-        this.showColumnSelector = false,
-        this.showFilterSelector = false,
         this.loadingCSV = false;
-        this.error = "Export nur verfügbar in Analysis & Sample";
+        this.error = "Export nur verfügbar für Analysis & Sample";
       }
     },
 

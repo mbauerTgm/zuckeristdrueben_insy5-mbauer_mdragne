@@ -9,6 +9,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import com.mbauer_mdragne.vue_crud.DTOs.AnalysisGlobalFilterDto;
@@ -25,12 +26,14 @@ public class ThresholdController {
     private ThresholdRepository thresholdRepo;
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('User', 'Researcher', 'Admin')")
     public List<Threshold> getAllThresholds(AnalysisGlobalFilterDto globalFilter) {
         Specification<Threshold> spec = ThresholdSpecifications.withGlobalDateFilter(globalFilter);
         return (spec != null) ? thresholdRepo.findAll(spec) : thresholdRepo.findAll();
     }
     
     @GetMapping("/filter")
+    @PreAuthorize("hasAnyRole('User', 'Researcher', 'Admin')")
     public ResponseEntity<Page<Threshold>> getAllThresholds(
             AnalysisGlobalFilterDto globalFilter,
             @PageableDefault(size = 20, sort = "thId", direction = Sort.Direction.DESC) Pageable pageable) {
@@ -41,6 +44,7 @@ public class ThresholdController {
     }
 
     @GetMapping("/{thId}")
+    @PreAuthorize("hasAnyRole('User', 'Researcher', 'Admin')")
     public ResponseEntity<Threshold> getThresholdById(@PathVariable String thId) {
         Threshold threshold = thresholdRepo.findById(thId)
                 .orElseThrow(() -> new ResourceNotFoundException("Threshold not found with id=" + thId));
@@ -48,12 +52,14 @@ public class ThresholdController {
     }
 
     @PostMapping
+    @PreAuthorize("hasAnyRole('Researcher', 'Admin')")
     public ResponseEntity<Threshold> createThreshold(@RequestBody Threshold threshold) {
         Threshold saved = thresholdRepo.save(threshold);
         return ResponseEntity.ok(saved);
     }
 
     @PutMapping("/{thId}")
+    @PreAuthorize("hasAnyRole('Researcher', 'Admin')")
     public ResponseEntity<Threshold> updateThreshold(@PathVariable String thId, @RequestBody Threshold updated) {
         if (!thresholdRepo.existsById(thId)) {
             throw new ResourceNotFoundException("Threshold not found with id=" + thId);
