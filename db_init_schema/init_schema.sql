@@ -639,6 +639,8 @@ ALTER TABLE ONLY venlab.log
 --
 -- PostgreSQL database dump complete
 --
+-- zusätzliche Funktionen & Views
+\i functions.sql
 
 \unrestrict bvmthY5amHB7qQGb2IK8wc9lk8bl3zD8dj7PUb1c316obHQyjhMcqY8NaQYHJ8f
 
