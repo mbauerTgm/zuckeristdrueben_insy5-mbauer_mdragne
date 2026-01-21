@@ -390,7 +390,7 @@ const SCHEMAS = {
   analysis: {
     endpoint: 'analysis',
     pk: 'a_id',
-    displayColumns: ['a_id', 's_id', 's_stamp', 'pol', 'nat', 'glu', 'date_in', 'a_flags'],
+    displayColumns: ['a_id', 's_id', 's_stamp', 'pol', 'nat', 'glu', 'date_in', 'a_flags', 'comment'],
     formColumns: [
       's_id', 'pol', 'nat', 'kal', 'an', 'glu', 'dry',
       'date_in', 'date_out', 'weight_mea', 'weight_nrm', 'weight_cur',
