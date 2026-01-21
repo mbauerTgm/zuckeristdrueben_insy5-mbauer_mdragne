@@ -14,20 +14,33 @@ import java.sql.Timestamp;
 
 public class AnalysisSpecifications {
 
-    public static Specification<Analysis> withDynamicFilter(AnalysisFilterDto dto) {
+    public static Specification<Analysis> withDynamicFilter(AnalysisFilterDto dto, boolean isResearcher) {
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
 
             addRangePredicate(predicates, cb, root.get("aId"), dto.getAId());
             addRangePredicate(predicates, cb, root.get("sId"), dto.getSId());
-            
             addDateTimeRangePredicate(predicates, cb, root.get("dateIn"), dto.getDateIn());
             addDateTimeRangePredicate(predicates, cb, root.get("dateOut"), dto.getDateOut());
 
-            addRangePredicate(predicates, cb, root.get("aFlags"), dto.getAFlags());
+            // NUR hinzufügen, wenn es KEIN Researcher ist. 
+            // Researcher bekommen ihre aFlags-Logik separat über forResearcher()
+            if (!isResearcher) {
+                addAFlagsPredicate(predicates, cb, root.get("aFlags"), dto.getAFlags());
+            }
 
             return cb.and(predicates.toArray(new Predicate[0]));
         };
+    }
+    private static void addAFlagsPredicate(
+        List<Predicate> predicates,
+        jakarta.persistence.criteria.CriteriaBuilder cb,
+        Path<String> path,
+        Range<String> range
+    ) {
+        if (range == null || range.getFrom() == null) return;
+
+        predicates.add(cb.like(path, range.getFrom() + "%"));
     }
 
     private static void addDateTimeRangePredicate(

@@ -2,6 +2,7 @@ package com.mbauer_mdragne.vue_crud.Controllers;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.ArrayList;
 import java.util.List;
 import java.text.SimpleDateFormat;
 
@@ -48,18 +49,23 @@ public class AnalysisController {
 
     @GetMapping("/filter")
     public ResponseEntity<Page<Analysis>> filterAnalysis(
-            AnalysisFilterDto filterDto,
-            AnalysisGlobalFilterDto globalFilter,
-            @PageableDefault(size = 20, sort = "aId", direction = Sort.Direction.DESC) Pageable pageable) {
+        AnalysisFilterDto filterDto,
+        AnalysisGlobalFilterDto globalFilter,
+        @PageableDefault(size = 20, sort = "aId", direction = Sort.Direction.DESC) Pageable pageable) {
+    
+        boolean researcher = isResearcher();
         
-        Specification<Analysis> spec = AnalysisSpecifications.withDynamicFilter(filterDto);
+        // 1. Dynamischen Filter laden (jetzt mit researcher flag)
+        Specification<Analysis> spec = AnalysisSpecifications.withDynamicFilter(filterDto, researcher);
+        
+        // 2. Globalen Datumsfilter
         Specification<Analysis> globalSpec = AnalysisSpecifications.withGlobalDateFilter(globalFilter);
-
         if (globalSpec != null) {
             spec = (spec == null) ? globalSpec : spec.and(globalSpec);
         }
 
-        if (isResearcher()) {
+        // 3. Researcher-Pflichtfilter (F% oder V%)
+        if (researcher) {
             spec = (spec == null) ? AnalysisSpecifications.forResearcher() : spec.and(AnalysisSpecifications.forResearcher());
         }
         
@@ -121,33 +127,69 @@ public class AnalysisController {
     public void exportAnalysisToCsv(
             AnalysisFilterDto searchDto, 
             AnalysisGlobalFilterDto globalFilter,
+            @RequestParam(value = "columns", required = false) List<String> columns,
             HttpServletResponse response) throws IOException {
         
-        Specification<Analysis> spec = AnalysisSpecifications.withDynamicFilter(searchDto);
+        boolean researcher = isResearcher();
+        
+        // 1. Spezifikation wie bisher
+        Specification<Analysis> spec = AnalysisSpecifications.withDynamicFilter(searchDto, researcher);
         Specification<Analysis> globalSpec = AnalysisSpecifications.withGlobalDateFilter(globalFilter);
         if (globalSpec != null) spec = (spec == null) ? globalSpec : spec.and(globalSpec);
-        if (isResearcher()) {
+        if (researcher) {
             spec = (spec == null) ? AnalysisSpecifications.forResearcher() : spec.and(AnalysisSpecifications.forResearcher());
         }
+
         List<Analysis> list = analysisRepo.findAll(spec);
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
+        if (columns == null || columns.isEmpty()) {
+            columns = List.of("aId", "sId", "dateIn", "pol", "nat", "kal", "comment");
+        }
+
+        // HTTP Header setzen
         response.setContentType("text/csv");
         response.setCharacterEncoding("UTF-8");
         response.setHeader("Content-Disposition", "attachment; filename=analysis_export.csv");
         
         try (PrintWriter writer = response.getWriter()) {
-            writer.println("ID;SampleID;DateIn;Pol;Nat;Kal;Comment");
+            writer.write('\ufeff'); 
+
+            // Spaltenüberschriften schreiben
+            writer.println(String.join(";", columns));
             for (Analysis a : list) {
-                writer.println(String.format("%s;%s;%s;%s;%s;%s;%s",
-                    a.getAId(),
-                    a.getSId(),
-                    a.getDateIn() != null ? sdf.format(a.getDateIn()) : "",
-                    a.getPol(), a.getNat(), a.getKal(),
-                    a.getComment() != null ? a.getComment().replace(";", ",") : ""
-                ));
+                List<String> row = new ArrayList<>();
+                for (String col : columns) {
+                    String val = getFieldValue(a, col, sdf);
+                    
+                    if (val == null) val = "";
+                    val = val.replace("\"", "\"\""); 
+                    row.add("\"" + val + "\"");
+                }
+                writer.println(String.join(";", row));
             }
+            writer.flush();
         }
+    }
+
+    private String getFieldValue(Analysis a, String col, SimpleDateFormat sdf) {
+        Object val = null;
+        switch (col) {
+            case "aId": val = a.getAId(); break;
+            case "sId": val = a.getSId(); break;
+            case "dateIn": val = a.getDateIn() != null ? sdf.format(a.getDateIn()) : ""; break;
+            case "dateOut": val = a.getDateOut() != null ? sdf.format(a.getDateOut()) : ""; break;
+            case "pol": val = a.getPol(); break;
+            case "nat": val = a.getNat(); break;
+            case "kal": val = a.getKal(); break;
+            case "an": val = a.getAn(); break;
+            case "glu": val = a.getGlu(); break;
+            case "dry": val = a.getDry(); break;
+            case "aFlags": val = a.getAFlags(); break;
+            case "comment": val = a.getComment() != null ? a.getComment().replace(";", ",") : ""; break;
+            default: val = "";
+        }
+        return val != null ? val.toString() : "";
     }
 
     private Sample findLatestSample(String sId) {
