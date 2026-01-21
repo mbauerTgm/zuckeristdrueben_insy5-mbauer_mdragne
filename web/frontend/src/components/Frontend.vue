@@ -809,8 +809,8 @@ export default {
             if (this.searchParams.dateInFrom) queryParams['dateIn.from'] = this.searchParams.dateInFrom;
             if (this.searchParams.dateInTo) queryParams['dateIn.to'] = this.searchParams.dateInTo;
 
-            if (this.searchParams.globalDateInFrom) queryParams['dateIn.from'] = this.searchParams.globalDateInFrom;
-            if (this.searchParams.globalDateInTo) queryParams['dateIn.to'] = this.searchParams.globalDateInTo;
+            if (this.searchParams.globalDateInFrom) queryParams['globalDateIn.from'] = this.searchParams.globalDateInFrom;
+            if (this.searchParams.globalDateInTo) queryParams['globalDateIn.to'] = this.searchParams.globalDateInTo;
             
             if (this.searchParams.dateOutFrom) queryParams['dateOut.from'] = this.searchParams.dateOutFrom;
             if (this.searchParams.dateOutTo) queryParams['dateOut.to'] = this.searchParams.dateOutTo;
