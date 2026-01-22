@@ -36,7 +36,10 @@ public class SampleController {
     @GetMapping
     @PreAuthorize("hasAnyRole('User', 'Researcher', 'Admin')")
     public List<Sample> getAllSamples(AnalysisGlobalFilterDto globalFilter) {
-        Specification<Sample> spec = SampleSpecifications.withGlobalDateFilter(globalFilter, isResearcher());
+        Specification<Sample> spec = SampleSpecifications.withGlobalDateFilter(globalFilter);
+        
+        if (spec == null) spec = Specification.allOf();
+        
         return sampleRepo.findAll(spec);
     }
     
@@ -46,7 +49,9 @@ public class SampleController {
         AnalysisGlobalFilterDto globalFilter,
         @PageableDefault(size = 20, sort = "sId", direction = Sort.Direction.DESC) Pageable pageable) {
         
-        Specification<Sample> spec = SampleSpecifications.withGlobalDateFilter(globalFilter, isResearcher());
+        Specification<Sample> spec = SampleSpecifications.withGlobalDateFilter(globalFilter);
+        
+        if (spec == null) spec = Specification.allOf();
         
         return ResponseEntity.ok(sampleRepo.findAll(spec, pageable));
     }
@@ -99,7 +104,9 @@ public class SampleController {
     @GetMapping("/export")
     @PreAuthorize("hasAnyRole('User', 'Researcher', 'Admin')")
     public void exportSamplesToCsv(AnalysisGlobalFilterDto globalFilter, HttpServletResponse response) throws IOException {
-        Specification<Sample> spec = SampleSpecifications.withGlobalDateFilter(globalFilter, isResearcher());
+        Specification<Sample> spec = SampleSpecifications.withGlobalDateFilter(globalFilter);
+        if (spec == null) spec = Specification.allOf();
+
         List<Sample> list = sampleRepo.findAll(spec);
 
         response.setContentType("text/csv");
@@ -120,11 +127,5 @@ public class SampleController {
                 ));
             }
         }
-    }
-
-    private boolean isResearcher() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        return auth != null && auth.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_Researcher"));
     }
 }

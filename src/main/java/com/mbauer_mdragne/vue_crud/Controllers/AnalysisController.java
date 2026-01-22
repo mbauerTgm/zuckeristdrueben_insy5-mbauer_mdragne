@@ -13,8 +13,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import com.mbauer_mdragne.vue_crud.DTOs.AnalysisFilterDto;
@@ -42,7 +40,9 @@ public class AnalysisController {
     public List<Analysis> getAllAnalysis(AnalysisGlobalFilterDto globalFilter) {
         Specification<Analysis> spec = AnalysisSpecifications.withGlobalDateFilter(globalFilter);
         
-        return spec != null ? analysisRepo.findAll(spec) : analysisRepo.findAll();
+        if (spec == null) spec = Specification.allOf();
+        
+        return analysisRepo.findAll(spec);
     }
 
     @GetMapping("/filter")
@@ -52,16 +52,14 @@ public class AnalysisController {
         AnalysisGlobalFilterDto globalFilter,
         @PageableDefault(size = 20, sort = "aId", direction = Sort.Direction.DESC) Pageable pageable) {
     
-        boolean researcher = isResearcher();
-        
-        // 1. Dynamischen Filter laden (jetzt mit researcher flag)
-        Specification<Analysis> spec = AnalysisSpecifications.withDynamicFilter(filterDto, researcher);
-        
-        // 2. Globalen Datumsfilter
+        Specification<Analysis> spec = AnalysisSpecifications.withDynamicFilter(filterDto);
         Specification<Analysis> globalSpec = AnalysisSpecifications.withGlobalDateFilter(globalFilter);
+        
         if (globalSpec != null) {
             spec = (spec == null) ? globalSpec : spec.and(globalSpec);
         }
+        
+        if (spec == null) spec = Specification.allOf();
         
         return ResponseEntity.ok(analysisRepo.findAll(spec, pageable));
     }
@@ -129,12 +127,11 @@ public class AnalysisController {
             @RequestParam(value = "columns", required = false) List<String> columns,
             HttpServletResponse response) throws IOException {
         
-        boolean researcher = isResearcher();
-        
-        // 1. Spezifikation wie bisher
-        Specification<Analysis> spec = AnalysisSpecifications.withDynamicFilter(searchDto, researcher);
+        Specification<Analysis> spec = AnalysisSpecifications.withDynamicFilter(searchDto);
         Specification<Analysis> globalSpec = AnalysisSpecifications.withGlobalDateFilter(globalFilter);
         if (globalSpec != null) spec = (spec == null) ? globalSpec : spec.and(globalSpec);
+
+        if (spec == null) spec = Specification.allOf();
 
         List<Analysis> list = analysisRepo.findAll(spec);
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -217,11 +214,5 @@ public class AnalysisController {
                 .getResultStream()
                 .findFirst()
                 .orElseThrow(() -> new BadRequestException("Kein Sample gefunden für sId=" + sId));
-    }
-
-    private boolean isResearcher() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        return auth != null && auth.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_Researcher"));
     }
 }
