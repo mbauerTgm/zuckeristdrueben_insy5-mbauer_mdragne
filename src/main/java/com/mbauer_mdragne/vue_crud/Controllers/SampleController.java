@@ -36,11 +36,8 @@ public class SampleController {
     @GetMapping
     @PreAuthorize("hasAnyRole('User', 'Researcher', 'Admin')")
     public List<Sample> getAllSamples(AnalysisGlobalFilterDto globalFilter) {
-        Specification<Sample> spec = SampleSpecifications.withGlobalDateFilter(globalFilter);
-        if (isResearcher()) {
-             return (spec != null) ? sampleRepo.findAll(spec) : sampleRepo.findAllForResearcher();
-        }
-        return (spec != null) ? sampleRepo.findAll(spec) : sampleRepo.findAll();
+        Specification<Sample> spec = SampleSpecifications.withGlobalDateFilter(globalFilter, isResearcher());
+        return sampleRepo.findAll(spec);
     }
     
     @GetMapping("/filter")
@@ -49,13 +46,8 @@ public class SampleController {
         AnalysisGlobalFilterDto globalFilter,
         @PageableDefault(size = 20, sort = "sId", direction = Sort.Direction.DESC) Pageable pageable) {
         
-        Specification<Sample> spec = SampleSpecifications.withGlobalDateFilter(globalFilter);
+        Specification<Sample> spec = SampleSpecifications.withGlobalDateFilter(globalFilter, isResearcher());
         
-        if (spec == null) {
-            if (isResearcher()) return ResponseEntity.ok(sampleRepo.findAllForResearcher(pageable));
-            else return ResponseEntity.ok(sampleRepo.findAll(pageable));
-        }
-
         return ResponseEntity.ok(sampleRepo.findAll(spec, pageable));
     }
 
@@ -107,9 +99,8 @@ public class SampleController {
     @GetMapping("/export")
     @PreAuthorize("hasAnyRole('User', 'Researcher', 'Admin')")
     public void exportSamplesToCsv(AnalysisGlobalFilterDto globalFilter, HttpServletResponse response) throws IOException {
-        Specification<Sample> spec = SampleSpecifications.withGlobalDateFilter(globalFilter);
-        List<Sample> list = (spec != null) ? sampleRepo.findAll(spec) : 
-                           (isResearcher() ? sampleRepo.findAllForResearcher() : sampleRepo.findAll());
+        Specification<Sample> spec = SampleSpecifications.withGlobalDateFilter(globalFilter, isResearcher());
+        List<Sample> list = sampleRepo.findAll(spec);
 
         response.setContentType("text/csv");
         response.setCharacterEncoding("UTF-8");
