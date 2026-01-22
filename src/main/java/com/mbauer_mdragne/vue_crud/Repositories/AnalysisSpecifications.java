@@ -14,7 +14,7 @@ import java.sql.Timestamp;
 
 public class AnalysisSpecifications {
 
-    public static Specification<Analysis> withDynamicFilter(AnalysisFilterDto dto, boolean isResearcher) {
+    public static Specification<Analysis> withDynamicFilter(AnalysisFilterDto dto) {
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
 
@@ -22,65 +22,14 @@ public class AnalysisSpecifications {
             addRangePredicate(predicates, cb, root.get("sId"), dto.getSId());
             addDateTimeRangePredicate(predicates, cb, root.get("dateIn"), dto.getDateIn());
             addDateTimeRangePredicate(predicates, cb, root.get("dateOut"), dto.getDateOut());
-            if (isResearcher) {
-                Predicate likeF = cb.like(root.get("aFlags"), "F%");
-                Predicate likeV = cb.like(root.get("aFlags"), "V%");
-                predicates.add(cb.or(likeF, likeV));
-            } else {
-                addAFlagsPredicate(predicates, cb, root.get("aFlags"), dto.getAFlags());
-            }
-
+            
+            addAFlagsPredicate(predicates, cb, root.get("aFlags"), dto.getAFlags());
 
             return cb.and(predicates.toArray(new Predicate[0]));
         };
     }
-    private static void addAFlagsPredicate(
-        List<Predicate> predicates,
-        jakarta.persistence.criteria.CriteriaBuilder cb,
-        Path<String> path,
-        Range<String> range
-    ) {
-        if (range == null || range.getFrom() == null) return;
 
-        predicates.add(cb.like(path, range.getFrom() + "%"));
-    }
-
-    private static void addDateTimeRangePredicate(
-            List<Predicate> predicates,
-            jakarta.persistence.criteria.CriteriaBuilder cb,
-            Path<Timestamp> path,
-            Range<?> range
-    ) {
-        if (range == null) return;
-
-        Timestamp from = DateUtils.parseAny(range.getFrom());
-        Timestamp to = DateUtils.parseAny(range.getTo());
-
-        if (from != null) {
-            predicates.add(cb.greaterThanOrEqualTo(path, from));
-        }
-        if (to != null) {
-            predicates.add(cb.lessThanOrEqualTo(path, to));
-        }
-    }
-
-    private static <T extends Comparable<? super T>> void addRangePredicate(
-            List<Predicate> predicates,
-            jakarta.persistence.criteria.CriteriaBuilder cb,
-            Path<T> path,
-            Range<T> range
-    ) {
-        if (range == null) return;
-
-        if (range.getFrom() != null) {
-            predicates.add(cb.greaterThanOrEqualTo(path, range.getFrom()));
-        }
-        if (range.getTo() != null) {
-            predicates.add(cb.lessThanOrEqualTo(path, range.getTo()));
-        }
-    }
-
-    public static Specification<Analysis> forResearcher() {
+    public static Specification<Analysis> researcherRestriction() {
         return (root, query, cb) -> {
             Predicate likeF = cb.like(root.get("aFlags"), "F%");
             Predicate likeV = cb.like(root.get("aFlags"), "V%");
@@ -91,7 +40,7 @@ public class AnalysisSpecifications {
     public static Specification<Analysis> withGlobalDateFilter(AnalysisGlobalFilterDto globalDto) {
         return (root, query, cb) -> {
             if (globalDto == null || globalDto.getGlobalDateIn() == null) {
-                return null;
+                return null; // Wichtig: Specification.where(null) im Controller nutzen!
             }
             List<Predicate> predicates = new ArrayList<>();
             Range<?> range = globalDto.getGlobalDateIn();
@@ -107,7 +56,25 @@ public class AnalysisSpecifications {
             }
 
             return predicates.isEmpty() ? cb.conjunction() : cb.and(predicates.toArray(new Predicate[0]));
-
         };
+    }
+    
+    private static void addAFlagsPredicate(List<Predicate> predicates, jakarta.persistence.criteria.CriteriaBuilder cb, Path<String> path, Range<String> range) {
+        if (range == null || range.getFrom() == null) return;
+        predicates.add(cb.like(path, range.getFrom() + "%"));
+    }
+
+    private static void addDateTimeRangePredicate(List<Predicate> predicates, jakarta.persistence.criteria.CriteriaBuilder cb, Path<Timestamp> path, Range<?> range) {
+        if (range == null) return;
+        Timestamp from = DateUtils.parseAny(range.getFrom());
+        Timestamp to = DateUtils.parseAny(range.getTo());
+        if (from != null) predicates.add(cb.greaterThanOrEqualTo(path, from));
+        if (to != null) predicates.add(cb.lessThanOrEqualTo(path, to));
+    }
+
+    private static <T extends Comparable<? super T>> void addRangePredicate(List<Predicate> predicates, jakarta.persistence.criteria.CriteriaBuilder cb, Path<T> path, Range<T> range) {
+        if (range == null) return;
+        if (range.getFrom() != null) predicates.add(cb.greaterThanOrEqualTo(path, range.getFrom()));
+        if (range.getTo() != null) predicates.add(cb.lessThanOrEqualTo(path, range.getTo()));
     }
 }

@@ -37,10 +37,10 @@ public class SampleController {
     @PreAuthorize("hasAnyRole('User', 'Researcher', 'Admin')")
     public List<Sample> getAllSamples(AnalysisGlobalFilterDto globalFilter) {
         Specification<Sample> spec = SampleSpecifications.withGlobalDateFilter(globalFilter);
-        if (isResearcher()) {
-             return (spec != null) ? sampleRepo.findAll(spec) : sampleRepo.findAllForResearcher();
-        }
-        return (spec != null) ? sampleRepo.findAll(spec) : sampleRepo.findAll();
+        
+        if (spec == null) spec = Specification.allOf();
+        
+        return sampleRepo.findAll(spec);
     }
     
     @GetMapping("/filter")
@@ -51,11 +51,8 @@ public class SampleController {
         
         Specification<Sample> spec = SampleSpecifications.withGlobalDateFilter(globalFilter);
         
-        if (spec == null) {
-            if (isResearcher()) return ResponseEntity.ok(sampleRepo.findAllForResearcher(pageable));
-            else return ResponseEntity.ok(sampleRepo.findAll(pageable));
-        }
-
+        if (spec == null) spec = Specification.allOf();
+        
         return ResponseEntity.ok(sampleRepo.findAll(spec, pageable));
     }
 
@@ -108,8 +105,9 @@ public class SampleController {
     @PreAuthorize("hasAnyRole('User', 'Researcher', 'Admin')")
     public void exportSamplesToCsv(AnalysisGlobalFilterDto globalFilter, HttpServletResponse response) throws IOException {
         Specification<Sample> spec = SampleSpecifications.withGlobalDateFilter(globalFilter);
-        List<Sample> list = (spec != null) ? sampleRepo.findAll(spec) : 
-                           (isResearcher() ? sampleRepo.findAllForResearcher() : sampleRepo.findAll());
+        if (spec == null) spec = Specification.allOf();
+
+        List<Sample> list = sampleRepo.findAll(spec);
 
         response.setContentType("text/csv");
         response.setCharacterEncoding("UTF-8");
@@ -129,11 +127,5 @@ public class SampleController {
                 ));
             }
         }
-    }
-
-    private boolean isResearcher() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        return auth != null && auth.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_Researcher"));
     }
 }
