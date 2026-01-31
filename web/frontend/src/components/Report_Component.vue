@@ -97,23 +97,6 @@ export default {
     globalDateEnd: String
   },
 
-  watch: {
-    globalDateStart(newVal) {
-      this.globalDateInFrom = newVal; 
-      if (this.selectedReport) {
-          this.currentPage = 0;
-          this.fetchReport();
-      }
-    },
-    globalDateEnd(newVal) {
-      this.globalDateInTo = newVal;
-      if (this.selectedReport) {
-          this.currentPage = 0;
-          this.fetchReport();
-      }
-    }
-  },
-
   data() {
     return {
       selectedReport: '',
@@ -121,15 +104,6 @@ export default {
       error: null,
       hasSearched: false,
       reportData: [],
-
-      globalDateInFrom: '',
-      globalDateInTo: '',
-      
-      // Pagination State (Server-Side)
-      currentPage: 0,
-      totalPages: 0,
-      totalItems: 0,
-      displayLimit: 25,
 
       params: {
         start: '',
@@ -164,13 +138,6 @@ export default {
       this.currentPage = 0; 
       this.totalPages = 0;
       this.totalItems = 0;
-    },
-
-    changePage(newPage) {
-      if (newPage >= 0 && newPage < this.totalPages) {
-        this.currentPage = newPage;
-        this.fetchReport();
-      }
     },
 
     formatHeader(key) {

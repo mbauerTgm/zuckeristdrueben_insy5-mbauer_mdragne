@@ -82,7 +82,7 @@
           </div>
         </div>
 
-        <button class="header-btn logout-btn" @click="onLogout" title="Abmelden">
+        <button class="header-btn logout-btn" @click="onLogout" title="Abmelden" data-cy="log-out-btn">
           <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
             <path d="M17,17.25V14H10V10H17V6.75L22.25,12L17,17.25M13,2A2,2 0 0,1 15,4V8H13V4H4V20H13V16H15V20A2,2 0 0,1 13,22H4A2,2 0 0,1 2,20V4A2,2 0 0,1 4,2Z" />
           </svg>
