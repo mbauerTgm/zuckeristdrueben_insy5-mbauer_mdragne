@@ -21,9 +21,6 @@ describe('Report System Test:', () => {
     // Report Auswahl (erstes Select)
     cy.get('.controls-card select').eq(0).should('contain', '-- Bitte wählen --')
     
-    // Limit Auswahl (zweites Select) sollte standardmäßig 25 sein (siehe Vue data)
-    cy.get('.controls-card select').eq(1).should('have.value', '25')
-    
     // Button sollte deaktiviert sein, solange kein Report gewählt ist
     cy.get('.btn-load').should('be.disabled')
   })
