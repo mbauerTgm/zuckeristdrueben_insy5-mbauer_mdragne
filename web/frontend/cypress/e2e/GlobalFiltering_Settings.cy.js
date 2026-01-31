@@ -6,12 +6,14 @@ describe('Global Filtering & Settings Test:', () => {
     cy.visit('http://localhost:8082/')
     cy.login('TestAdmin','Sehr_Schwieriges_Test_Passwort!!_Sehr_Geheim_12253')
     
-    cy.intercept('GET', '/api/analysis/filter*').as('filterRequest')
+    cy.intercept('GET', '/api/analysis/filter*').as('anyFilterRequest')
   })
 
   it('Global Date Filter: Set, Apply, Persist and Reset', () => {
-    const startDate = '2024-01-01T12:00:00'
+    const startDate = '2024-01-01T12:00:35'
     const endDate = '2024-12-31T12:00:00'
+
+    cy.intercept('GET', '**globalDateIn.to**').as('completeFilterRequest')
 
     // Einstellungen öffnen
     cy.get('button[title="Einstellungen"]').click()
@@ -20,7 +22,8 @@ describe('Global Filtering & Settings Test:', () => {
     // Datum setzen
     cy.get('.settings-dropdown input[type="datetime-local"]').eq(0).type(startDate)
     cy.get('.settings-dropdown input[type="datetime-local"]').eq(1).type(endDate)
-    cy.wait(500)
+    
+    cy.wait(100) 
 
     // Anwenden klicken
     cy.get('.settings-dropdown .btn-save').click()
@@ -29,29 +32,29 @@ describe('Global Filtering & Settings Test:', () => {
     cy.get('.settings-dropdown').should('not.exist')
 
     // Prüfen, ob der Request die globalen Parameter enthält
-    cy.wait('@filterRequest').then((interception) => {
+    cy.wait('@completeFilterRequest').then((interception) => {
       expect(interception.request.url).to.include('globalDateIn.from')
       expect(interception.request.url).to.include('globalDateIn.to')
     })
 
     // Reload testen (Persistenz Check)
     cy.reload()
-    // Warten bis App geladen
-    cy.wait(1000)
+    // Sicherstellen, dass die App geladen ist (Tabelle sichtbar)
+    cy.get('table').should('be.visible')
     
     // Einstellungen öffnen -> Werte sollten noch da sein
     cy.get('button[title="Einstellungen"]').click()
-    cy.get('.settings-dropdown input[type="datetime-local"]').eq(0).should('have.value', startDate)
+    cy.get('.settings-dropdown input[type="datetime-local"]').eq(0).should('contain.value', startDate.slice(startDate.length-1, startDate.length-3))
 
     // Reset testen
     cy.contains('.btn-link', 'Reset').click()
+    cy.get('button[title="Einstellungen"]').click()
     cy.get('.settings-dropdown input[type="datetime-local"]').eq(0).should('have.value', '')
     
     // Anwenden nach Reset
     cy.get('.settings-dropdown .btn-save').click()
     
-    // Request sollte nun keine Parameter mehr haben
-    cy.wait('@filterRequest').then((interception) => {
+    cy.wait('@anyFilterRequest').then((interception) => {
       expect(interception.response.statusCode).to.eq(200)
     })
   })

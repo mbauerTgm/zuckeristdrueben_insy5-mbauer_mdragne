@@ -148,6 +148,8 @@ export default {
     },
 
     onLoginSuccess() {
+      localStorage.setItem('isAuthenticated', 'true');
+
       this.currentView = 'table';
       window.history.pushState({}, '', '/');
     },
@@ -226,7 +228,8 @@ export default {
     }
 
     window.addEventListener('popstate', () => {
-      const isLoggedIn = !!this.getCookie('jwt');
+      const isLoggedIn = localStorage.getItem('isAuthenticated') === 'true';
+      
       if (!isLoggedIn) {
         this.currentView = 'login';
       } else if (this.currentView === 'login') {
@@ -234,12 +237,12 @@ export default {
       }
     });
     
-    if (this.getCookie('jwt')) {
+    if (localStorage.getItem('isAuthenticated') === 'true') {
       this.currentView = 'table';
     } else {
       this.currentView = 'login';
       if (window.location.pathname !== '/auth') {
-         window.history.replaceState({}, '', '/auth');
+        window.history.replaceState({}, '', '/auth');
       }
     }
   },

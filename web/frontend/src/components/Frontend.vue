@@ -65,7 +65,7 @@
                 <div class="column-dropdown-header">
                   <span>Sichtbare Spalten</span>
                   <button @click="selectAllColumns" class="btn-link">Alle</button>
-                  <button @click="deselectAllColumns" class="btn-link">Keine</button>
+                  <button @click="deselectAllColumns" class="btn-link">Alle Abwählen</button>
                 </div>
                 <div 
                   v-for="col in availableColumns" 
