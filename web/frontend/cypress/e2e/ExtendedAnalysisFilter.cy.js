@@ -35,6 +35,7 @@ describe('Advanced Analysis Filtering:', () => {
   })
 
   after(() => {
+    cy.visit('http://localhost:8082/')
     cy.login('TestAdmin','Sehr_Schwieriges_Test_Passwort!!_Sehr_Geheim_12253')
     
     // Analysis löschen

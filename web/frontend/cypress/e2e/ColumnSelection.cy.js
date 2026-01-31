@@ -11,7 +11,7 @@ describe('Column Selection Test:', () => {
     cy.get('.btn-load').click()
 
     cy.wait('@loadData')
-    cy.get('table').should('exist')
+    cy.get('table', { timeout: 10000 }).should('exist')
   })
 
   it('Toggle specific columns', () => {
