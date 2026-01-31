@@ -28,16 +28,6 @@
         </div>
       </div>
 
-      <div class="control-group">
-        <label>Limit:</label>
-        <select v-model.number="displayLimit" style="width: 80px; min-width: auto;">
-          <option :value="10">10</option>
-          <option :value="25">25</option>
-          <option :value="50">50</option>
-          <option :value="100">100</option>
-        </select>
-      </div>
-
       <div class="control-group button-wrapper">
         <button @click="fetchReport" class="btn btn-load" :disabled="loading || !selectedReport">
           <span v-if="loading">Lade...</span>
@@ -66,20 +56,6 @@
             </tr>
           </tbody>
         </table>
-      </div>
-
-      <div class="table-footer" v-if="!selectedReport === 'daily-report'">
-        <p class="info-text">
-            Zeige {{ reportData.length }} von {{ totalItems }} Einträgen
-        </p>
-        
-        <div class="pagination-controls" v-if="totalPages > 1">
-            <button @click="changePage(0)" :disabled="currentPage === 0" class="btn btn-page">«</button>
-            <button @click="changePage(currentPage - 1)" :disabled="currentPage === 0" class="btn btn-page">‹</button>
-            <span class="page-info">Seite {{ currentPage + 1 }} von {{ totalPages }}</span>
-            <button @click="changePage(currentPage + 1)" :disabled="currentPage >= totalPages - 1" class="btn btn-page">›</button>
-            <button @click="changePage(totalPages - 1)" :disabled="currentPage >= totalPages - 1" class="btn btn-page">»</button>
-        </div>
       </div>
     </div>
 
