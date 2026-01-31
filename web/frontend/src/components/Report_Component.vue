@@ -92,10 +92,6 @@
 <script>
 export default {
   name: 'ReportComponent',
-  props: {
-    globalDateStart: String,
-    globalDateEnd: String
-  },
 
   data() {
     return {

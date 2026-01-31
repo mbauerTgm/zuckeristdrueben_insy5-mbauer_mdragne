@@ -107,8 +107,6 @@
     
     <Report_Component 
       v-else-if="currentView === 'report'" 
-      :global-date-start="appliedStart"
-      :global-date-end="appliedEnd"
     />
   </div>
 </template>
