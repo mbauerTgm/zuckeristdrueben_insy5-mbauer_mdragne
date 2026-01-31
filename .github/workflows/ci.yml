@@ -2,11 +2,9 @@ name: CI – Build & Tests
 
 on:
   push:
-    branches-ignore:
-      - main
-  pull_request:
     branches:
       - main
+      - dev
 
 permissions:
   contents: write
