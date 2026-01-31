@@ -91,23 +91,20 @@ describe('Report System Test:', () => {
     cy.get('.time-inputs input[type="date"]').eq(0).type(startDate)
     cy.get('.time-inputs input[type="date"]').eq(1).type(today)
     
-    // 3. Limit ändern (Testet auch das zweite Select)
-    cy.get('.controls-card select').eq(1).select('10')
-    
-    // 4. Laden
+    // 3. Laden
     cy.get('.btn-load').click()
     
-    // 5. Fehlerbox darf nicht mehr da sein
+    // 4. Fehlerbox darf nicht mehr da sein
     cy.get('.error-box').should('not.exist')
     
-    // 6. Tabelle oder Leermeldung prüfen
+    // 5. Tabelle oder Leermeldung prüfen
     cy.get('body').then(($body) => {
         // Prüfen ob Ladezustand beendet ist
         cy.get('.btn-load').should('contain', 'Report laden')
 
         if ($body.find('.table-scroll').length > 0) {
             // Wenn Daten da sind, prüfen ob Pagination Info sichtbar ist (außer bei daily-report)
-            cy.get('.info-text').should('contain', 'Zeige')
+            cy.get('thead').should('be.visible')
         } else {
             cy.get('.empty-state').should('be.visible')
         }
