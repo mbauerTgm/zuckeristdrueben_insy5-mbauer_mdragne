@@ -25,6 +25,9 @@ describe('Analysis Test:', () => {
 
   afterEach(() => {
     cy.deleteSample(sampleData.comment)
+    cy.get('[data-cy="log-out-btn"]').click();
+    cy.wait(500);
+    cy.url().should('include', '/auth');
   });
 
 
