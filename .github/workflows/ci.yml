@@ -124,6 +124,18 @@ jobs:
           yarn test:report
         continue-on-error: false
 
+      - name: Check coverage report exists
+        run: ls -R web/frontend/coverage || echo "Coverage folder not found!"
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          directory: ./web/frontend/coverage
+          files: ./web/frontend/coverage/lcov.info
+          flags: e2e
+          name: cypress-tests
+          fail_ci_if_error: true
+
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v4
