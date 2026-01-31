@@ -73,6 +73,12 @@ describe('Advanced Analysis Filtering:', () => {
     cy.get('.filter-dropdown .btn-save').click()
   })
 
+  afterEach(() => {
+    cy.get('[data-cy="log-out-btn"]').click();
+    cy.wait(500);
+    cy.url().should('include', '/auth');
+  })
+
   it('Filter by Sample ID Range', () => {
     cy.contains('button', 'Filter').click()
     

@@ -1,4 +1,8 @@
+import { erstelleDatum } from '../support/utils';
+
 describe('Column Selection Test:', () => {
+  const sId = 888888888888 // Test-ID für diesen Test
+  const uniqueComment = 'ColTest_' + Date.now()
 
   before(() => {
     cy.visit('http://localhost:8082/')
@@ -17,7 +21,8 @@ describe('Column Selection Test:', () => {
     // Analyse erstellen
     cy.get(':nth-child(1) > select').select('Analysis')
     cy.get('.btn-load').click()
-    cy.get('.btn-save').click().click() // Create Mode
+    cy.wait(500)
+    cy.get('.btn-save').click()// Create Mode
     cy.wait(500) // UI Animation abwarten
     cy.get('#field-s_id').type(sId)
     cy.get('#field-pol').type(12.5) // Wert für "Pol" Spalte
@@ -26,6 +31,10 @@ describe('Column Selection Test:', () => {
     
     // Logout um Session sauber für die Tests zu übergeben
     cy.get('[data-cy="log-out-btn"]').click()
+
+    cy.get('[data-cy="log-out-btn"]').click();
+    cy.wait(500);
+    cy.url().should('include', '/auth');
   })
 
   beforeEach(() => {
@@ -58,6 +67,12 @@ describe('Column Selection Test:', () => {
     
     // Sample löschen
     cy.deleteSample(uniqueComment)
+  })
+
+  afterEach(() => {
+    cy.get('[data-cy="log-out-btn"]').click();
+    cy.wait(500);
+    cy.url().should('include', '/auth');
   })
 
   it('Toggle specific columns', () => {
