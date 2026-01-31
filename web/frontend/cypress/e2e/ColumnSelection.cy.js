@@ -4,9 +4,14 @@ describe('Column Selection Test:', () => {
     cy.visit('http://localhost:8082/')
     cy.login('TestAdmin','Sehr_Schwieriges_Test_Passwort!!_Sehr_Geheim_12253')
     
-    // Sicherstellen, dass wir auf Analysis sind (hat die meisten Spalten)
+    // Request abfangen, damit wir warten können bis Daten da sind
+    cy.intercept('GET', '/api/analysis/filter*').as('loadData')
+
     cy.get(':nth-child(1) > select').select('Analysis')
     cy.get('.btn-load').click()
+
+    cy.wait('@loadData')
+    cy.get('table').should('exist')
   })
 
   it('Toggle specific columns', () => {
@@ -20,7 +25,7 @@ describe('Column Selection Test:', () => {
     // "Pol" abwählen
     cy.get('.column-dropdown').contains('label', 'Pol').find('input[type="checkbox"]').uncheck()
 
-    // Prüfen, ob "Pol" aus dem Header verschwunden ist
+    // Prüfen, ob "Pol" verschwunden ist
     cy.get('thead').contains('Pol').should('not.exist')
 
     // "Pol" wieder anwählen

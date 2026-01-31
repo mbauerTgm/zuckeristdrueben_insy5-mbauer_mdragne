@@ -2,7 +2,7 @@ import { erstelleDatum } from '../support/utils';
 
 describe('Advanced Analysis Filtering:', () => {
   const uniqueComment = 'AdvFilterTest_' + Date.now()
-  const sId = 999999111111 // Eindeutige ID für den Test
+  const sId = 999999187111 
 
   before(() => {
     cy.visit('http://localhost:8082/')
@@ -25,7 +25,7 @@ describe('Advanced Analysis Filtering:', () => {
     cy.wait(500)
     cy.get('#field-s_id').type(sId)
     cy.get('#field-pol').type(5.5)
-    cy.get('#field-date_in').type(erstelleDatum(0)) // Heute
+    cy.get('#field-date_in').type(erstelleDatum(0)) 
     cy.get('#field-comment').type(uniqueComment)
     cy.get('.form-actions > .btn-save').click()
 
@@ -35,18 +35,29 @@ describe('Advanced Analysis Filtering:', () => {
   })
 
   after(() => {
-    // Cleanup
-    cy.deleteSample(uniqueComment + '_Sample')
+    cy.login('TestAdmin','Sehr_Schwieriges_Test_Passwort!!_Sehr_Geheim_12253')
+    
+    // Analysis löschen
     cy.get(':nth-child(1) > select').select('Analysis')
     cy.get('.btn-load').click()
     cy.get('.search-input').clear().type(uniqueComment)
     cy.get('.search-input-group > .btn').click()
+    
+    // Warten bis Suche fertig ist
+    cy.wait(1000) 
+    
     cy.get('body').then($body => {
+        // Nur löschen, wenn auch wirklich was gefunden wurde
         if ($body.find('.btn-delete').length > 0) {
             cy.get('.btn-delete').first().click()
             cy.get('.modal-actions > .btn-delete').click()
+            // Warten bis Modal weg ist und Delete durch ist
+            cy.wait(1000)
         }
     })
+
+    // Sample löschen
+    cy.deleteSample(uniqueComment + '_Sample')
   })
 
   beforeEach(() => {
@@ -81,8 +92,7 @@ describe('Advanced Analysis Filtering:', () => {
   })
 
   it('Filter by Date In (Datetime Local)', () => {
-    // Wir nehmen gestern als Start und morgen als Ende
-    const yesterday = erstelleDatum(-1).slice(0, 16) // Format anpassen falls nötig
+    const yesterday = erstelleDatum(-1).slice(0, 16)
     const tomorrow = erstelleDatum(1).slice(0, 16)
 
     cy.contains('button', 'Filter').click()
