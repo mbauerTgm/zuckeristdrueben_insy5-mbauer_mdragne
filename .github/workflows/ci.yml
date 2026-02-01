@@ -2,11 +2,9 @@ name: CI – Build & Tests
 
 on:
   push:
-    branches-ignore:
-      - main
-  pull_request:
     branches:
       - main
+      - dev
 
 permissions:
   contents: write
@@ -54,6 +52,7 @@ jobs:
           docker exec -i zuckerpostgres psql -U postgres -c "DROP DATABASE IF EXISTS venlab;"
           docker exec -i zuckerpostgres psql -U postgres -c "CREATE DATABASE venlab;"
           docker exec -i zuckerpostgres psql -U postgres -d venlab < db_init_schema/init_schema.sql
+          docker exec -i zuckerpostgres psql -U postgres -d venlab < db_init_schema/functions.sql
       - name: Insert CI test user
         run: |
           docker exec -i zuckerpostgres psql -U postgres -d venlab <<'EOF'
@@ -122,6 +121,18 @@ jobs:
           cd web/frontend
           yarn test:report
         continue-on-error: false
+
+      - name: Check coverage report exists
+        run: ls -R web/frontend/coverage || echo "Coverage folder not found!"
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          directory: ./web/frontend/coverage
+          files: ./web/frontend/coverage/lcov.info
+          flags: e2e
+          name: cypress-tests
+          fail_ci_if_error: true
 
       - name: Upload test results
         if: always()

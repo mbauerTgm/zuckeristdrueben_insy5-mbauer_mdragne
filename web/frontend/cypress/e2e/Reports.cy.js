@@ -21,41 +21,30 @@ describe('Report System Test:', () => {
     // Report Auswahl (erstes Select)
     cy.get('.controls-card select').eq(0).should('contain', '-- Bitte wählen --')
     
-    // Limit Auswahl (zweites Select) sollte standardmäßig 25 sein (siehe Vue data)
-    cy.get('.controls-card select').eq(1).should('have.value', '25')
-    
     // Button sollte deaktiviert sein, solange kein Report gewählt ist
     cy.get('.btn-load').should('be.disabled')
   })
 
   it('Load Report without parameters (e.g. BoxPos without Sample)', () => {
-    // 1. Netzwerk-Request abfangen (bevor wir klicken!)
-    // Wir hören auf alle GET-Anfragen an /api/reports/...
+    // Netzwerk-Request abfangen (bevor wir klicken!)
     cy.intercept('GET', '/api/reports/**').as('loadReport')
 
     const reportName = 'Box-Positionen ohne Sample'
     cy.get('.controls-card select').eq(0).select(reportName)
     
-    // 2. Klicken
+    // Klicken
     cy.get('.btn-load').click()
     
-    // 3. WICHTIG: Statt auf "Lade..." zu warten, warten wir, bis die API antwortet.
-    // Das ist viel stabiler als UI-Texte, die nur millisekundenlang sichtbar sind.
     cy.wait('@loadReport')
 
-    // 4. Ergebnis prüfen: Entweder Tabelle ODER "Keine Ergebnisse"
-    // Wir nutzen .then(), um den aktuellen Body-Status synchron zu prüfen
+    // Ergebnis prüfen: Entweder Tabelle ODER "Keine Ergebnisse"
+    cy.get('table, .empty-state', { timeout: 10000 }).should('be.visible')
+
     cy.get('body').then(($body) => {
-      // Wir suchen im Body nach dem Element mit der Klasse .empty-state
       if ($body.find('.empty-state').length > 0) {
-        // Fall A: Keine Ergebnisse
-        cy.get('.empty-state').should('contain', 'Keine Ergebnisse für diesen Report gefunden.')
-        cy.get('.empty-state').should('be.visible')
+        cy.get('.empty-state').should('contain', 'Keine Ergebnisse')
       } else {
-        // Fall B: Tabelle vorhanden
         cy.get('table').should('be.visible')
-        // Optional: Header prüfen
-        cy.get('thead').should('exist')
       }
     })
   })
@@ -94,23 +83,20 @@ describe('Report System Test:', () => {
     cy.get('.time-inputs input[type="date"]').eq(0).type(startDate)
     cy.get('.time-inputs input[type="date"]').eq(1).type(today)
     
-    // 3. Limit ändern (Testet auch das zweite Select)
-    cy.get('.controls-card select').eq(1).select('10')
-    
-    // 4. Laden
+    // 3. Laden
     cy.get('.btn-load').click()
     
-    // 5. Fehlerbox darf nicht mehr da sein
+    // 4. Fehlerbox darf nicht mehr da sein
     cy.get('.error-box').should('not.exist')
     
-    // 6. Tabelle oder Leermeldung prüfen
+    // 5. Tabelle oder Leermeldung prüfen
     cy.get('body').then(($body) => {
         // Prüfen ob Ladezustand beendet ist
         cy.get('.btn-load').should('contain', 'Report laden')
 
         if ($body.find('.table-scroll').length > 0) {
             // Wenn Daten da sind, prüfen ob Pagination Info sichtbar ist (außer bei daily-report)
-            cy.get('.info-text').should('contain', 'Zeige')
+            cy.get('thead').should('be.visible')
         } else {
             cy.get('.empty-state').should('be.visible')
         }

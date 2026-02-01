@@ -1,5 +1,62 @@
 [![CD – Deployment (main)](https://github.com/TGM-HIT/insy5-informationssysteme-vue-pwa-pwa_mbauer_mdragne_dgernesch/actions/workflows/cd.yml/badge.svg)](https://github.com/TGM-HIT/insy5-informationssysteme-vue-pwa-pwa_mbauer_mdragne_dgernesch/actions/workflows/cd.yml)
 [![CI – Build & Tests (dev)](https://github.com/TGM-HIT/insy5-informationssysteme-vue-pwa-pwa_mbauer_mdragne_dgernesch/actions/workflows/ci.yml/badge.svg?branch=dev)](https://github.com/TGM-HIT/insy5-informationssysteme-vue-pwa-pwa_mbauer_mdragne_dgernesch/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/github/mbauerTgm/zuckeristdrueben_insy5-mbauer_mdragne/graph/badge.svg)](https://codecov.io/github/mbauerTgm/zuckeristdrueben_insy5-mbauer_mdragne)
+
+# Informationssysteme "PWA Deployment" EK
+von: Maximilian Bauer, Matei Dragne 5CHITM
+
+## Login mit JWT Tokens und Roles
+Wir haben das Projekt um ein Security System erweitert, dass mit JWT/JWA und HTTP-Only Cookies logins sicher hält. Dazu wurden zwei neue Datenbank Schemas, Users und Role in der Datenbank eingebracht. Dann haben wir im Backend einen AuthControler hinzugefügt, der die API Endpoint für Login & out enthält, als auch einige Services wie den Passwortencrypter und den Service der die JTW Tokens erstellt. Diese werden dem Browser des Users übergeben, in den Cookies gespeichert.
+
+ Nun wird bei jedem API Call durch den Befhel "credentials: 'include'" im Browser nach Cookies für die Domain gesucht und im Request mit geschickt. Bevor irgendein Controller (z.B. getAllAnalysis) ausgeführt wird, fängt dieser Filter in der Klasse 'JwtTokenFilter' die Anfrage ab. Er sucht im Request nach dem Cookie 'jwt', wenn er vorhanden ist überprüft er ihn. Wenn alles passt, liest er die User-ID und die Rollen (z.B. "Admin", "Researcher") aus dem Token aus und leitet den Befehl an den gesuchten Controller weiter.
+
+Es gibt folgende Rollen:
+- Admin: Hat volle Rechte, kann alle Daten einsehen, bearbeiten und löschen, kann neue Datensätze anlegen und (im Frontend noch nicht implementiert) neue Nutzer anlegen.
+- Researcher: Kann Datensätze bearbeiten und erstellen, aber nicht löschen. Er kann in den Tabellen nur Daten aus Sample und Analysis sehen, bei denen die Flags mit F oder V beginnen.
+- Reader: Kann alle Daten lesen (Read Only)
+
+#### Einfügen eines Testusers in die Datenbank
+Falls für das das lokale verwenden oder das ausführen der Tests, eine User benötigt wird kann mit folgendem Befehl ein User mit dem Username: 'TestAdmin' und dem Passwort 'Sehr_Schwieriges_Test_Passwort!!_Sehr_Geheim_12253', in die Datenbank integriert werden:
+
+```bash
+docker exec -i zuckerpostgres psql -U postgres -d database -c "INSERT INTO venlab.users (username, password_hash, role_id, created_at) VALUES ('TestAdmin', '$2a$12$/x3aVXCCLs6YCvN5O4lwhu3TLNLfncNqhRAiIrkfFXkC0GrPYVU..', 1, NOW());"
+```
+Der Vorletzte Parameter in diesem INSERT Befehl ist die Rolle des Users. 1 - Admin, 3 - Researcher, 2 - Reader. 
+Der letzte Parameter ist der erstellungs Zeitstempel.
+
+## Filterung & Paging im Backend
+Um eine bessere Performance sowohl im Front- als auch im Backend zu erzielen wurde eine Filterung und ein Paging im Backend umgesetzt.
+
+Für das Paging wurde Springboots Pagable interface verwendet. Es sortiert Daten und Paginiert diese automatisch im Backend. Dabei übergibt das Interface bei jedem Request die Daten im context[], aber auch Informationen für das Paging wie Seite, insgesammte Seiten und insgesammte Items der Tabelle. Dadurch musste das Frontend kaum geändert werden. 
+
+Die Filterung im Backend wurde mittels Specifications und DynamicFilter umgesetzt.
+Das Backend bekommt durch POJO Angaben, die Durch ein Dto vordefiniert sind, im HTTP Request mittgeteilt nach was gefiltert werden soll. Die Angaben werden dann durch die Implementierung der Specifications und DynamicFilter in fertige Querys umgewandelt und (gepaded) wieder an das Frontend geschickt.
+
+Die ursprünglichen GET Request wurden nicht ersetzt, sondern die Server Paginated Verion und bei den Tabellen Analysis und Sample Serverseitig gefilterte Version ist unter `/api/<tablename>/filter` zu finden.
+
+## Eingeschränkte Daten Anzeige für Researcher
+Die Einschränkung für Reseacher wurde ebenfalls durch eine filterung im Backend umgesetzt.
+Da wir zuerst das Security- und Rollenmanagment implementiert haben und danach den jenen Punkt hatten wir zwei Iterationen dieser Rollenbasierten Filterung. Bei beiden wurde aus dem SecurityContext die Rolle des Benutzers entnommen.
+
+Zuerst wurde eifach das Repository von Analysis und Sample um eine Funktion mit @Query Annotation und simpler Sql Abfrage.
+```java
+@Query("SELECT a FROM Analysis a WHERE a.aFlags LIKE 'F%' OR a.aFlags LIKE 'V%'")
+List<Analysis> findAllForResearcher();
+```
+
+Als die Backendfilterung mit Specifications und DynamicFilter implementiert wurde setzten wir es mittels `.add(...)` um. Damit wurde an den Query ein `AND` mit der Flags Bedinngung für den Researcher drangehängt.
+
+## CSV Export über ReST-Schnittstelle
+Im Gegensatz zur Web-Ansicht, die aus Performancegründen mit einer Paginierung (Seitenaufteilung) arbeitet, gibt es einen Export, der  sicherstellt, dass der gesamte Datensatz gemeinsam in einer Datei vorliegt.
+Der Button löst einen GET-Request an `/api/export` aus. Das Backend generiert zur Laufzeit einen CSV-Stream, der über das Frontend als Download (`.csv`) bereitgestellt wird.
+
+## Erstellung und Anzeige der Reports auf Basis der SQL-Funktionen
+Um Qualität der täglichen Daten sicherzustellen, nutzt das System spezialisierte SQL-Funktionen die im Backend und der Datenbank definiert sind. Das Backend besitzt API-Endpunkte, die mit den Funktionen gezielt nach ungültigen oder inkonsistenten Datensätzen suchen. Das Ziel dieser Reports ist es, Fehler im Arbeitsablauf sofort sichtbar zu machen und sicherzustellen, dass jede Probe den korrekten Prozess durchläuft.
+
+Beispielsweise konzentriert sich ein Teil dieser Analyse auf die Boxen. Hier wird automatisch geprüft, ob Boxen ohne zugewiesene Samplenummern existieren oder ob Samples im System gespeichert sind, für die noch keine Analyse gestartet wurde. Ebenso identifiziert das System Analysen, denen eine feste Rückstellposition im Lager fehlt.
+
+## Globale Filterung
+Die Globale Filterung vom DateIn wurde durch eine Erweiterung der bestehenden Filterung um ein DTO im POJO Request erweitert.
 
 # Informationssysteme "PWA Deployment" GK
 von: Maximilian Bauer, Matei Dragne, Denis Gernesch 5CHITM
@@ -61,6 +118,20 @@ Es gab an Anfang nur ein Favicon und mit der Website kann man die weiteren Gener
 
 Die PWA-Funktionalität wurde mit Browser-Tools überprüft unter Chrome DevTools → Application → Manifest / Service Worker / Cache Storage
 
+**Web App Manifest**
+Das Manifest (manifest.json) definiert die Identität der App. Durch die Konfiguration in der vue.config.js wird sichergestellt, dass die App im Standalone-Modus (ohne Browser-Adressleiste) startet.
+
+- Display: standalone für das "Native App"-Feeling.
+
+- Icons: Bereitstellung von hochauflösenden Icons (192x192 und 512x512) für Homescreen und Taskleiste. [5][6]
+
+- Service Worker mit Workbox
+Die App nutzt das Workbox-Plugin im Modus GenerateSW, um den Service Worker automatisch zu bauen.
+
+Caching-Strategie: Ressourcen (HTML, JS, CSS) werden lokal zwischengespeichert, was zu extrem schnellen Ladezeiten und eingeschränkter Offline-Kompatibilität führt.
+
+Update-Logik: Durch skipWaiting: true und clientsClaim: true werden neue Versionen der App nach einem Deployment sofort aktiv.
+
 ### Dark mode
 Die Weboberfläche unterstützt einen Dark Mode, um die Lesbarkeit bei wenig Licht zu verbessern und eine moderne UI bereitzustellen</br>
 [7][8]
@@ -77,61 +148,6 @@ Damit können Benutzer gezielt festlegen, welche Spalten angezeigt werden.
 Zusätzlich gibt es „Alle“ und „Keine“, um schnell alle Spalten ein- oder auszublenden.
 [9][10]
 
-# Informationssysteme "PWA Deployment" EK
-von: Maximilian Bauer, Matei Dragne 5CHITM
-
-## Login mit JWT Tokens und Roles
-Wir haben das Projekt um ein Security System erweitert, dass mit JWT/JWA und HTTP-Only Cookies logins sicher hält. Dazu wurden zwei neue Datenbank Schemas, Users und Role in der Datenbank eingebracht. Dann haben wir im Backend einen AuthControler hinzugefügt, der die API Endpoint für Login & out enthält, als auch einige Services wie den Passwortencrypter und den Service der die JTW Tokens erstellt. Diese werden dem Browser des Users übergeben, in den Cookies gespeichert.
-
- Nun wird bei jedem API Call durch den Befhel "credentials: 'include'" im Browser nach Cookies für die Domain gesucht und im Request mit geschickt. Bevor irgendein Controller (z.B. getAllAnalysis) ausgeführt wird, fängt dieser Filter in der Klasse 'JwtTokenFilter' die Anfrage ab. Er sucht im Request nach dem Cookie 'jwt', wenn er vorhanden ist überprüft er ihn. Wenn alles passt, liest er die User-ID und die Rollen (z.B. "Admin", "Researcher") aus dem Token aus und leitet den Befehl an den gesuchten Controller weiter.
-
-Es gibt folgende Rollen:
-- Admin: Hat volle Rechte, kann alle Daten einsehen, bearbeiten und löschen, kann neue Datensätze anlegen und (im Frontend noch nicht implementiert) neue Nutzer anlegen.
-- Researcher: Kann Datensätze bearbeiten und erstellen, aber nicht löschen. Er kann in den Tabellen nur Daten aus Sample und Analysis sehen, bei denen die Flags mit F oder V beginnen.
-- Reader: Kann alle Daten lesen (Read Only)
-
-#### Einfügen eines Testusers in die Datenbank
-Falls für das das lokale verwenden oder das ausführen der Tests, eine User benötigt wird kann mit folgendem Befehl ein User mit dem Username: 'TestAdmin' und dem Passwort 'Sehr_Schwieriges_Test_Passwort!!_Sehr_Geheim_12253', in die Datenbank integriert werden:
-
-```bash
-docker exec -i zuckerpostgres psql -U postgres -d database -c "INSERT INTO venlab.users (username, password_hash, role_id, created_at) VALUES ('TestAdmin', '$2a$12$/x3aVXCCLs6YCvN5O4lwhu3TLNLfncNqhRAiIrkfFXkC0GrPYVU..', 1, NOW());"
-```
-Der Vorletzte Parameter in diesem INSERT Befehl ist die Rolle des Users. 1 - Admin, 3 - Researcher, 2 - Reader. 
-Der letzte Parameter ist der erstellungs Zeitstempel.
-
-## Filterung & Paging im Backend
-Um eine bessere Performance sowohl im Front- als auch im Backend zu erzielen wurde eine Filterung und ein Paging im Backend umgesetzt.
-
-Für das Paging wurde Springboots Pagable interface verwendet. Es sortiert Daten und Paginiert diese automatisch im Backend. Dabei übergibt das Interface bei jedem Request die Daten im context[], aber auch Informationen für das Paging wie Seite, insgesammte Seiten und insgesammte Items der Tabelle. Dadurch musste das Frontend kaum geändert werden. 
-
-Die Filterung im Backend wurde mittels Specifications und DynamicFilter umgesetzt.
-Das Backend bekommt durch POJO Angaben, die Durch ein Dto vordefiniert sind, im HTTP Request mittgeteilt nach was gefiltert werden soll. Die Angaben werden dann durch die Implementierung der Specifications und DynamicFilter in fertige Querys umgewandelt und (gepaded) wieder an das Frontend geschickt.
-
-Die ursprünglichen GET Request wurden nicht ersetzt, sondern die Server Paginated Verion und bei den Tabellen Analysis und Sample Serverseitig gefilterte Version ist unter `/api/<tablename>/filter` zu finden.
-
-## Eingeschränkte Daten Anzeige für Researcher
-Die Einschränkung für Reseacher wurde ebenfalls durch eine filterung im Backend umgesetzt.
-Da wir zuerst das Security- und Rollenmanagment implementiert haben und danach den jenen Punkt hatten wir zwei Iterationen dieser Rollenbasierten Filterung. Bei beiden wurde aus dem SecurityContext die Rolle des Benutzers entnommen.
-
-Zuerst wurde eifach das Repository von Analysis und Sample um eine Funktion mit @Query Annotation und simpler Sql Abfrage.
-```java
-@Query("SELECT a FROM Analysis a WHERE a.aFlags LIKE 'F%' OR a.aFlags LIKE 'V%'")
-List<Analysis> findAllForResearcher();
-```
-
-Als die Backendfilterung mit Specifications und DynamicFilter implementiert wurde setzten wir es mittels `.add(...)` um. Damit wurde an den Query ein `AND` mit der Flags Bedinngung für den Researcher drangehängt.
-
-## CSV Export über ReST-Schnittstelle
-Im Gegensatz zur Web-Ansicht, die aus Performancegründen mit einer Paginierung (Seitenaufteilung) arbeitet, gibt es einen Export, der  sicherstellt, dass der gesamte Datensatz gemeinsam in einer Datei vorliegt.
-Der Button löst einen GET-Request an `/api/export` aus. Das Backend generiert zur Laufzeit einen CSV-Stream, der über das Frontend als Download (`.csv`) bereitgestellt wird.
-
-## Erstellung und Anzeige der Reports auf Basis der SQL-Funktionen
-Um Qualität der täglichen Daten sicherzustellen, nutzt das System spezialisierte SQL-Funktionen die im Backend und der Datenbank definiert sind. Das Backend besitzt API-Endpunkte, die mit den Funktionen gezielt nach ungültigen oder inkonsistenten Datensätzen suchen. Das Ziel dieser Reports ist es, Fehler im Arbeitsablauf sofort sichtbar zu machen und sicherzustellen, dass jede Probe den korrekten Prozess durchläuft.
-
-Beispielsweise konzentriert sich ein Teil dieser Analyse auf die Boxen. Hier wird automatisch geprüft, ob Boxen ohne zugewiesene Samplenummern existieren oder ob Samples im System gespeichert sind, für die noch keine Analyse gestartet wurde. Ebenso identifiziert das System Analysen, denen eine feste Rückstellposition im Lager fehlt.
-
-## Globale Filterung
-Die Globale Filterung vom DateIn wurde durch eine Erweiterung der bestehenden Filterung um ein DTO im POJO Request erweitert.
 
 # Projekt lokal starten – Schritt-für-Schritt Anleitung (aus vorherigen Aufgaben)
 
@@ -207,20 +223,6 @@ npx swagger-markdown -i swagger.json
 ```bash
 docker run --rm -v "%cd%:/local" openapitools/openapi-generator-cli generate -i /local/swagger.json -g markdown -o /local/api-doc
 ```
-
-### 6. Web App Manifest
-Das Manifest (manifest.json) definiert die Identität der App. Durch die Konfiguration in der vue.config.js wird sichergestellt, dass die App im Standalone-Modus (ohne Browser-Adressleiste) startet.
-
-- Display: standalone für das "Native App"-Feeling.
-
-- Icons: Bereitstellung von hochauflösenden Icons (192x192 und 512x512) für Homescreen und Taskleiste. [5][6]
-
-- Service Worker mit Workbox
-Die App nutzt das Workbox-Plugin im Modus GenerateSW, um den Service Worker automatisch zu bauen.
-
-Caching-Strategie: Ressourcen (HTML, JS, CSS) werden lokal zwischengespeichert, was zu extrem schnellen Ladezeiten und eingeschränkter Offline-Kompatibilität führt.
-
-Update-Logik: Durch skipWaiting: true und clientsClaim: true werden neue Versionen der App nach einem Deployment sofort aktiv.
 
 ## Quellen:
 \[1\] Oracle, "Connecting to a Port Forwarding Session," Oracle Cloud Infrastructure Documentation, 2024. [Online]. Available: https://docs.oracle.com/en-us/iaas/Content/Bastion/Tasks/connect-port-forwarding.htm. Accessed: Jan. 8, 2026. <br>

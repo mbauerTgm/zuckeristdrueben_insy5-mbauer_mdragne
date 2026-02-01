@@ -28,16 +28,6 @@
         </div>
       </div>
 
-      <div class="control-group">
-        <label>Limit:</label>
-        <select v-model.number="displayLimit" style="width: 80px; min-width: auto;">
-          <option :value="10">10</option>
-          <option :value="25">25</option>
-          <option :value="50">50</option>
-          <option :value="100">100</option>
-        </select>
-      </div>
-
       <div class="control-group button-wrapper">
         <button @click="fetchReport" class="btn btn-load" :disabled="loading || !selectedReport">
           <span v-if="loading">Lade...</span>
@@ -67,20 +57,6 @@
           </tbody>
         </table>
       </div>
-
-      <div class="table-footer" v-if="!selectedReport === 'daily-report'">
-        <p class="info-text">
-            Zeige {{ reportData.length }} von {{ totalItems }} Einträgen
-        </p>
-        
-        <div class="pagination-controls" v-if="totalPages > 1">
-            <button @click="changePage(0)" :disabled="currentPage === 0" class="btn btn-page">«</button>
-            <button @click="changePage(currentPage - 1)" :disabled="currentPage === 0" class="btn btn-page">‹</button>
-            <span class="page-info">Seite {{ currentPage + 1 }} von {{ totalPages }}</span>
-            <button @click="changePage(currentPage + 1)" :disabled="currentPage >= totalPages - 1" class="btn btn-page">›</button>
-            <button @click="changePage(totalPages - 1)" :disabled="currentPage >= totalPages - 1" class="btn btn-page">»</button>
-        </div>
-      </div>
     </div>
 
     <div v-else-if="!loading && hasSearched" class="empty-state">
@@ -92,27 +68,6 @@
 <script>
 export default {
   name: 'ReportComponent',
-  props: {
-    globalDateStart: String,
-    globalDateEnd: String
-  },
-
-  watch: {
-    globalDateStart(newVal) {
-      this.globalDateInFrom = newVal; 
-      if (this.selectedReport) {
-          this.currentPage = 0;
-          this.fetchReport();
-      }
-    },
-    globalDateEnd(newVal) {
-      this.globalDateInTo = newVal;
-      if (this.selectedReport) {
-          this.currentPage = 0;
-          this.fetchReport();
-      }
-    }
-  },
 
   data() {
     return {
@@ -121,15 +76,6 @@ export default {
       error: null,
       hasSearched: false,
       reportData: [],
-
-      globalDateInFrom: '',
-      globalDateInTo: '',
-      
-      // Pagination State (Server-Side)
-      currentPage: 0,
-      totalPages: 0,
-      totalItems: 0,
-      displayLimit: 25,
 
       params: {
         start: '',
@@ -164,13 +110,6 @@ export default {
       this.currentPage = 0; 
       this.totalPages = 0;
       this.totalItems = 0;
-    },
-
-    changePage(newPage) {
-      if (newPage >= 0 && newPage < this.totalPages) {
-        this.currentPage = newPage;
-        this.fetchReport();
-      }
     },
 
     formatHeader(key) {

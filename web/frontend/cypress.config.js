@@ -12,6 +12,7 @@ module.exports = defineConfig({
   e2e: {
     setupNodeEvents(on, config) {
       require('cypress-mochawesome-reporter/plugin')(on);
+      require('@cypress/code-coverage/task')(on, config);
       return config;
     },
     

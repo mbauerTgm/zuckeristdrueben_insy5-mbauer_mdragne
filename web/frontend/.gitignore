@@ -7,6 +7,9 @@ cypress/e2e/2-advanced-examples
 cypress/videos
 cypress/screenshots
 cypress/reports
+coverage
+.nyc_output
+cypress/downloads
 
 
 # local env files
