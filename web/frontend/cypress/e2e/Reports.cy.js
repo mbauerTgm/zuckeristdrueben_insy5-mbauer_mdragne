@@ -43,6 +43,7 @@ describe('Report System Test:', () => {
     // 4. Ergebnis prüfen: Entweder Tabelle ODER "Keine Ergebnisse"
     // Wir nutzen .then(), um den aktuellen Body-Status synchron zu prüfen
     cy.get('body').then(($body) => {
+      cy.wait(1000)
       // Wir suchen im Body nach dem Element mit der Klasse .empty-state
       if ($body.find('.empty-state').length > 0) {
         // Fall A: Keine Ergebnisse

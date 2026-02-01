@@ -2,6 +2,9 @@ import { erstelleDatum } from '../support/utils';
 
 describe('Global Filtering & Settings Test:', () => {
 
+  const uniqueComment = 'GlobalTest_' + Date.now()
+  const sId = '777187777777'
+
   before(() => {
     cy.visit('http://localhost:8082/')
     cy.login('TestAdmin','Sehr_Schwieriges_Test_Passwort!!_Sehr_Geheim_12253')
