@@ -30,8 +30,6 @@ describe('Column Selection Test:', () => {
     cy.get('.form-actions > .btn-save').click()
     
     // Logout um Session sauber für die Tests zu übergeben
-    cy.get('[data-cy="log-out-btn"]').click()
-
     cy.get('[data-cy="log-out-btn"]').click();
     cy.wait(500);
     cy.url().should('include', '/auth');
