@@ -1,6 +1,58 @@
 import { erstelleDatum } from '../support/utils';
 
 describe('Global Filtering & Settings Test:', () => {
+
+  before(() => {
+    cy.visit('http://localhost:8082/')
+    cy.login('TestAdmin','Sehr_Schwieriges_Test_Passwort!!_Sehr_Geheim_12253')
+
+    cy.createSample({
+        s_id: sId,
+        s_stamp: erstelleDatum(0),
+        name: 'GlobalBase',
+        weight_net: 10, weight_bru: 11, weight_tar: 1, quantity: 1, distance: 10,
+        date_crumbled: erstelleDatum(0), s_flags: '-', lane: 1, 
+        comment: uniqueComment
+    })
+
+    cy.get(':nth-child(1) > select').select('Analysis')
+    cy.get('.btn-load').click()
+    cy.get('.btn-save').click().click()
+    cy.wait(500)
+    cy.get('#field-s_id').type(sId)
+    cy.get('#field-date_in').type(erstelleDatum(0)) 
+    cy.get('.form-actions > .btn-save').click()
+    
+    cy.get('[data-cy="log-out-btn"]').click()
+  })
+
+  after(() => {
+    cy.visit('http://localhost:8082/auth')
+    cy.get('#username', { timeout: 10000 }).should('be.visible')
+    cy.login('TestAdmin','Sehr_Schwieriges_Test_Passwort!!_Sehr_Geheim_12253')
+    
+    // Analysis löschen
+    cy.get(':nth-child(1) > select').select('Analysis')
+    cy.get('.btn-load').click()
+    
+    cy.contains('button', 'Filter').click()
+    cy.contains('.filter-group', 'Sample ID').within(() => {
+        cy.get('input').eq(0).type(sId)
+        cy.get('input').eq(1).type(sId)
+    })
+    cy.get('.filter-dropdown .btn-save').click()
+    cy.wait(1000)
+
+    cy.get('body').then($body => {
+        if ($body.find('.btn-delete').length > 0) {
+             cy.get('.btn-delete').first().click()
+             cy.get('.modal-actions > .btn-delete').click()
+             cy.wait(1000)
+        }
+    })
+    
+    cy.deleteSample(uniqueComment)
+  })
   
   beforeEach(() => {
     cy.visit('http://localhost:8082/')
