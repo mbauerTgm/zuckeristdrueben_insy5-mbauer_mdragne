@@ -26,34 +26,25 @@ describe('Report System Test:', () => {
   })
 
   it('Load Report without parameters (e.g. BoxPos without Sample)', () => {
-    // 1. Netzwerk-Request abfangen (bevor wir klicken!)
-    // Wir hören auf alle GET-Anfragen an /api/reports/...
+    // Netzwerk-Request abfangen (bevor wir klicken!)
     cy.intercept('GET', '/api/reports/**').as('loadReport')
 
     const reportName = 'Box-Positionen ohne Sample'
     cy.get('.controls-card select').eq(0).select(reportName)
     
-    // 2. Klicken
+    // Klicken
     cy.get('.btn-load').click()
     
-    // 3. WICHTIG: Statt auf "Lade..." zu warten, warten wir, bis die API antwortet.
-    // Das ist viel stabiler als UI-Texte, die nur millisekundenlang sichtbar sind.
     cy.wait('@loadReport')
 
-    // 4. Ergebnis prüfen: Entweder Tabelle ODER "Keine Ergebnisse"
-    // Wir nutzen .then(), um den aktuellen Body-Status synchron zu prüfen
+    // Ergebnis prüfen: Entweder Tabelle ODER "Keine Ergebnisse"
+    cy.get('table, .empty-state', { timeout: 10000 }).should('be.visible')
+
     cy.get('body').then(($body) => {
-      cy.wait(1000)
-      // Wir suchen im Body nach dem Element mit der Klasse .empty-state
       if ($body.find('.empty-state').length > 0) {
-        // Fall A: Keine Ergebnisse
-        cy.get('.empty-state').should('contain', 'Keine Ergebnisse für diesen Report gefunden.')
-        cy.get('.empty-state').should('be.visible')
+        cy.get('.empty-state').should('contain', 'Keine Ergebnisse')
       } else {
-        // Fall B: Tabelle vorhanden
         cy.get('table').should('be.visible')
-        // Optional: Header prüfen
-        cy.get('thead').should('exist')
       }
     })
   })

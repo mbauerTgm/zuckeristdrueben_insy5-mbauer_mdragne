@@ -28,10 +28,17 @@ describe('Global Filtering & Settings Test:', () => {
     
     cy.get('[data-cy="log-out-btn"]').click()
   })
-
   after(() => {
+    cy.request({
+      method: 'POST', 
+      url: '/api/auth/logout', 
+      failOnStatusCode: false
+    })
+
     cy.visit('http://localhost:8082/auth')
+    
     cy.get('#username', { timeout: 10000 }).should('be.visible')
+    
     cy.login('TestAdmin','Sehr_Schwieriges_Test_Passwort!!_Sehr_Geheim_12253')
     
     // Analysis löschen
