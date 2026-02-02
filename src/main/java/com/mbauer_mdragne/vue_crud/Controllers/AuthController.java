@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
@@ -42,7 +43,7 @@ public class AuthController {
 
     // ===== SignIn mit HttpOnly Cookie =====
     @PostMapping("/login")
-    public ResponseEntity<?> signIn(@RequestBody LoginRequest req) {
+    public ResponseEntity<?> signIn(@RequestBody LoginRequest req, HttpServletRequest request) {
         if (req == null || req.UsersID == null || req.password == null) {
             return problem(HttpStatus.BAD_REQUEST, "Missing credentials");
         }
@@ -57,10 +58,12 @@ public class AuthController {
 
         String token = jwtUtil.generateToken(Users.getId().toString(), List.of(Users.getRole().getName()));
 
+        boolean isSecure = request.isSecure();
+
         // Cookie Erstellen
         ResponseCookie jwtCookie = ResponseCookie.from("jwt", token)
                 .httpOnly(true) // JS kann es nicht lesen
-                .secure(false) // false für Localhost, true für Produktion (HTTPS)
+                .secure(isSecure) // false für Localhost, true für Produktion (HTTPS)
                 .path("/") // Gilt für die ganze Seite
                 .maxAge(24 * 60 * 60) // 1 Tag gültig (in Sekunden)
                 .sameSite("Strict")// Schutz vor CSRF
@@ -77,13 +80,56 @@ public class AuthController {
                 .body(body);
     }
 
+    // ===== Guest Login (Read Only) =====
+    @PostMapping("/guest")
+    public ResponseEntity<?> guestLogin(HttpServletRequest request) {
+        Users guestUser = UsersService.getUserByUserID("guest").orElseGet(() -> {
+            // Falls 'guest' nicht existiert -> anlegen
+            Role readerRole = roleRepository.findByName("Reader")
+                    .orElseThrow(() -> new RuntimeException("Role 'Reader' not found inside DB."));
+            
+            Users newGuest = new Users();
+            newGuest.setUserID("guest");
+            // Ein zufälliges Passwort, das niemand kennt
+            newGuest.setPassword(passwordEncoder.encode("guest-secret-" + java.util.UUID.randomUUID())); 
+            newGuest.setRole(readerRole);
+            newGuest.setCreatedAt(LocalDateTime.now());
+            
+            return UsersService.updateUser(newGuest); // Speichert den neuen User
+        });
+
+        String token = jwtUtil.generateToken(guestUser.getId().toString(), List.of(guestUser.getRole().getName()));
+
+        boolean isSecure = request.isSecure();
+
+        ResponseCookie jwtCookie = ResponseCookie.from("jwt", token)
+                .httpOnly(true)
+                .secure(isSecure)
+                .path("/")
+                .maxAge(24 * 60 * 60)
+                .sameSite("Strict")
+                .build();
+
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("message", "guest_login_success");
+        body.put("UsersID", "Gast");
+        body.put("role", guestUser.getRole().getName());
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, jwtCookie.toString())
+                .body(body);
+    }
+
     // ===== Logout (Cookie löschen) =====
     // Da das Frontend das Cookie nicht löschen kann, muss das Backend ein "leeres" Cookie senden
     @PostMapping("/logout")
-    public ResponseEntity<?> logout() {
+    public ResponseEntity<?> logout(HttpServletRequest request) {
+
+        boolean isSecure = request.isSecure();
+
         ResponseCookie cleanCookie = ResponseCookie.from("jwt", "")
                 .httpOnly(true)
-                .secure(false)
+                .secure(isSecure)
                 .path("/")
                 .maxAge(0) // Sofort ablaufen lassen
                 .build();

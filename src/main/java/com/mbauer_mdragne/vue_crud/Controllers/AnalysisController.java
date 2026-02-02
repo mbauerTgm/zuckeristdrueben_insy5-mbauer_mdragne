@@ -36,7 +36,7 @@ public class AnalysisController {
     @Autowired private EntityManager em;
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('User', 'Researcher', 'Admin')")
+    @PreAuthorize("isAuthenticated()")
     public List<Analysis> getAllAnalysis(AnalysisGlobalFilterDto globalFilter) {
         Specification<Analysis> spec = AnalysisSpecifications.withGlobalDateFilter(globalFilter);
         
@@ -46,7 +46,7 @@ public class AnalysisController {
     }
 
     @GetMapping("/filter")
-    @PreAuthorize("hasAnyRole('User', 'Researcher', 'Admin')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Page<Analysis>> filterAnalysis(
         AnalysisFilterDto filterDto,
         AnalysisGlobalFilterDto globalFilter,
@@ -65,7 +65,7 @@ public class AnalysisController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('User', 'Researcher', 'Admin')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Analysis> getAnalysisById(@PathVariable Long id) {
         return analysisRepo.findById(id)
                 .map(ResponseEntity::ok)
@@ -120,7 +120,7 @@ public class AnalysisController {
     }
 
     @GetMapping("/export")
-    @PreAuthorize("hasAnyRole('User', 'Researcher', 'Admin')")
+    @PreAuthorize("isAuthenticated()")
     public void exportAnalysisToCsv(
             AnalysisFilterDto searchDto, 
             AnalysisGlobalFilterDto globalFilter,

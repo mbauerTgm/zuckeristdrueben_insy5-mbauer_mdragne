@@ -25,14 +25,14 @@ public class LogController {
     private LogRepository logRepo;
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('User', 'Researcher', 'Admin')")
+    @PreAuthorize("isAuthenticated()")
     public List<Log> getAllLogs(AnalysisGlobalFilterDto globalFilter) {
         Specification<Log> spec = LogSpecifications.withGlobalDateFilter(globalFilter);
         return (spec != null) ? logRepo.findAll(spec) : logRepo.findAll();
     }
     
     @GetMapping("/filter")
-    @PreAuthorize("hasAnyRole('User', 'Researcher', 'Admin')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Page<Log>> getAllLogs(
             AnalysisGlobalFilterDto globalFilter,
             @PageableDefault(size = 20, sort = "logId", direction = Sort.Direction.DESC) Pageable pageable) {
@@ -43,7 +43,7 @@ public class LogController {
     }
 
     @GetMapping("/{logId}")
-    @PreAuthorize("hasAnyRole('User', 'Researcher', 'Admin')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Log> getLogById(@PathVariable Long logId) {
         Log log = logRepo.findById(logId)
                 .orElseThrow(() -> new ResourceNotFoundException("Log not found with id=" + logId));

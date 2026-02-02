@@ -36,7 +36,7 @@ public class BoxPosController {
     }
 
     @GetMapping("/filter")
-    @PreAuthorize("hasAnyRole('User', 'Researcher', 'Admin')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Page<BoxPos>> getAllBoxPos(
             AnalysisGlobalFilterDto globalFilter,
             @PageableDefault(size = 20, sort = "bId", direction = Sort.Direction.DESC) Pageable pageable) {
@@ -47,7 +47,7 @@ public class BoxPosController {
     }
 
     @GetMapping("/{bId}/{bposId}")
-    @PreAuthorize("hasAnyRole('User', 'Researcher', 'Admin')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<BoxPos> getBoxPosById(@PathVariable String bId, @PathVariable Integer bposId) {
         BoxPosId id = new BoxPosId(bId, bposId);
         BoxPos boxPos = boxPosRepo.findById(id)

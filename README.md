@@ -2,7 +2,36 @@
 [![CI – Build & Tests (dev)](https://github.com/TGM-HIT/insy5-informationssysteme-vue-pwa-pwa_mbauer_mdragne_dgernesch/actions/workflows/ci.yml/badge.svg?branch=dev)](https://github.com/TGM-HIT/insy5-informationssysteme-vue-pwa-pwa_mbauer_mdragne_dgernesch/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/github/mbauerTgm/zuckeristdrueben_insy5-mbauer_mdragne/graph/badge.svg)](https://codecov.io/github/mbauerTgm/zuckeristdrueben_insy5-mbauer_mdragne)
 
-# Informationssysteme "PWA Deployment" EK
+# ZuckerIstDrueben Abstract
+"ZuckerIstDrueben" is a specialized Progressive Web Application (PWA) designed to manage and analyze production data for a sugar beet factory. Built upon a robust tech stack featuring Vue.js, Spring Boot, and PostgreSQL, the system ensures high performance and data integrity while offering a seamless user experience across devices.
+
+**Live Deployment**: The application is currently live and accessible at https://zuckeristdrueben.live.
+
+### Key Features & Architecture:
+
+**Security & Access Control**: The application implements a secure authentication system using JWT tokens stored in HTTP-Only cookies. It utilizes Role-Based Access Control (RBAC) with distinct roles—Admin, Researcher, and Reader—to enforce granular permission levels, such as restricting Researchers to specific sample flags or providing Read-Only access to guests.
+
+**Performance & Data Handling**: To handle large datasets efficiently, the backend implements server-side paging and dynamic filtering (using Specifications), ensuring that only necessary data is transferred to the client. Users can also export complete datasets via a dedicated CSV stream ReST endpoint.
+
+**Quality Assurance & Reporting**: The system features an integrated reporting module powered by specialized SQL functions. These reports automatically detect anomalies, such as boxes without assigned samples or analyses missing storage positions, ensuring workflow consistency.
+
+**DevOps & CI/CD**: The project maintains a fully automated lifecycle using GitHub Actions. A CI pipeline builds and tests the application (including E2E Cypress tests), while a CD pipeline automatically deploys Docker containers to an Oracle Cloud server configured with Caddy Reverse-Proxy for SSL.
+
+**Modern UX/UI**: As a PWA, the application offers native-like capabilities including installation, offline compatibility via Service Workers, and high-performance caching. The interface supports a Dark Mode and customizable data tables where users can toggle specific columns for a tailored view.
+
+#### Login Page
+<img width="3840" height="1812" alt="Screenshot_Login" src="https://github.com/user-attachments/assets/ed470f12-0ef4-4c13-9f8d-d81b887d280e" />
+
+#### Datatable
+<img width="3836" height="1811" alt="Screenshot_Frontend" src="https://github.com/user-attachments/assets/2612d0eb-a382-4f68-b528-cd1c9f4dc199" />
+
+#### Create new Analysis
+<img width="3832" height="1812" alt="Screenshot_Create" src="https://github.com/user-attachments/assets/c6e17717-1aae-4873-a1fb-73234bf891c2" />
+
+#### Reports
+<img width="3834" height="1815" alt="Screenshot_Reports" src="https://github.com/user-attachments/assets/648e1ba9-bf4f-4e4a-8530-d5b470ab96c3" />
+
+# Informationssysteme "PWA Deployment" EK (Erweiterte Kompetenz)
 von: Maximilian Bauer, Matei Dragne 5CHITM
 
 ## Login mit JWT Tokens und Roles
@@ -58,7 +87,7 @@ Beispielsweise konzentriert sich ein Teil dieser Analyse auf die Boxen. Hier wir
 ## Globale Filterung
 Die Globale Filterung vom DateIn wurde durch eine Erweiterung der bestehenden Filterung um ein DTO im POJO Request erweitert.
 
-# Informationssysteme "PWA Deployment" GK
+# Informationssysteme "PWA Deployment" GK (Grund Kompetenz)
 von: Maximilian Bauer, Matei Dragne, Denis Gernesch 5CHITM
 
 ## Continuous Integration
