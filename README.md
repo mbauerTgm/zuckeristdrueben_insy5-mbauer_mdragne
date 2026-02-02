@@ -3,7 +3,21 @@
 [![codecov](https://codecov.io/github/mbauerTgm/zuckeristdrueben_insy5-mbauer_mdragne/graph/badge.svg)](https://codecov.io/github/mbauerTgm/zuckeristdrueben_insy5-mbauer_mdragne)
 
 # ZuckerIstDrueben Abstract
-A PWA web interface designed for use by employees at a sugar beet factory. Created using Vue.js, Springboot, and PostgreSQL. Tested with Cypress.
+"ZuckerIstDrueben" is a specialized Progressive Web Application (PWA) designed to manage and analyze production data for a sugar beet factory. Built upon a robust tech stack featuring Vue.js, Spring Boot, and PostgreSQL, the system ensures high performance and data integrity while offering a seamless user experience across devices.
+
+**Live Deployment**: The application is currently live and accessible at https://zuckeristdrueben.live.
+
+### Key Features & Architecture:
+
+**Security & Access Control**: The application implements a secure authentication system using JWT tokens stored in HTTP-Only cookies. It utilizes Role-Based Access Control (RBAC) with distinct roles—Admin, Researcher, and Reader—to enforce granular permission levels, such as restricting Researchers to specific sample flags or providing Read-Only access to guests.
+
+**Performance & Data Handling**: To handle large datasets efficiently, the backend implements server-side paging and dynamic filtering (using Specifications), ensuring that only necessary data is transferred to the client. Users can also export complete datasets via a dedicated CSV stream ReST endpoint.
+
+**Quality Assurance & Reporting**: The system features an integrated reporting module powered by specialized SQL functions. These reports automatically detect anomalies, such as boxes without assigned samples or analyses missing storage positions, ensuring workflow consistency.
+
+**DevOps & CI/CD**: The project maintains a fully automated lifecycle using GitHub Actions. A CI pipeline builds and tests the application (including E2E Cypress tests), while a CD pipeline automatically deploys Docker containers to an Oracle Cloud server configured with Caddy Reverse-Proxy for SSL.
+
+**Modern UX/UI**: As a PWA, the application offers native-like capabilities including installation, offline compatibility via Service Workers, and high-performance caching. The interface supports a Dark Mode and customizable data tables where users can toggle specific columns for a tailored view.
 
 #### Login Page
 <img width="3840" height="1812" alt="Screenshot_Login" src="https://github.com/user-attachments/assets/ed470f12-0ef4-4c13-9f8d-d81b887d280e" />
