@@ -66,10 +66,29 @@
               <Login_Loader />
             </template>
           </button>
-
         </form>
 
+        <div class="guest-section">
+          <div class="separator-or">
+            <span>oder</span>
+          </div>
+
+          <button type="button" class="guest-btn" @click="guestLogin" :disabled="isLoading">
+            <template v-if="!isLoading">
+              Als Gast fortfahren (Read Only)
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                <path d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z" />
+              </svg>
+            </template>
+            <template v-else>
+               Einen Moment...
+            </template>
+          </button>
+        </div>
+
+        <div class="footer-separator"></div>
         <p class="footer-text">© 2025/26 zuckeristdrueben.live</p>
+
       </div>
     </div>
   </div>
@@ -97,15 +116,26 @@ export default {
     document.body.classList.remove('dark-theme');
   },
   methods: {
+    // Standard Login
     async login() {
+      this.handleAuthRequest("/api/auth/login", {
+        UsersID: this.userName, 
+        password: this.password,
+      });
+    },
+    
+    // Guest Login via API
+    async guestLogin() {
+      this.handleAuthRequest("/api/auth/guest", {}); 
+    },
+
+    // Gemeinsame Logik für beide Login-Arten
+    async handleAuthRequest(endpoint, payload) {
       this.checkLogin = "";
       this.isLoading = true;
 
       try {
-        const response = await axios.post("/api/auth/login", {
-          UsersID: this.userName, 
-          password: this.password,
-        }, { withCredentials: true });
+        const response = await axios.post(endpoint, payload, { withCredentials: true });
 
         const { role, UsersID, UsersId } = response.data;
         
@@ -123,11 +153,12 @@ export default {
 
       } catch (error) {
         console.error(error);
-        this.checkLogin = "Zugangsdaten ungültig.";
+        this.checkLogin = "Anmeldung fehlgeschlagen.";
       } finally {
         this.isLoading = false;
       }
     },
+
     togglePasswordVisibility() {
       this.showPassword = !this.showPassword;
     },
@@ -136,6 +167,7 @@ export default {
 </script>
 
 <style scoped>
+/* --- Layout Grundgerüst --- */
 .split-screen {
   display: flex;
   height: 100vh;
@@ -145,85 +177,6 @@ export default {
   color: #0f172a;
   overflow: hidden;
 }
-
-.floating-group {
-  position: relative;
-  margin-bottom: 24px;
-}
-
-.floating-group input {
-  width: 100%;
-  padding: 16px 16px 12px 16px; 
-  font-size: 1.05rem;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  background-color: #f8fafc;
-  color: #0f172a;
-  outline: none;
-  transition: all 0.2s ease;
-  box-sizing: border-box;
-  height: 56px;
-}
-
-.floating-group label {
-  position: absolute;
-  top: 50%;
-  left: 16px;
-  transform: translateY(-50%);
-  font-size: 1.05rem;
-  color: #64748b;
-  pointer-events: none;
-  transition: all 0.2s ease;
-  background-color: transparent;
-}
-
-.floating-group input:focus,
-.floating-group input:not(:placeholder-shown) {
-  border-color: #198754;
-  background-color: #fff;
-  padding-top: 24px;
-  padding-bottom: 8px;
-}
-
-.floating-group input:focus + label,
-.floating-group input:not(:placeholder-shown) + label,
-.floating-group input:-webkit-autofill + label {
-  top: 8px;
-  left: 16px;
-  transform: translateY(0);
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: #198754;
-}
-
-.floating-group input:-webkit-autofill,
-.floating-group input:-webkit-autofill:hover, 
-.floating-group input:-webkit-autofill:focus {
-  -webkit-box-shadow: 0 0 0px 1000px #f8fafc inset !important;
-  -webkit-text-fill-color: #0f172a !important;
-  transition: background-color 5000s ease-in-out 0s;
-  padding-top: 24px !important; 
-  padding-bottom: 8px !important;
-}
-
-.floating-group input:focus:-webkit-autofill {
-  -webkit-box-shadow: 0 0 0px 1000px #ffffff inset !important;
-}
-
-.eye-btn {
-  position: absolute;
-  right: 16px;
-  top: 50%;
-  transform: translateY(-50%);
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: #64748b;
-  display: flex;
-  padding: 0;
-  z-index: 5;
-}
-.eye-btn:hover { color: #334155; }
 
 .visual-side {
   flex: 1;
@@ -275,9 +228,9 @@ export default {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
-
 .visual-content p { color: #94a3b8; font-size: 1.05rem; line-height: 1.6; }
 
+/* --- Formular Seite --- */
 .form-side {
   flex: 0 0 500px;
   display: flex; align-items: center; justify-content: center;
@@ -290,41 +243,105 @@ export default {
 .form-header h2 { font-size: 2.3rem; font-weight: 700; color: #0f172a; margin-bottom: 10px; }
 .form-header p { color: #64748b; }
 
+/* --- Inputs --- */
+.floating-group {
+  position: relative;
+  margin-bottom: 24px;
+}
+.floating-group input {
+  width: 100%;
+  padding: 16px 16px 12px 16px; 
+  font-size: 1.05rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background-color: #f8fafc;
+  color: #0f172a;
+  outline: none;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+  height: 56px;
+}
+.floating-group label {
+  position: absolute;
+  top: 50%;
+  left: 16px;
+  transform: translateY(-50%);
+  font-size: 1.05rem;
+  color: #64748b;
+  pointer-events: none;
+  transition: all 0.2s ease;
+  background-color: transparent;
+}
+.floating-group input:focus, .floating-group input:not(:placeholder-shown) {
+  border-color: #198754; background-color: #fff; padding-top: 24px; padding-bottom: 8px;
+}
+.floating-group input:focus + label, .floating-group input:not(:placeholder-shown) + label {
+  top: 8px; left: 16px; transform: translateY(0); font-size: 0.75rem; font-weight: 600; color: #198754;
+}
+
+.eye-btn {
+  position: absolute; right: 16px; top: 50%; transform: translateY(-50%);
+  background: none; border: none; cursor: pointer; color: #64748b; display: flex; padding: 0; z-index: 5;
+}
+
+/* --- Buttons --- */
 .submit-btn {
   width: 100%; padding: 16px;
   background-color: #0f172a; color: white;
   font-weight: 600; font-size: 1rem;
   border: none; border-radius: 12px;
   cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;
-  transition: all 0.2s; margin-top: 10px;
-  
-  min-height: 54px; 
+  transition: all 0.2s; margin-top: 10px; min-height: 54px; 
 }
-.submit-btn:hover:not(:disabled) { 
-  background-color: #198754; 
-  transform: translateY(-1px); 
+.submit-btn:hover:not(:disabled) { background-color: #198754; transform: translateY(-1px); }
+
+.guest-btn {
+  width: 100%; padding: 14px;
+  background-color: transparent; 
+  color: #64748b;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  font-weight: 600; font-size: 0.95rem;
+  cursor: pointer; 
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  transition: all 0.2s;
+}
+.guest-btn:hover:not(:disabled) {
+  border-color: #94a3b8; color: #0f172a; background-color: #f8fafc;
 }
 
-/* Deaktivierter Button während Loading */
-.submit-btn:disabled {
-  background-color: #0f172a;
-  opacity: 0.8;
-  cursor: not-allowed;
+.submit-btn:disabled, .guest-btn:disabled { opacity: 0.7; cursor: not-allowed; }
+
+/* --- Separators --- */
+.guest-section {
+  margin-top: 24px;
+  margin-bottom: 30px;
 }
 
-.error-banner {
-  background-color: #fef2f2; border: 1px solid #fecaca; color: #b91c1c;
-  padding: 12px; border-radius: 8px; margin-bottom: 24px; font-size: 0.9rem;
-  display: flex; align-items: center; gap: 10px;
+.separator-or {
+  display: flex; align-items: center; text-align: center; color: #94a3b8; font-size: 0.9rem; margin-bottom: 24px;
+}
+.separator-or::before, .separator-or::after {
+  content: ''; flex: 1; border-bottom: 1px solid #e2e8f0;
+}
+.separator-or span { margin: 0 12px; }
+
+/* Die explizite Linie vor dem Footer */
+.footer-separator {
+  width: 100%;
+  border-top: 1px solid #e2e8f0;
+  margin-top: 40px; /* Großer Abstand zum Gast Button */
+  margin-bottom: 20px; /* Kleiner Abstand zum Text */
 }
 
-.footer-text { margin-top: 40px; text-align: center; font-size: 0.8rem; color: #94a3b8; }
+.footer-text { text-align: center; font-size: 0.8rem; color: #94a3b8; }
+.error-banner { background-color: #fef2f2; border: 1px solid #fecaca; color: #b91c1c; padding: 12px; border-radius: 8px; margin-bottom: 24px; font-size: 0.9rem; display: flex; align-items: center; gap: 10px; }
 
 @media (max-width: 900px) {
   .split-screen { flex-direction: column; overflow-y: auto; }
   .visual-side { padding: 40px; min-height: 200px; flex: none; }
-  .visual-content h1 { font-size: 2.3rem; }
   .logo-circle { width: 48px; height: 48px; margin-bottom: 15px; }
+  .visual-content h1 { font-size: 2.3rem; }
   .form-side { flex: 1; width: 100%; padding: 40px 20px; box-sizing: border-box; }
 }
 </style>
