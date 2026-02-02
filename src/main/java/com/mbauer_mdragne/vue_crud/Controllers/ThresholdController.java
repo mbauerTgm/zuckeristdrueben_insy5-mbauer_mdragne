@@ -26,14 +26,14 @@ public class ThresholdController {
     private ThresholdRepository thresholdRepo;
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('User', 'Researcher', 'Admin')")
+    @PreAuthorize("isAuthenticated()")
     public List<Threshold> getAllThresholds(AnalysisGlobalFilterDto globalFilter) {
         Specification<Threshold> spec = ThresholdSpecifications.withGlobalDateFilter(globalFilter);
         return (spec != null) ? thresholdRepo.findAll(spec) : thresholdRepo.findAll();
     }
     
     @GetMapping("/filter")
-    @PreAuthorize("hasAnyRole('User', 'Researcher', 'Admin')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Page<Threshold>> getAllThresholds(
             AnalysisGlobalFilterDto globalFilter,
             @PageableDefault(size = 20, sort = "thId", direction = Sort.Direction.DESC) Pageable pageable) {
@@ -44,7 +44,7 @@ public class ThresholdController {
     }
 
     @GetMapping("/{thId}")
-    @PreAuthorize("hasAnyRole('User', 'Researcher', 'Admin')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Threshold> getThresholdById(@PathVariable String thId) {
         Threshold threshold = thresholdRepo.findById(thId)
                 .orElseThrow(() -> new ResourceNotFoundException("Threshold not found with id=" + thId));

@@ -26,14 +26,14 @@ public class BoxController {
 
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('User', 'Researcher', 'Admin')")
+    @PreAuthorize("isAuthenticated()")
     public List<Box> getAllBoxes(AnalysisGlobalFilterDto globalFilter) {
         Specification<Box> spec = BoxSpecifications.withGlobalDateFilter(globalFilter);
         return (spec != null) ? boxRepo.findAll(spec) : boxRepo.findAll();
     }
 
     @GetMapping("/filter")
-    @PreAuthorize("hasAnyRole('User', 'Researcher', 'Admin')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Page<Box>> getAllBoxes(
             AnalysisGlobalFilterDto globalFilter,
             @PageableDefault(size = 20, sort = "bId", direction = Sort.Direction.DESC) Pageable pageable) {
@@ -44,7 +44,7 @@ public class BoxController {
     }
 
     @GetMapping("/{bId}")
-    @PreAuthorize("hasAnyRole('User', 'Researcher', 'Admin')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Box> getBoxById(@PathVariable String bId) {
         Box box = boxRepo.findById(bId)
                 .orElseThrow(() -> new ResourceNotFoundException("Box not found with id=" + bId));

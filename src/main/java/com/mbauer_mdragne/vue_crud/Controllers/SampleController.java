@@ -13,8 +13,6 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import com.mbauer_mdragne.vue_crud.DTOs.AnalysisGlobalFilterDto;
@@ -34,7 +32,7 @@ public class SampleController {
     @Autowired private SampleRepository sampleRepo;
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('User', 'Researcher', 'Admin')")
+    @PreAuthorize("isAuthenticated()")
     public List<Sample> getAllSamples(AnalysisGlobalFilterDto globalFilter) {
         Specification<Sample> spec = SampleSpecifications.withGlobalDateFilter(globalFilter);
         
@@ -44,7 +42,7 @@ public class SampleController {
     }
     
     @GetMapping("/filter")
-    @PreAuthorize("hasAnyRole('User', 'Researcher', 'Admin')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Page<Sample>> filterSamples(
         AnalysisGlobalFilterDto globalFilter,
         @PageableDefault(size = 20, sort = "sId", direction = Sort.Direction.DESC) Pageable pageable) {
@@ -57,7 +55,7 @@ public class SampleController {
     }
 
     @GetMapping("/{sId}/{sStamp}")
-    @PreAuthorize("hasAnyRole('User', 'Researcher', 'Admin')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Sample> getSampleById(@PathVariable String sId, @PathVariable String sStamp) {
         SampleId id = new SampleId(sId, DateUtils.parseAny(sStamp));
         Sample sample = sampleRepo.findById(id)
@@ -102,7 +100,7 @@ public class SampleController {
     }
 
     @GetMapping("/export")
-    @PreAuthorize("hasAnyRole('User', 'Researcher', 'Admin')")
+    @PreAuthorize("isAuthenticated()")
     public void exportSamplesToCsv(AnalysisGlobalFilterDto globalFilter, HttpServletResponse response) throws IOException {
         Specification<Sample> spec = SampleSpecifications.withGlobalDateFilter(globalFilter);
         if (spec == null) spec = Specification.allOf();

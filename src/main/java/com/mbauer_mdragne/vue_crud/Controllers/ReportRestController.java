@@ -20,21 +20,21 @@ public class ReportRestController {
     @Autowired private ReportRepository reportRepo;
 
     @GetMapping("/boxpos/with-sample-no-analysis")
-    @PreAuthorize("hasAnyRole('User', 'Researcher', 'Admin')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<BoxPosWithoutTableView>> getBoxPosWithSampleNoAnalysis() {
         List<BoxPosWithoutTableView> result = boxPosRepo.findBoxPosWithoutAnalysis();
         return ResponseEntity.ok(result);
     }
 
     @GetMapping("/boxpos/without-sample")
-    @PreAuthorize("hasAnyRole('User', 'Researcher', 'Admin')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<BoxPosWithoutTableView>> getBoxPosWithoutSample() {
         List<BoxPosWithoutTableView> result = boxPosRepo.findBoxPosWithoutSample();
         return ResponseEntity.ok(result);
     }
 
     @GetMapping("/samples/suspicious/by-date")
-    @PreAuthorize("hasAnyRole('User', 'Researcher', 'Admin')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<SuspiciousEanSampleView>> getSuspiciousSamplesByDate(
             @RequestParam LocalDate startDate,
             @RequestParam LocalDate endDate) {
@@ -43,7 +43,7 @@ public class ReportRestController {
     }
 
     @GetMapping("/analysis/without-boxpos")
-    @PreAuthorize("hasAnyRole('User', 'Researcher', 'Admin')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<AnalysisWithoutBoxposView>> getAnalysesWithoutBoxPos(
             @RequestParam LocalDate startDate,
             @RequestParam LocalDate endDate) {
@@ -52,7 +52,7 @@ public class ReportRestController {
     }
 
     @GetMapping("/analysis/with-zero-values")
-    @PreAuthorize("hasAnyRole('User', 'Researcher', 'Admin')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<AnalysisWithNullValuesView>> getAnalysesWithZeroValues(
             @RequestParam LocalDate startDate,
             @RequestParam LocalDate endDate) {
@@ -61,7 +61,7 @@ public class ReportRestController {
     }
 
     @GetMapping("/analysis/without-time")
-    @PreAuthorize("hasAnyRole('User', 'Researcher', 'Admin')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<AnalysisWithoutTimeView>> getAnalysesWithoutTime(
             @RequestParam LocalDate startDate,
             @RequestParam LocalDate endDate) {
@@ -70,7 +70,7 @@ public class ReportRestController {
     }
 
     @GetMapping("/samples/multiple-analyses")
-    @PreAuthorize("hasAnyRole('User', 'Researcher', 'Admin')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<SampleMultipleAnalysisView>> getSamplesWithMultipleAnalyses(
             @RequestParam LocalDate startDate,
             @RequestParam LocalDate endDate) {
@@ -79,21 +79,21 @@ public class ReportRestController {
     }
 
     @GetMapping("/samples/suspicious")
-    @PreAuthorize("hasAnyRole('User', 'Researcher', 'Admin')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<SuspiciousEanSampleView>> getAllSuspiciousSamples() {
         List<SuspiciousEanSampleView> result = sampleRepo.findAllSuspiciousSamples();
         return ResponseEntity.ok(result);
     }
 
     @GetMapping("/samples/invalid-ean13")
-    @PreAuthorize("hasAnyRole('User', 'Researcher', 'Admin')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<SuspiciousEanSampleView>> getSamplesWithInvalidEan13() {
         List<SuspiciousEanSampleView> result = sampleRepo.findSamplesWithInvalidEan();
         return ResponseEntity.ok(result);
     }
 
     @GetMapping("/daily-report")
-    @PreAuthorize("hasAnyRole('User', 'Researcher', 'Admin')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<DayReportView>> getDailySummaryReport(
             @RequestParam LocalDate startDate, 
             @RequestParam LocalDate endDate) {
