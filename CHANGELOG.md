@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.8.0] - 2026-06-09
+
+### Added
+- Rate Limiting to public APIs
+    - Limited /auth to 10 requests per minute
+    - Limited other APIs to 40 requests per minute
+
 ## [1.7.5] - 2026-01-08
 
 ### Added 
