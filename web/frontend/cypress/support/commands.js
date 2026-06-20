@@ -110,6 +110,10 @@ Cypress.Commands.add('login',(userid, password) => {
 
   cy.get('#username').type(userid)
   cy.get('#password').type(password)
+
+  cy.intercept('POST', '/api/auth/login*').as('loginRequest')
+  
   cy.get('.submit-btn').click()
-  cy.wait(2000)
+
+  cy.wait('@loginRequest')
 })
