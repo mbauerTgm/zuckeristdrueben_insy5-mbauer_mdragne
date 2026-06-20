@@ -18,11 +18,21 @@ describe('Global Filtering & Settings Test:', () => {
         comment: uniqueComment
     })
 
+    cy.intercept('GET', '/api/analysis/filter*').as('loadAnalysisData')
     cy.get(':nth-child(1) > select').select('Analysis')
     cy.get('.btn-load').click()
-    cy.get('.btn-save').click().click()
-    cy.wait(500)
-    cy.get('#field-s_id').type(sId)
+    cy.wait('@loadAnalysisData')
+
+    cy.get('.loader').should('not.exist')
+    cy.get('table').should('be.visible')
+
+    cy.wait(300)
+
+    cy.get('.btn-save').first().should('be.visible').click({ force: true })
+
+    cy.get('.form-actions').should('be.visible')
+
+    cy.get('#field-s_id', { timeout: 5000 }).should('be.visible').type(sId)
     cy.get('#field-date_in').type(erstelleDatum(0)) 
     cy.get('.form-actions > .btn-save').click()
     
